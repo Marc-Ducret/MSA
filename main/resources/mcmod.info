@@ -1,0 +1,16 @@
+[
+{
+  "modid": "serversideagent",
+  "name": "Server Side Agent",
+  "description": "A mod enabling the usage of server side agents.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Marc Ducret"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
