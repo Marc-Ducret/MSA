@@ -2,17 +2,18 @@ package edu.usc.thevillagers.serversideagent.agent;
 
 public abstract class AgentBrain {
 
-	public final AgentState state;
+	private AgentState state;
 	
-	public AgentBrain(AgentState state) {
-		this.state = state;
+	public final void init() {
+		state = initBrain();
 	}
 	
-	public abstract void init();
+	public AgentState getState() {
+		return state;
+	}
 	
+	protected abstract AgentState initBrain();
 	public abstract void observe();
-	
 	public abstract void act();
-	
 	public abstract void terminate();
 }

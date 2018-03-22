@@ -8,9 +8,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AgentState {
-	
-	public static final int OBS_DIST = 1;
-	public static final int OBS_SIZE = 2 * OBS_DIST + 1;
+
+	public final int updatePeriod;
+	public final int obsDist;
+	public final int obsSize;
 	
 	public float forward, strafe, momentumYaw, momentumPitch;
 	public boolean jump, crouch, attack, use;
@@ -19,11 +20,15 @@ public class AgentState {
 	public Vec3d relativePos;
 	public float yaw, pitch;
 	
-	public AgentState() {
+	public AgentState(int updatePeriod, int obsDist) {
+		this.updatePeriod = updatePeriod;
+		this.obsDist = obsDist;
+		this.obsSize = 2 * obsDist + 1;
+		
 		forward = strafe = momentumYaw = momentumPitch = 0;
 		jump = crouch = attack = use = false;
 		
-		blocks = new BlockStateBase[OBS_SIZE * OBS_SIZE * OBS_SIZE];
+		blocks = new BlockStateBase[obsSize * obsSize * obsSize];
 		relativePos = Vec3d.ZERO;
 		yaw = pitch = 0;
 	}
@@ -37,26 +42,26 @@ public class AgentState {
 	
 	public void observe(Agent a) {
 		World world = a.getEntityWorld();
-		BlockPos pos = a.getPosition().add(-OBS_DIST, 0, -OBS_DIST);
-		for(int z = 0; z < OBS_SIZE; z++) {
-			for(int y = 0; y < OBS_SIZE; y++) {
-				for(int x = 0; x < OBS_SIZE; x++) {
-					blocks[x + y * OBS_SIZE + z * OBS_SIZE * OBS_SIZE] = world.getBlockState(pos.add(x, z, y));
+		BlockPos pos = a.getPosition().add(-obsDist, 0, -obsDist);
+		for(int z = 0; z < obsSize; z++) {
+			for(int y = 0; y < obsSize; y++) {
+				for(int x = 0; x < obsSize; x++) {
+					blocks[x + y * obsSize + z * obsSize * obsSize] = world.getBlockState(pos.add(x, z, y));
 				}
 			}
 		}
-		relativePos = a.getPositionVector().subtract(new Vec3d(pos));
+		relativePos = a.getPositionVector().subtract(new Vec3d(a.getPosition()));
 		yaw = a.rotationYaw;
 		pitch = a.rotationPitch;
 	}
 	
 	public IBlockState getBlockStateRelativeToAgent(int dx, int dy, int dz) {
-		if(MathHelper.abs(dx) > OBS_DIST || MathHelper.abs(dy) > OBS_DIST ||  MathHelper.abs(dz) > OBS_DIST) 
-			throw new IllegalArgumentException(dx+" "+dy+" "+dz+" is too far from agent (max dist: "+OBS_DIST);
-		dx += OBS_DIST;
-		dy += OBS_DIST;
-		dz += OBS_DIST;
-		return blocks[dx + dy * OBS_SIZE + dz * OBS_SIZE * OBS_SIZE];
+		if(MathHelper.abs(dx) > obsDist || MathHelper.abs(dy) > obsDist ||  MathHelper.abs(dz) > obsDist) 
+			throw new IllegalArgumentException(dx+" "+dy+" "+dz+" is too far from agent (max dist: "+obsDist);
+		dx += obsDist;
+		dy += obsDist;
+		dz += obsDist;
+		return blocks[dx + dy * obsSize + dz * obsSize * obsSize];
 	}
 	
 	public IBlockState getBlockStateRelativeToAgent(BlockPos pos) {

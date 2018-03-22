@@ -45,6 +45,6 @@ public class CommandSpawn extends CommandBase {
 		world.spawnEntity(agent);
 		world.getPlayerChunkMap().addPlayer(agent);
 		
-		agent.setBrain(new AgentBrainExternal(agent.state, "python brain.py"));
+		agent.setBrain(new AgentBrainExternal("python python/auto_jump.py"));
 	}
 }

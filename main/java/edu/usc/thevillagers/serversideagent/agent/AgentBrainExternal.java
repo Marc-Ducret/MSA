@@ -15,13 +15,12 @@ public class AgentBrainExternal extends AgentBrain {
 	private PrintStream pOut;
 	private Scanner pIn;
 	
-	public AgentBrainExternal(AgentState state, String command) {
-		super(state);
+	public AgentBrainExternal(String command) {
 		this.command = command;
 	}
 
 	@Override
-	public void init() {
+	protected AgentState initBrain() {
 		try {
 			process = Runtime.getRuntime().exec(command);
 			pOut = new PrintStream(process.getOutputStream());
@@ -36,6 +35,9 @@ public class AgentBrainExternal extends AgentBrain {
 				}
 				System.out.println("Agent terminated");
 			}).start();
+			int updatePeriod = pIn.nextInt();
+			int obsDist = pIn.nextInt();
+			return new AgentState(updatePeriod, obsDist);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't start agent external brain", e);
 		}
@@ -43,6 +45,7 @@ public class AgentBrainExternal extends AgentBrain {
 
 	@Override
 	public void observe() {
+		AgentState state = getState();
 		pOut.println(state.relativePos.x);
 		pOut.println(state.relativePos.y);
 		pOut.println(state.relativePos.z);
@@ -56,6 +59,7 @@ public class AgentBrainExternal extends AgentBrain {
 
 	@Override
 	public void act() {
+		AgentState state = getState();
 		state.forward = pIn.nextFloat();
 		state.strafe = pIn.nextFloat();
 		state.momentumYaw = pIn.nextFloat();

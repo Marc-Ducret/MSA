@@ -12,24 +12,32 @@ public class Agent extends EntityPlayerMP {
 	
 	public static final float ROTATION_SPEED = 20;
 	
-	public final AgentState state;
 	private AgentBrain brain;
+	private int brainCooldown = 1;
 	
 	public Agent(WorldServer world, GameProfile profile) {
 		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, profile, new PlayerInteractionManager(world));
-		state = new AgentState();
 	}
 
 	@Override
 	public void onUpdate() {
 		super.onUpdate();
-		useBrain(() -> brain.act()); 
-		this.setPositionAndRotation(posX, posY, posZ, 
-				rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
-				rotationPitch + state.momentumPitch * ROTATION_SPEED);
-		this.travel(state.strafe, 0, state.forward);
-		state.observe(this);
-		useBrain(() -> brain.observe()); 
+		useBrain(() -> {
+			AgentState state = brain.getState();
+			boolean updateBrain = --brainCooldown <= 0;
+			if(updateBrain) {
+				brainCooldown = state.updatePeriod;
+				brain.act();
+			}
+			this.setPositionAndRotation(posX, posY, posZ, 
+					rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
+					rotationPitch + state.momentumPitch * ROTATION_SPEED);
+			this.travel(state.strafe, 0, state.forward);
+			if(updateBrain) {
+				state.observe(this);
+				brain.observe();
+			}
+		});
 	}
 	
 	public void setBrain(AgentBrain brain) {
