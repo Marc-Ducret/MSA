@@ -19,8 +19,8 @@ class State:
 
 		self.forward = 0
 		self.strafe = 0
-		self.momentumYaw = 0
-		self.momentumPitch = 0
+		self.momentum_yaw = 0
+		self.momentum_pitch = 0
 
 		self.jump = False
 		self.crouch = False
@@ -34,6 +34,7 @@ class State:
 		dx += d
 		dy += d
 		dz += d
+		d = d * 2 + 1
 		return self.blocks[dx + dy * d + dz * d * d]
 class Brain:
 	def __init__(self, update_period, obs_dist, think):
@@ -49,8 +50,8 @@ class Brain:
 	def act(self):
 		print(self.state.forward)
 		print(self.state.strafe)
-		print(self.state.momentumYaw)
-		print(self.state.momentumPitch)
+		print(self.state.momentum_yaw)
+		print(self.state.momentum_pitch)
 		print(self.state.jump)
 		print(self.state.crouch)
 		print(self.state.attack)

@@ -42,11 +42,11 @@ public class AgentState {
 	
 	public void observe(Agent a) {
 		World world = a.getEntityWorld();
-		BlockPos pos = a.getPosition().add(-obsDist, 0, -obsDist);
+		BlockPos pos = a.getPosition().add(-obsDist, -obsDist, -obsDist);
 		for(int z = 0; z < obsSize; z++) {
 			for(int y = 0; y < obsSize; y++) {
 				for(int x = 0; x < obsSize; x++) {
-					blocks[x + y * obsSize + z * obsSize * obsSize] = world.getBlockState(pos.add(x, z, y));
+					blocks[x + y * obsSize + z * obsSize * obsSize] = world.getBlockState(pos.add(x, y, z));
 				}
 			}
 		}
@@ -57,7 +57,7 @@ public class AgentState {
 	
 	public IBlockState getBlockStateRelativeToAgent(int dx, int dy, int dz) {
 		if(MathHelper.abs(dx) > obsDist || MathHelper.abs(dy) > obsDist ||  MathHelper.abs(dz) > obsDist) 
-			throw new IllegalArgumentException(dx+" "+dy+" "+dz+" is too far from agent (max dist: "+obsDist);
+			throw new IllegalArgumentException(dx+" "+dy+" "+dz+" is too far from agent (max dist: "+obsDist+")");
 		dx += obsDist;
 		dy += obsDist;
 		dz += obsDist;

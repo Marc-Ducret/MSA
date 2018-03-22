@@ -22,6 +22,7 @@ public class Agent extends EntityPlayerMP {
 	@Override
 	public void onUpdate() {
 		super.onUpdate();
+		super.onLivingUpdate();
 		useBrain(() -> {
 			AgentState state = brain.getState();
 			boolean updateBrain = --brainCooldown <= 0;
@@ -33,6 +34,7 @@ public class Agent extends EntityPlayerMP {
 					rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
 					rotationPitch + state.momentumPitch * ROTATION_SPEED);
 			this.travel(state.strafe, 0, state.forward);
+			this.setJumping(state.jump);
 			if(updateBrain) {
 				state.observe(this);
 				brain.observe();

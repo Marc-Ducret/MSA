@@ -27,14 +27,16 @@ public class CommandSpawn extends CommandBase {
 
 	@Override
 	public String getUsage(ICommandSender sender) {
-		return "/s";
+		return "/s <script>";
 	}
 
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+		if(args.length < 1)
+			return;
 		WorldServer world = server.worlds[0];
 		BlockPos pos = sender.getPosition();
-		GameProfile profile = new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), "Agent");
+		GameProfile profile = new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), "Agent "+args[0]);
 		Agent agent = new Agent(world, profile);
     	
     	agent.setPosition(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
@@ -45,6 +47,6 @@ public class CommandSpawn extends CommandBase {
 		world.spawnEntity(agent);
 		world.getPlayerChunkMap().addPlayer(agent);
 		
-		agent.setBrain(new AgentBrainExternal("python python/auto_jump.py"));
+		agent.setBrain(new AgentBrainExternal("python python/"+args[0]+".py"));
 	}
 }
