@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
+import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.AgentBrainExternal;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -33,7 +35,7 @@ public class CommandSpawn extends CommandBase {
 		WorldServer world = server.worlds[0];
 		BlockPos pos = sender.getPosition();
 		GameProfile profile = new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), "Agent");
-		EntityPlayerMP agent = new Agent(world, profile);
+		Agent agent = new Agent(world, profile);
     	
     	agent.setPosition(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
 		agent.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new NetworkManager(EnumPacketDirection.SERVERBOUND), agent);
@@ -42,5 +44,7 @@ public class CommandSpawn extends CommandBase {
 		
 		world.spawnEntity(agent);
 		world.getPlayerChunkMap().addPlayer(agent);
+		
+		agent.setBrain(new AgentBrainExternal(agent.state, "python brain.py"));
 	}
 }
