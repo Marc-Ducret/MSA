@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.util.Scanner;
 
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
 
 public class AgentBrainExternal extends AgentBrain {
 
@@ -53,6 +54,10 @@ public class AgentBrainExternal extends AgentBrain {
 		pOut.println(state.pitch);
 		for(IBlockState b : state.blocks) {
 			pOut.println(b);
+		}
+		pOut.println(state.entities.size());
+		for(Entity e : state.entities) {
+			pOut.println(e);
 		}
 		pOut.flush();
 	}

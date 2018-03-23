@@ -1,10 +1,16 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.block.state.BlockStateBase;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
 public class AgentState {
@@ -16,9 +22,10 @@ public class AgentState {
 	public float forward, strafe, momentumYaw, momentumPitch;
 	public boolean jump, crouch, attack, use;
 	
-	public IBlockState[] blocks;
 	public Vec3d relativePos;
 	public float yaw, pitch;
+	public IBlockState[] blocks;
+	public List<Entity> entities;
 	
 	public AgentState(int updatePeriod, int obsDist) {
 		this.updatePeriod = updatePeriod;
@@ -28,9 +35,10 @@ public class AgentState {
 		forward = strafe = momentumYaw = momentumPitch = 0;
 		jump = crouch = attack = use = false;
 		
-		blocks = new BlockStateBase[obsSize * obsSize * obsSize];
 		relativePos = Vec3d.ZERO;
 		yaw = pitch = 0;
+		blocks = new BlockStateBase[obsSize * obsSize * obsSize];
+		entities = new ArrayList<>();
 	}
 	
 	public void clamp() {
@@ -41,8 +49,12 @@ public class AgentState {
 	}
 	
 	public void observe(Agent a) {
+		relativePos = a.getPositionVector();//.subtract(new Vec3d(a.getPosition())); TODO make relative?
+		yaw = a.rotationYaw;
+		pitch = a.rotationPitch;
 		World world = a.getEntityWorld();
-		BlockPos pos = a.getPosition().add(-obsDist, -obsDist, -obsDist);
+		Vec3i offset = new Vec3i(obsDist, obsDist, obsDist);
+		BlockPos pos = a.getPosition().subtract(offset);
 		for(int z = 0; z < obsSize; z++) {
 			for(int y = 0; y < obsSize; y++) {
 				for(int x = 0; x < obsSize; x++) {
@@ -50,9 +62,9 @@ public class AgentState {
 				}
 			}
 		}
-		relativePos = a.getPositionVector().subtract(new Vec3d(a.getPosition()));
-		yaw = a.rotationYaw;
-		pitch = a.rotationPitch;
+		entities = a.world.getEntitiesWithinAABBExcludingEntity(a, new AxisAlignedBB(
+				a.getPositionVector().subtract(new Vec3d(offset)), 
+				a.getPositionVector().add(new Vec3d(offset))));
 	}
 	
 	public IBlockState getBlockStateRelativeToAgent(int dx, int dy, int dz) {

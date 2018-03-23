@@ -29,6 +29,7 @@ public class Agent extends EntityPlayerMP {
 			boolean updateBrain = --brainCooldown <= 0;
 			if(updateBrain) {
 				brainCooldown = state.updatePeriod;
+				state.clamp();
 				brain.act();
 			}
 			this.setPositionAndRotation(posX, posY, posZ, 

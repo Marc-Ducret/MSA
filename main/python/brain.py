@@ -16,6 +16,7 @@ class State:
 		self.yaw = 0
 		self.pitch = 0
 		self.blocks = [None] * ((obs_dist * 2 + 1) ** 3)
+		self.entities = []
 
 		self.forward = 0
 		self.strafe = 0
@@ -36,6 +37,7 @@ class State:
 		dz += d
 		d = d * 2 + 1
 		return self.blocks[dx + dy * d + dz * d * d]
+		
 class Brain:
 	def __init__(self, update_period, obs_dist, think):
 		self.update_period = update_period
@@ -68,6 +70,9 @@ class Brain:
 		self.state.pitch = float(read())
 		for i in range(len(self.state.blocks)):
 			self.state.blocks[i] = read()
+		self.state.entities = ["#"] * int(read())
+		for i in range(len(self.state.entities)):
+			self.state.entities[i] = read()
 			
 	def run(self):
 		self.init()
