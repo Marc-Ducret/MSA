@@ -35,7 +35,11 @@ public class CommandSpawn extends CommandBase {
 		if(args.length < 1)
 			return;
 		WorldServer world = server.worlds[0];
-		BlockPos pos = sender.getPosition();
+		BlockPos pos;
+		if(args.length > 1)  
+			pos = parseBlockPos(sender, args, 1, false);
+		else
+			pos = sender.getPosition();
 		GameProfile profile = new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), "Agent "+args[0]);
 		Agent agent = new Agent(world, profile);
     	
@@ -48,5 +52,10 @@ public class CommandSpawn extends CommandBase {
 		world.getPlayerChunkMap().addPlayer(agent);
 		
 		agent.setBrain(new AgentBrainExternal("python python/"+args[0]+".py"));
+	}
+	
+	@Override
+	public int getRequiredPermissionLevel() {
+		return 2;
 	}
 }
