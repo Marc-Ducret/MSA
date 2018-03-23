@@ -1,10 +1,17 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
+import java.util.UUID;
+
 import com.mojang.authlib.GameProfile;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.EnumPacketDirection;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
@@ -15,8 +22,30 @@ public class Agent extends EntityPlayerMP {
 	private AgentBrain brain;
 	private int brainCooldown = 1;
 	
-	public Agent(WorldServer world, GameProfile profile) {
-		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, profile, new PlayerInteractionManager(world));
+	public Agent(WorldServer world, String name) {
+		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), name), new PlayerInteractionManager(world));
+	}
+	
+	public void spawn(BlockPos pos) {
+		this.setPosition(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
+		this.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new NetworkManager(EnumPacketDirection.SERVERBOUND), this);
+		
+		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendPacketToAllPlayers(
+				new SPacketPlayerListItem(SPacketPlayerListItem.Action.ADD_PLAYER, new EntityPlayerMP[] {this}));
+		
+		world.spawnEntity(this);
+		getServerWorld().getPlayerChunkMap().addPlayer(this);
+	}
+	
+	public void remove() {
+		useBrain(() -> brain.terminate());
+		this.world.removeEntity(this);
+		
+		if(!this.world.isRemote) {
+			FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendPacketToAllPlayers(
+					new SPacketPlayerListItem(SPacketPlayerListItem.Action.REMOVE_PLAYER, new EntityPlayerMP[] {this}));
+			this.getServerWorld().getPlayerChunkMap().removePlayer(this);
+		}
 	}
 
 	@Override
@@ -52,8 +81,7 @@ public class Agent extends EntityPlayerMP {
 	@Override
 	public void onDeath(DamageSource cause) {
 		super.onDeath(cause);
-		useBrain(() -> brain.terminate());
-		this.world.removeEntity(this);
+		remove();
 	}
 	
 	private void useBrain(Runnable run) {
