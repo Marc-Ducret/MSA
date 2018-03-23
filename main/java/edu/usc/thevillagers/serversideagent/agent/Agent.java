@@ -22,6 +22,7 @@ public class Agent extends EntityPlayerMP {
 	@Override
 	public void onUpdate() {
 		super.onUpdate();
+		super.onEntityUpdate();
 		super.onLivingUpdate();
 		useBrain(() -> {
 			AgentState state = brain.getState();
