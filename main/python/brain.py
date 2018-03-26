@@ -79,4 +79,5 @@ class Brain:
 		while True:
 			self.act()
 			self.observe()
-			self.think(self)
+			if self.think(self) is not None:
+				return

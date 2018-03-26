@@ -23,7 +23,8 @@ public class Agent extends EntityPlayerMP {
 	private int brainCooldown = 1;
 	
 	public Agent(WorldServer world, String name) {
-		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), name), new PlayerInteractionManager(world));
+		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, 
+				new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), name), new PlayerInteractionManager(world));
 	}
 	
 	public void spawn(BlockPos pos) {
@@ -75,7 +76,7 @@ public class Agent extends EntityPlayerMP {
 	
 	public void setBrain(AgentBrain brain) {
 		this.brain = brain;
-		brain.init();
+		useBrain(() -> brain.init());
 	}
 	
 	@Override
@@ -89,8 +90,7 @@ public class Agent extends EntityPlayerMP {
 		try {
 			run.run();
 		} catch(Exception e) {
-			System.out.println("Error while using brain");
-			e.printStackTrace();
+			System.out.println("Error while using brain "+e);
 			brain = null;
 		}
 	}
