@@ -9,9 +9,10 @@ from keras.optimizers import Adam
 EPISODES = 1000
 
 class DQNAgent:
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, hidden=24):
         self.state_size = state_size
         self.action_size = action_size
+        self.hidden = hidden
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95    # discount rate
         self.epsilon = 1.0  # exploration rate
@@ -23,8 +24,8 @@ class DQNAgent:
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
-        model.add(Dense(24, input_dim=self.state_size, activation='relu'))
-        #model.add(Dense(24, activation='relu'))
+        model.add(Dense(self.hidden, input_dim=self.state_size, activation='relu'))
+        model.add(Dense(self.hidden, activation='relu'))
         model.add(Dense(self.action_size, activation='linear'))
         model.compile(loss='mse',
                       optimizer=Adam(lr=self.learning_rate))
