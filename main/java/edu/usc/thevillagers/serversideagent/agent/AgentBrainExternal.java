@@ -1,11 +1,14 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.util.Scanner;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 
@@ -13,8 +16,8 @@ public class AgentBrainExternal extends AgentBrain {
 
 	private final String command;
 	private Process process;
-	private PrintStream pOut;
-	private Scanner pIn;
+	private DataOutputStream pOut;
+	private DataInputStream pIn;
 	
 	public AgentBrainExternal(String command) {
 		this.command = command;
@@ -24,8 +27,8 @@ public class AgentBrainExternal extends AgentBrain {
 	protected AgentState initBrain() {
 		try {
 			process = Runtime.getRuntime().exec(command);
-			pOut = new PrintStream(process.getOutputStream());
-			pIn = new Scanner(process.getInputStream());
+			pOut = new DataOutputStream(new BufferedOutputStream(process.getOutputStream()));
+			pIn = new DataInputStream(new BufferedInputStream(process.getInputStream()));
 			new Thread(() -> {
 				BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 				String line;
@@ -36,8 +39,9 @@ public class AgentBrainExternal extends AgentBrain {
 				}
 				System.out.println("Agent terminated");
 			}).start();
-			int updatePeriod = pIn.nextInt();
-			int obsDist = pIn.nextInt();
+			int updatePeriod = pIn.readInt();
+			int obsDist = pIn.readInt();
+			System.out.println(command+" started and provided: updatePeriod="+updatePeriod+"; obsDist="+obsDist);
 			return new AgentState(updatePeriod, obsDist);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't start agent external brain", e);
@@ -45,34 +49,34 @@ public class AgentBrainExternal extends AgentBrain {
 	}
 
 	@Override
-	public void observe() {
+	public void observe() throws Exception {
 		AgentState state = getState();
-		pOut.println(state.relativePos.x);
-		pOut.println(state.relativePos.y);
-		pOut.println(state.relativePos.z);
-		pOut.println(state.yaw);
-		pOut.println(state.pitch);
+		pOut.writeFloat((float) state.relativePos.x);
+		pOut.writeFloat((float) state.relativePos.y);
+		pOut.writeFloat((float) state.relativePos.z);
+		pOut.writeFloat(state.yaw);
+		pOut.writeFloat(state.pitch);
 		for(IBlockState b : state.blocks) {
-			pOut.println(b);
+			pOut.writeInt(Block.getIdFromBlock(b.getBlock()));
 		}
-		pOut.println(state.entities.size());
+		pOut.writeInt(state.entities.size());
 		for(Entity e : state.entities) {
-			pOut.println(e);
+			pOut.writeUTF(e.toString());
 		}
 		pOut.flush();
 	}
 
 	@Override
-	public void act() {
+	public void act() throws Exception {
 		AgentState state = getState();
-		state.forward = pIn.nextFloat();
-		state.strafe = pIn.nextFloat();
-		state.momentumYaw = pIn.nextFloat();
-		state.momentumPitch = pIn.nextFloat();
-		state.jump = pIn.nextBoolean();
-		state.crouch = pIn.nextBoolean();
-		state.attack = pIn.nextBoolean();
-		state.use = pIn.nextBoolean();
+		state.forward = pIn.readFloat();
+		state.strafe = pIn.readFloat();
+		state.momentumYaw = pIn.readFloat();
+		state.momentumPitch = pIn.readFloat();
+		state.jump = pIn.readBoolean();
+		state.crouch = pIn.readBoolean();
+		state.attack = pIn.readBoolean();
+		state.use = pIn.readBoolean();
 	}
 
 	@Override

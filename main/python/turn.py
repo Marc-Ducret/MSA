@@ -11,7 +11,7 @@ def think(brain):
 	brain.state.forward = 0
 	brain.state.momentum_yaw = 0
 	
-	if b != "minecraft:air":
+	if b > 0:
 			brain.state.momentum_yaw = -.2
 	else:	
 		if abs(dir - yaw) > 1:

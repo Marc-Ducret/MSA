@@ -85,7 +85,7 @@ public class Agent extends EntityPlayerMP {
 		remove();
 	}
 	
-	private void useBrain(Runnable run) {
+	private void useBrain(TryRunnable run) {
 		if(brain == null) return;
 		try {
 			run.run();
@@ -93,5 +93,9 @@ public class Agent extends EntityPlayerMP {
 			System.out.println("Error while using brain "+e);
 			brain = null;
 		}
+	}
+	
+	private static interface TryRunnable {
+		public void run() throws Exception;
 	}
 }

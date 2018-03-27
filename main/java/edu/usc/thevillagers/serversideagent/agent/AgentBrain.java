@@ -13,7 +13,7 @@ public abstract class AgentBrain {
 	}
 	
 	protected abstract AgentState initBrain();
-	public abstract void observe();
-	public abstract void act();
+	public abstract void observe() throws Exception;
+	public abstract void act() throws Exception;
 	public abstract void terminate();
 }

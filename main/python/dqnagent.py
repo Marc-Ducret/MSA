@@ -24,8 +24,8 @@ class DQNAgent:
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
-        model.add(Dense(self.hidden, input_dim=self.state_size, activation='relu'))
-        model.add(Dense(self.hidden, activation='relu'))
+        model.add(Dense(self.hidden, input_dim=self.state_size, activation='sigmoid'))
+        model.add(Dense(self.hidden, activation='sigmoid'))
         model.add(Dense(self.action_size, activation='linear'))
         model.compile(loss='mse',
                       optimizer=Adam(lr=self.learning_rate))
@@ -42,6 +42,8 @@ class DQNAgent:
 
     def replay(self, batch_size):
         minibatch = random.sample(self.memory, batch_size)
+        X = np.empty((0, self.state_size))
+        Y = np.empty((0, self.action_size))
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
@@ -49,7 +51,10 @@ class DQNAgent:
                           np.amax(self.model.predict(next_state)[0]))
             target_f = self.model.predict(state)
             target_f[0][action] = target
-            self.model.fit(state, target_f, epochs=1, verbose=0)
+            X = np.concatenate((X, state))
+            Y = np.concatenate((Y, target_f))
+            
+        self.model.fit(np.array(X), np.array(Y), epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 

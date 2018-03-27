@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sys
+from data_stream import *
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -44,35 +45,37 @@ class Brain:
 		self.obs_dist = obs_dist
 		self.state = State(obs_dist)
 		self.think = think
+		self.inStream = DataInputStream(sys.stdin.buffer)
+		self.outStream = DataOutputStream(sys.stdout.buffer)
 		
 	def init(self):
-		print(self.update_period)
-		print(self.obs_dist)
+		self.outStream.write_int(self.update_period)
+		self.outStream.write_int(self.obs_dist)
 
 	def act(self):
-		print(self.state.forward)
-		print(self.state.strafe)
-		print(self.state.momentum_yaw)
-		print(self.state.momentum_pitch)
-		print(self.state.jump)
-		print(self.state.crouch)
-		print(self.state.attack)
-		print(self.state.use)
-		sys.stdout.flush()
+		self.outStream.write_float(self.state.forward)
+		self.outStream.write_float(self.state.strafe)
+		self.outStream.write_float(self.state.momentum_yaw)
+		self.outStream.write_float(self.state.momentum_pitch)
+		self.outStream.write_boolean(self.state.jump)
+		self.outStream.write_boolean(self.state.crouch)
+		self.outStream.write_boolean(self.state.attack)
+		self.outStream.write_boolean(self.state.use)
+		self.outStream.flush()
 		
 	def observe(self):
 		def read():
 			return sys.stdin.readline()[:-1]
-		self.state.x = float(read())
-		self.state.y = float(read())
-		self.state.z = float(read())
-		self.state.yaw = float(read())
-		self.state.pitch = float(read())
+		self.state.x = self.inStream.read_float()
+		self.state.y = self.inStream.read_float()
+		self.state.z = self.inStream.read_float()
+		self.state.yaw = self.inStream.read_float()
+		self.state.pitch = self.inStream.read_float()
 		for i in range(len(self.state.blocks)):
-			self.state.blocks[i] = read()
-		self.state.entities = ["#"] * int(read())
+			self.state.blocks[i] = self.inStream.read_int()
+		self.state.entities = ["#"] * self.inStream.read_int()
 		for i in range(len(self.state.entities)):
-			self.state.entities[i] = read()
+			self.state.entities[i] = self.inStream.read_utf()
 			
 	def run(self):
 		self.init()

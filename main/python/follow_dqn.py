@@ -35,8 +35,8 @@ def think(brain):
 			break
 	
 	if dx is not None:
-		dx /= 10.0
-		dz /= 10.0
+		dx /= 5.0
+		dz /= 5.0
 		reward = - (dx ** 2 + dz ** 2)
 		eprint(reward)
 		state = np.array([dx, dz])
@@ -45,11 +45,11 @@ def think(brain):
 			agent.remember(agent.prev_state, agent.action, reward, state, False)
 
 		agent.action = agent.act(state)
-		brain.state.forward = cos(agent.action * pi / 2)
-		brain.state.strafe = sin(agent.action * pi / 2)
+		brain.state.forward = cos(agent.action * pi / 2) * .5
+		brain.state.strafe = sin(agent.action * pi / 2) * .5
 		agent.prev_state = state
 		
 	if len(agent.memory) > batch_size:
 		agent.replay(batch_size)
 
-Brain(5, 10, think).run()
+Brain(1, 5, think).run()
