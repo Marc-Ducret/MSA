@@ -37,7 +37,7 @@ def think(brain):
 	if dx is not None:
 		dx /= 5.0
 		dz /= 5.0
-		reward = - (dx ** 2 + dz ** 2)
+		reward = - (abs(dx) + abs(dz))
 		eprint(reward)
 		state = np.array([dx, dz])
 		state = np.reshape(state, [1, 2])
@@ -52,4 +52,4 @@ def think(brain):
 	if len(agent.memory) > batch_size:
 		agent.replay(batch_size)
 
-Brain(1, 5, think).run()
+Brain(2, 5, think).run()

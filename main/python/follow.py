@@ -23,4 +23,4 @@ def think(brain):
 			return
 		
 	
-Brain(1, 5, think).run()
+Brain(1, 10, think).run()
