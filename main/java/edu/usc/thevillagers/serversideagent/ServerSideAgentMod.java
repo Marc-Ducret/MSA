@@ -1,5 +1,7 @@
 package edu.usc.thevillagers.serversideagent;
 
+import net.minecraft.command.ICommandSender;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -19,6 +21,9 @@ public class ServerSideAgentMod {
     public float avgTickPeriod = 50;
     private long lastTickTime = -1;
     
+    private int requestFastTicks = 0;
+    private ICommandSender requestSender = null;
+    
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
     }
@@ -31,18 +36,44 @@ public class ServerSideAgentMod {
     @EventHandler
     public void serverLoad(FMLServerStartingEvent event) {
     	event.registerServerCommand(new CommandSpawn());
-    	event.registerServerCommand(new CommandFastTick());
+    	event.registerServerCommand(new CommandFastTick(this));
     	event.registerServerCommand(new CommandTPS(this));
     }
     
     @SubscribeEvent
     public void serverTick(ServerTickEvent event) {
     	if(event.phase == Phase.END) {
-    		long time = System.currentTimeMillis();
-    		if(lastTickTime >= 0) {
-    			avgTickPeriod = .9F * avgTickPeriod + .1F * (time - lastTickTime);
+    		updateTPS();
+    		if(requestFastTicks > 0) {
+    			fastTick(requestFastTicks, requestSender);
     		}
-    		lastTickTime = time;
     	}
+    }
+    
+    private void updateTPS() {
+    	long time = System.currentTimeMillis();
+		if(lastTickTime >= 0) {
+			avgTickPeriod = .9F * avgTickPeriod + .1F * (time - lastTickTime);
+		}
+		lastTickTime = time;
+    }
+    
+    public void requestFastTick(int ticks, ICommandSender sender) {
+    	if(ticks > 0 && sender != null) {
+    		requestFastTicks = ticks;
+    		requestSender = sender;
+    	}
+    }
+    
+    private void fastTick(int ticks, ICommandSender sender) {
+    	requestFastTicks = 0;
+    	long startTime = System.currentTimeMillis();
+		for(int t = 0; t < ticks; t++) {
+			sender.getServer().tick();
+		}
+		long duration = System.currentTimeMillis() - startTime;
+		float tickP = duration / (float) ticks;
+		float tps = ticks / (duration / 1000F);
+		sender.sendMessage(new TextComponentString(String.format("%d ticks completed in %d ms (avg: %.1f ms - %.1f TPS)", ticks, duration, tickP, tps)));
     }
 }
