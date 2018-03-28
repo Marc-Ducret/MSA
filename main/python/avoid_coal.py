@@ -18,13 +18,12 @@ def think(brain):
     reward = encode(brain.state.block(0, -1, 0)) - .1 * ((rel_x - .5) ** 2 + (rel_z - .5) ** 2)
     global mean_reward
     mean_reward = mean_reward * .99 + reward * .01
-    eprint('cur:', reward, 'mean:', mean_reward)
+
     s = SIGHT * 2 + 1
     state = np.array([encode(brain.state.block(i % s - SIGHT, -1, i // s - SIGHT)) for i in range(s ** 2)])
     state = np.append(state,
                     np.array([rel_x, rel_z]))
     state = np.reshape(state, [1, s ** 2 + 2])
-    eprint(state)
     if agent.prev_state is not None:
         agent.remember(agent.prev_state, agent.action, reward, state, False)
 
@@ -37,17 +36,18 @@ def think(brain):
         brain.state.strafe = sin(agent.action * pi / 2) * .5
     agent.prev_state = state
 
-    if len(agent.memory) > batch_size:
+    if len(agent.memory) > batch_size and brain.state.age % 6 == 0:
+        eprint('mean:', mean_reward)
         agent.replay(batch_size)
 
 utils.use_gpu(False)
 
-SIGHT = 1
+SIGHT = 3
 
 agent = DQNAgent((SIGHT * 2 + 1) ** 2 + 2, 5, hidden=32)
 agent.prev_state = None
 
-batch_size = 48
+batch_size = 32
 mean_reward = 0
 
 Brain(1, SIGHT, think).run()

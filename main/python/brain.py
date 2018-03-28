@@ -10,10 +10,11 @@ class State:
     def __init__(self, obs_dist):
         self.obs_dist = obs_dist
 
+        self.age = 0
+
         self.x = 0
         self.y = 0
         self.z = 0
-
         self.yaw = 0
         self.pitch = 0
         self.blocks = [None] * ((obs_dist * 2 + 1) ** 3)
@@ -23,7 +24,6 @@ class State:
         self.strafe = 0
         self.momentum_yaw = 0
         self.momentum_pitch = 0
-
         self.jump = False
         self.crouch = False
         self.attack = False
@@ -64,8 +64,7 @@ class Brain:
         self.outStream.flush()
 
     def observe(self):
-        def read():
-            return sys.stdin.readline()[:-1]
+        self.state.age += 1
         self.state.x = self.inStream.read_float()
         self.state.y = self.inStream.read_float()
         self.state.z = self.inStream.read_float()

@@ -35,7 +35,7 @@ def think(brain):
         brain.state.strafe = sin(agent.action * pi / 2) * .5
         agent.prev_state = state
 
-    if len(agent.memory) > batch_size:
+    if len(agent.memory) > batch_size and brain.state.age % 4 == 0:
         agent.replay(batch_size)
 
 utils.use_gpu(False)
@@ -52,4 +52,4 @@ pattern = re.compile(r"""(?P<type>.*?)\[
                         y=(?P<y>.*?),\s
                         z=(?P<z>.*?)\]""", re.VERBOSE)
 
-Brain(2, 5, think).run()
+Brain(1, 5, think).run()
