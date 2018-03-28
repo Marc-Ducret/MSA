@@ -1,17 +1,10 @@
+import utils
 from dqnagent import *
 from brain import *
 from math import *
 import re
 import numpy as np
 import cProfile
-
-SIGHT = 1
-
-agent = DQNAgent((SIGHT * 2 + 1) ** 2 + 2, 5, hidden=32)
-agent.prev_state = None
-
-batch_size = 32
-mean_reward = 0
 
 def encode(b):
     if b == 173: # coal
@@ -46,5 +39,15 @@ def think(brain):
 
     if len(agent.memory) > batch_size:
         agent.replay(batch_size)
+
+utils.use_gpu(False)
+
+SIGHT = 1
+
+agent = DQNAgent((SIGHT * 2 + 1) ** 2 + 2, 5, hidden=32)
+agent.prev_state = None
+
+batch_size = 48
+mean_reward = 0
 
 Brain(1, SIGHT, think).run()

@@ -5,7 +5,7 @@ import re
 def think(brain):
     pattern = re.compile(r"""(?P<type>.*?)\[
                             '(?P<name>.*?)'/
-                            (?P<id>.*?),\sl='New\sWorld',\s
+                            (?P<id>.*?),\sl='(?P<world_name>.*?)',\s
                             x=(?P<x>.*?),\s
                             y=(?P<y>.*?),\s
                             z=(?P<z>.*?)\]""", re.VERBOSE)

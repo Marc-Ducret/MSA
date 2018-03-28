@@ -1,3 +1,4 @@
+import utils
 from dqnagent import *
 from brain import *
 from math import *
@@ -5,22 +6,8 @@ import re
 import numpy as np
 import cProfile
 
-agent = DQNAgent(2, 4)
-agent.prev_state = None
-
-batch_size = 32
-
-pattern = re.compile(r"""(?P<type>.*?)\[
-                            '(?P<name>.*?)'/
-                            (?P<id>.*?),\sl='New\sWorld',\s
-                            x=(?P<x>.*?),\s
-                            y=(?P<y>.*?),\s
-                            z=(?P<z>.*?)\]""", re.VERBOSE)
-
-
 def think(brain):
     dx, dz = None, None
-
     for e in brain.state.entities:
         match = pattern.match(e)
         if match is not None:
@@ -38,7 +25,6 @@ def think(brain):
         dx /= 5.0
         dz /= 5.0
         reward = - (abs(dx) + abs(dz))
-        eprint(reward)
         state = np.array([dx, dz])
         state = np.reshape(state, [1, 2])
         if agent.prev_state is not None:
@@ -51,5 +37,19 @@ def think(brain):
 
     if len(agent.memory) > batch_size:
         agent.replay(batch_size)
+
+utils.use_gpu(False)
+
+agent = DQNAgent(2, 4)
+agent.prev_state = None
+
+batch_size = 32
+
+pattern = re.compile(r"""(?P<type>.*?)\[
+                        '(?P<name>.*?)'/
+                        (?P<id>.*?),\sl='(?P<world_name>.*?)',\s
+                        x=(?P<x>.*?),\s
+                        y=(?P<y>.*?),\s
+                        z=(?P<z>.*?)\]""", re.VERBOSE)
 
 Brain(2, 5, think).run()
