@@ -16,7 +16,7 @@ class DataInputStream:
 
     def read_unsigned_byte(self):
         return struct.unpack('B', self.stream.read(1))[0]
-    
+
     def read_char(self):
         return chr(struct.unpack('>H', self.stream.read(2))[0])
 
@@ -41,7 +41,7 @@ class DataInputStream:
 
     def read_int(self):
         return struct.unpack('>i', self.stream.read(4))[0]
-        
+
 """
 Writing to Java DataInputStream format.
 """
@@ -58,7 +58,7 @@ class DataOutputStream:
 
     def write_unsigned_byte(self, val):
         self.stream.write(struct.pack('B', val))
-    
+
     def write_char(self, val):
         self.stream.write(struct.pack('>H', ord(val)))
 
@@ -83,6 +83,6 @@ class DataOutputStream:
 
     def write_int(self, val):
         self.stream.write(struct.pack('>i', val))
-        
+
     def flush(self):
         self.stream.flush()

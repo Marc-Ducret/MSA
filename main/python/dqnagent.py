@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import random
 import numpy as np
 from collections import deque
@@ -53,7 +52,7 @@ class DQNAgent:
             target_f[0][action] = target
             X = np.concatenate((X, state))
             Y = np.concatenate((Y, target_f))
-            
+
         self.model.fit(np.array(X), np.array(Y), epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
