@@ -14,9 +14,9 @@ batch_size = 32
 mean_reward = 0
 
 def encode(b):
-    if b == 'minecraft:coal_block':
+    if b == 173: # coal
         return -1
-    if b == 'minecraft:gold_block':
+    if b == 41: # gold
         return 1
     return 0
 
@@ -24,7 +24,7 @@ def think(brain):
     rel_x, rel_z = brain.state.x - floor(brain.state.x), brain.state.z - floor(brain.state.z)
     reward = encode(brain.state.block(0, -1, 0)) - .1 * ((rel_x - .5) ** 2 + (rel_z - .5) ** 2)
     global mean_reward
-    mean_reward = mean_reward * .999 + reward * .001
+    mean_reward = mean_reward * .99 + reward * .01
     eprint('cur:', reward, 'mean:', mean_reward)
     s = SIGHT * 2 + 1
     state = np.array([encode(brain.state.block(i % s - SIGHT, -1, i // s - SIGHT)) for i in range(s ** 2)])

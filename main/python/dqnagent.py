@@ -5,8 +5,6 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 
-EPISODES = 1000
-
 class DQNAgent:
     def __init__(self, state_size, action_size, hidden=24):
         self.state_size = state_size
@@ -65,6 +63,8 @@ class DQNAgent:
 
 
 if __name__ == "__main__":
+    EPISODES = 1000
+
     env = gym.make('CartPole-v1')
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
