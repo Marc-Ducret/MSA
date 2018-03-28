@@ -25,8 +25,14 @@ public class CommandFastTick extends CommandBase {
 
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		int ticks = parseInt(args[0]);
-		mod.requestFastTick(ticks, sender);
+		if(args[0].equalsIgnoreCase("stop")) {
+			mod.stopfastTick();
+		} else if(args[0].equalsIgnoreCase("start")) {
+			mod.requestFastTick(-1, sender);
+		} else {
+			int ticks = parseInt(args[0]);
+			mod.requestFastTick(ticks, sender);
+		}
 	}
 	
 	@Override

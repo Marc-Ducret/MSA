@@ -23,6 +23,7 @@ public class ServerSideAgentMod {
     
     private int requestFastTicks = 0;
     private ICommandSender requestSender = null;
+    private boolean fastTicking = false;
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -44,7 +45,7 @@ public class ServerSideAgentMod {
     public void serverTick(ServerTickEvent event) {
     	if(event.phase == Phase.END) {
     		updateTPS();
-    		if(requestFastTicks > 0) {
+    		if(requestFastTicks != 0) {
     			fastTick(requestFastTicks, requestSender);
     		}
     	}
@@ -59,21 +60,27 @@ public class ServerSideAgentMod {
     }
     
     public void requestFastTick(int ticks, ICommandSender sender) {
-    	if(ticks > 0 && sender != null) {
+    	if(ticks != 0 && sender != null && !fastTicking) {
     		requestFastTicks = ticks;
     		requestSender = sender;
     	}
     }
     
+    public void stopfastTick() {
+    	fastTicking = false;
+    }
+    
     private void fastTick(int ticks, ICommandSender sender) {
     	requestFastTicks = 0;
+    	fastTicking = true;
     	long startTime = System.currentTimeMillis();
-		for(int t = 0; t < ticks; t++) {
+    	int t = 0;
+		for(; t != ticks && fastTicking; t++) {
 			sender.getServer().tick();
 		}
 		long duration = System.currentTimeMillis() - startTime;
-		float tickP = duration / (float) ticks;
-		float tps = ticks / (duration / 1000F);
-		sender.sendMessage(new TextComponentString(String.format("%d ticks completed in %d ms (avg: %.1f ms - %.1f TPS)", ticks, duration, tickP, tps)));
+		float tickP = duration / (float) t;
+		float tps = t / (duration / 1000F);
+		sender.sendMessage(new TextComponentString(String.format("%d ticks completed in %d ms (avg: %.1f ms - %.1f TPS)", t, duration, tickP, tps)));
     }
 }
