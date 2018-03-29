@@ -116,8 +116,8 @@ class ActorCritic:
         for sample in samples:
             cur_state, action, reward, new_state, done = sample
             if not done:
-                target_action = self.actor_model.predict(new_state)
-                future_reward = self.critic_model.predict(
+                target_action = self.target_actor_model.predict(new_state)
+                future_reward = self.target_critic_model.predict(
                     [new_state, target_action])[0][0]
                 reward += self.gamma * future_reward
             self.critic_model.fit([cur_state, action], [reward], verbose=0)
