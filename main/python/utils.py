@@ -11,3 +11,4 @@ def use_gpu(flag):
             device_count = {'CPU' : num_CPU, 'GPU' : num_GPU})
     session = tf.Session(config=config)
     K.set_session(session)
+    return session
