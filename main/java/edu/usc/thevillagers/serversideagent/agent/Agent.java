@@ -67,6 +67,7 @@ public class Agent extends EntityPlayerMP {
 					rotationPitch + state.momentumPitch * ROTATION_SPEED);
 			this.travel(state.strafe, 0, state.forward);
 			this.setJumping(state.jump);
+			this.setSneaking(state.crouch);
 			if(updateBrain) {
 				state.observe(this);
 				brain.observe();
