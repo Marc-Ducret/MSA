@@ -21,6 +21,7 @@ class ActorCritic:
         self.learning_rate = 0.001
         self.epsilon = 1.0
         self.epsilon_decay = .995
+        self.lr_decay = .998
         self.gamma = .7
         self.tau   = .125
 
@@ -42,7 +43,8 @@ class ActorCritic:
         self.actor_grads = tf.gradients(self.actor_model.output,
             actor_model_weights, -self.actor_critic_grad) # dC/dA (from actor)
         grads = zip(self.actor_grads, actor_model_weights)
-        self.optimize = tf.train.AdamOptimizer(self.learning_rate).apply_gradients(grads)
+        self.optimizer_lr = tf.placeholder(tf.float32, shape=[])
+        self.optimize = tf.train.AdamOptimizer(learning_rate = self.optimizer_lr).apply_gradients(grads)
 
         # ===================================================================== #
         #                              Critic Model                             #
@@ -109,7 +111,8 @@ class ActorCritic:
 
             self.sess.run(self.optimize, feed_dict={
                 self.actor_state_input: cur_state,
-                self.actor_critic_grad: grads
+                self.actor_critic_grad: grads,
+                self.optimizer_lr: self.learning_rate
             })
 
     def _train_critic(self, samples):
@@ -130,6 +133,10 @@ class ActorCritic:
         samples = random.sample(self.memory, batch_size)
         self._train_critic(samples)
         self._train_actor(samples)
+        self.epsilon *= self.epsilon_decay
+        self.learning_rate *= self.lr_decay
+        K.set_value(self.actor_model.optimizer.lr, self.learning_rate)
+        K.set_value(self.critic_model.optimizer.lr, self.learning_rate)
 
     # ========================================================================= #
     #                         Target Model Updating                             #
@@ -160,7 +167,6 @@ class ActorCritic:
     # ========================================================================= #
 
     def act(self, cur_state):
-        self.epsilon *= self.epsilon_decay
         if np.random.random() < self.epsilon:
             return np.random.uniform(-1, 1, self.action_dim)
         return self.actor_model.predict(cur_state)

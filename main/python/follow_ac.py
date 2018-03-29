@@ -25,7 +25,7 @@ def think(brain):
         brain.state.crouch = False
         dx /= 5.0
         dz /= 5.0
-        reward = - (abs(dx) + abs(dz))
+        reward = - (abs(dx) ** 2 + abs(dz) ** 2)
         state = np.array([dx, dz]).reshape((1, agent.state_dim))
         if agent.prev_state is not None:
             agent.remember(agent.prev_state, agent.action, reward, state, False)
