@@ -17,8 +17,8 @@ public abstract class Environment {
 	public final int stateDim, actionDim;
 	
 	
-	protected final Agent[] agents;
-	protected final AgentBrainEnvironment[] brains;
+	protected Agent agent;
+	protected AgentBrainEnvironment brain;
 	protected WorldServer world;
 	
 	private Process process;
@@ -29,31 +29,23 @@ public abstract class Environment {
 		this.name = name;
 		this.stateDim = stateDim;
 		this.actionDim = actionDim;
-		this.agents = new Agent[numberAgents];
-		this.brains = new AgentBrainEnvironment[numberAgents];
 	}
 	
 	public void init(WorldServer world, String cmd) {
 		try {
 			this.world = world;
-			createAgents();
+			createAgent();
 			startProcess(cmd);
 		} catch (Exception e) {
 			System.err.println("Could not init environment "+name+" ("+e+")");
 		}
 	}
 	
-	private void createAgents() {
-		for(int i = 0; i < agents.length; i++) {
-			String agentName = name;
-			if(agents.length > 1) {
-				agentName += " "+(i+1);
-			}
-			agents[i] = new Agent(world, agentName);
-			agents[i].spawn(getSpawnPoint(i));
-			brains[i] = new AgentBrainEnvironment(this);
-			agents[i].setBrain(brains[i]);
-		}
+	private void createAgent() {
+		agent = new Agent(world, name);
+		agent.spawn(getSpawnPoint());
+		brain = new AgentBrainEnvironment(this);
+		agent.setBrain(brain);
 	}
 	
 	private void startProcess(String cmd) throws IOException {
@@ -70,6 +62,9 @@ public abstract class Environment {
 			}
 			System.out.println("Process "+cmd+" terminated");
 		}).start();
+		
+		pOut.writeInt(stateDim);
+		pOut.writeInt(actionDim);
 	}
 	
 	public final void tick() throws Exception {
@@ -79,21 +74,15 @@ public abstract class Environment {
 	}
 	
 	private void observe() throws IOException {
-		for(int i = 0; i < agents.length; i++) {
-			encodeState(agents[i], brains[i].stateVector);
-		}
-		for(AgentBrainEnvironment brain : brains)
-			for(float f : brain.stateVector)
-				pOut.writeFloat(f);
+		encodeState(agent, brain.stateVector);
+		for(float f : brain.stateVector)
+			pOut.writeFloat(f);
 	}
 	
 	private void act() throws IOException {
-		for(AgentBrainEnvironment brain : brains)
-			for(int i = 0; i < actionDim; i++)
-				brain.actionVector[i] = pIn.readFloat();
-		for(int i = 0; i < agents.length; i++) {
-			decodeAction(agents[i], brains[i].actionVector);
-		}
+		for(int i = 0; i < actionDim; i++)
+			brain.actionVector[i] = pIn.readFloat();
+		decodeAction(agent, brain.actionVector);
 	}
 	
 	protected abstract void encodeState(Agent a, float[] stateVector);
@@ -102,5 +91,5 @@ public abstract class Environment {
 	
 	public abstract void reset();
 	
-	public abstract BlockPos getSpawnPoint(int agent);
+	public abstract BlockPos getSpawnPoint();
 }
