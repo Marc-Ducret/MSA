@@ -1,6 +1,8 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
 public abstract class AgentBrain {
+	
+	//TODO is it made obsolete by Environment?
 
 	private AgentState state;
 	
