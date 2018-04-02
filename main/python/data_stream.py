@@ -42,8 +42,11 @@ class DataInputStream:
     def read_int(self):
         return struct.unpack('>i', self.stream.read(4))[0]
 
+    def read_float_array(self, n):
+        return [self.read_float() for _ in range(n)]
+
 """
-Writing to Java DataInputStream format.
+Writing to Java DataOutputStream format.
 """
 
 class DataOutputStream:
@@ -83,6 +86,10 @@ class DataOutputStream:
 
     def write_int(self, val):
         self.stream.write(struct.pack('>i', val))
+
+    def write_float_array(self, val):
+        for f in val:
+            self.write_float(f)
 
     def flush(self):
         self.stream.flush()
