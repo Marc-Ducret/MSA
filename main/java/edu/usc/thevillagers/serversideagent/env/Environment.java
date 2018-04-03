@@ -84,7 +84,7 @@ public abstract class Environment {
 	}
 	
 	public final void preTick() throws Exception {
-//		act();
+		act();
 	}
 	
 	public final void postTick() throws Exception {
@@ -103,8 +103,8 @@ public abstract class Environment {
 	}
 	
 	private void act() throws IOException {
-//		for(int i = 0; i < actionDim; i++)
-//			brain.actionVector[i] = pIn.readFloat();
+		for(int i = 0; i < actionDim; i++)
+			brain.actionVector[i] = pIn.readFloat();
 		decodeAction(brain.getState(), brain.actionVector);
 	}
 	

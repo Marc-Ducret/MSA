@@ -43,7 +43,7 @@ public class CommandEnvironment extends CommandBase {
 			Class<?> clazz = Class.forName("edu.usc.thevillagers.serversideagent.env.Environment"+args[0]);
 			Environment env = (Environment) clazz.newInstance();
 			env.setSpawnPoint(pos);
-			String cmd = "python python/"+args[0]+".py";
+			String cmd = "python python/"+args[1]+".py";
 			env.init(world, cmd);
 			mod.addEnv(env);
 		} catch (Exception e) {
