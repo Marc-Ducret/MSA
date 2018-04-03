@@ -43,4 +43,6 @@ class MinecraftEnv(gym.Env):
         return  self._receive_observation(), self._receive_reward(), self._receive_done(), {}
 
     def reset(self):
+        self.out_stream.write_int(0x13371337)
+        self.out_stream.flush()
         return self._receive_observation()

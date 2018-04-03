@@ -65,6 +65,7 @@ public class ServerSideAgentMod {
 					break;
 				}
 			} catch(Exception e) {
+				env.terminate();
 				iter.remove();
 				System.err.println("Env "+env.name+" terminated ("+e+")");
 			}

@@ -26,6 +26,7 @@ public abstract class Environment {
 	protected WorldServer world;
 	
 	protected float reward;
+	protected boolean done;
 	
 	private Process process;
 	private DataOutputStream pOut;
@@ -36,6 +37,9 @@ public abstract class Environment {
 		this.name = name;
 		this.stateDim = stateDim;
 		this.actionDim = actionDim;
+		
+		reward = 0;
+		done = true;
 	}
 	
 	public void init(WorldServer world, String cmd) {
@@ -89,21 +93,38 @@ public abstract class Environment {
 	}
 	
 	public final void preTick() throws Exception {
-		act();
+		if(!done) {
+			act();
+		}
 	}
 	
 	public final void postTick() throws Exception {
-		step();
-		observe();
+		if(!done) {
+			step();
+			observe();
+		} else {
+			if(pIn.available() > 0) {
+				if(pIn.readInt() == 0x13371337) {
+					reset();
+					observe_state();
+					pOut.flush();
+				} else {
+					throw new Exception("Expected reset code 0x13371337");
+				}
+			}
+		}
 	}
 	
-	private void observe() throws IOException {
+	private void observe_state() throws IOException {
 		encodeState(agent, brain.stateVector);
 		for(float f : brain.stateVector)
 			pOut.writeFloat(f);
+	}
+	
+	private void observe() throws IOException {
+		observe_state();
 		pOut.writeFloat(reward);
-		reward = 0;
-		pOut.writeBoolean(false); //TODO implement done
+		pOut.writeBoolean(done);
 		pOut.flush();
 	}
 	
@@ -117,5 +138,9 @@ public abstract class Environment {
 	protected abstract void decodeAction(AgentState a, float[] actionVector);
 	protected abstract void step() throws Exception;
 	
-	public abstract void reset();
+	public void reset() {
+		agent.moveToBlockPosAndAngles(getSpawnPoint(), 0, 0);
+		reward = 0;
+		done = false;
+	}
 }

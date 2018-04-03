@@ -2,29 +2,32 @@ package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.agent.AgentState;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 
-public class EnvironmentFollow extends Environment {
+public class EnvironmentParkour extends Environment {
 	
-	private Entity target;
+	private static final float WIDTH = 7, LENGTH = 20;
+	
+	private BlockPos ref;
 
-	public EnvironmentFollow() {
-		super("Follow", 2, 2);
+	public EnvironmentParkour() {
+		super("Parkour", 2, 2);
 	}
 	
 	@Override
 	public void init(WorldServer world, String cmd) {
 		super.init(world, cmd);
-		BlockPos ref = getSpawnPoint();
-		target = world.getClosestPlayer(ref.getX(), ref.getY(), ref.getZ(), 50, false);
+		ref = getSpawnPoint();
+		System.out.println("REF: "+ref);
 	}
 
 	@Override
 	protected void encodeState(Agent a, float[] stateVector) {
-		stateVector[0] = (float) (target.posX - a.posX) / 5F;
-		stateVector[1] = (float) (target.posZ - a.posZ) / 5F;
+		stateVector[0] = (float) (a.posX - ref.getX()) / WIDTH;
+		stateVector[1] = (float) (a.posZ - ref.getZ()) / LENGTH;
+		stateVector[0] = 1;
+		stateVector[1] = 1;
 	}
 
 	@Override
@@ -35,8 +38,13 @@ public class EnvironmentFollow extends Environment {
 
 	@Override
 	protected void step() throws Exception {
-		float dx = (float) (target.posX - agent.posX) / 5F;
-		float dz = (float) (target.posZ - agent.posZ) / 5F;
-		reward = - (dx*dx + dz*dz);
+		float dz = (float) (agent.posZ - ref.getZ()) / LENGTH;
+		if(agent.posY < ref.getY() - .5F) {
+			reward = -100;
+			done = true;
+		} else {
+			
+			reward = dz;
+		}
 	}
 }
