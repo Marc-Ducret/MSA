@@ -83,6 +83,11 @@ public abstract class Environment {
 		this.spawnPoint = spawnPoint;
 	}
 	
+	public void terminate() {
+		if(process != null && process.isAlive()) 
+			process.destroy();
+	}
+	
 	public final void preTick() throws Exception {
 		act();
 	}

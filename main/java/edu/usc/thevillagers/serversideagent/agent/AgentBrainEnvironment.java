@@ -29,5 +29,6 @@ public class AgentBrainEnvironment extends AgentBrain {
 
 	@Override
 	public void terminate() {
+		env.terminate();
 	}
 }

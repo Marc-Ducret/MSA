@@ -23,8 +23,8 @@ public class EnvironmentFollow extends Environment {
 
 	@Override
 	protected void encodeState(Agent a, float[] stateVector) {
-		stateVector[0] = (float) (target.posX - a.posX) / 20F;
-		stateVector[1] = (float) (target.posZ - a.posZ) / 20F;
+		stateVector[0] = (float) (target.posX - a.posX) / 5F;
+		stateVector[1] = (float) (target.posZ - a.posZ) / 5F;
 	}
 
 	@Override
@@ -35,8 +35,8 @@ public class EnvironmentFollow extends Environment {
 
 	@Override
 	protected void step() throws Exception {
-		float dx = (float) (target.posX - agent.posX) / 20F;
-		float dz = (float) (target.posZ - agent.posZ) / 20F;
+		float dx = (float) (target.posX - agent.posX) / 5F;
+		float dz = (float) (target.posZ - agent.posZ) / 5F;
 		reward = - (dx*dx + dz*dz);
 	}
 
