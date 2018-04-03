@@ -1,5 +1,7 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
+import edu.usc.thevillagers.serversideagent.env.Environment;
+
 public class AgentBrainEnvironment extends AgentBrain {
 	
 	public final Environment env;

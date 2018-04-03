@@ -1,4 +1,4 @@
-package edu.usc.thevillagers.serversideagent.agent;
+package edu.usc.thevillagers.serversideagent.env;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -8,6 +8,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.AgentBrainEnvironment;
+import edu.usc.thevillagers.serversideagent.agent.AgentState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 
@@ -16,16 +19,20 @@ public abstract class Environment {
 	public final String name;
 	public final int stateDim, actionDim;
 	
+	private BlockPos spawnPoint;
 	
 	protected Agent agent;
 	protected AgentBrainEnvironment brain;
 	protected WorldServer world;
 	
+	protected float reward;
+	
 	private Process process;
 	private DataOutputStream pOut;
 	private DataInputStream pIn;
 	
-	public Environment(String name, int stateDim, int actionDim, int numberAgents) {
+	
+	public Environment(String name, int stateDim, int actionDim) {
 		this.name = name;
 		this.stateDim = stateDim;
 		this.actionDim = actionDim;
@@ -65,31 +72,45 @@ public abstract class Environment {
 		
 		pOut.writeInt(stateDim);
 		pOut.writeInt(actionDim);
+		pOut.flush();
 	}
 	
-	public final void tick() throws Exception {
-		observe();
+	public BlockPos getSpawnPoint() {
+		return spawnPoint;
+	}
+	
+	public void setSpawnPoint(BlockPos spawnPoint) {
+		this.spawnPoint = spawnPoint;
+	}
+	
+	public final void preTick() throws Exception {
+//		act();
+	}
+	
+	public final void postTick() throws Exception {
 		step();
-		act();
+		observe();
 	}
 	
 	private void observe() throws IOException {
 		encodeState(agent, brain.stateVector);
 		for(float f : brain.stateVector)
 			pOut.writeFloat(f);
+		pOut.writeFloat(reward);
+		reward = 0;
+		pOut.writeBoolean(false); //TODO implement done
+		pOut.flush();
 	}
 	
 	private void act() throws IOException {
-		for(int i = 0; i < actionDim; i++)
-			brain.actionVector[i] = pIn.readFloat();
-		decodeAction(agent, brain.actionVector);
+//		for(int i = 0; i < actionDim; i++)
+//			brain.actionVector[i] = pIn.readFloat();
+		decodeAction(brain.getState(), brain.actionVector);
 	}
 	
 	protected abstract void encodeState(Agent a, float[] stateVector);
-	protected abstract void decodeAction(Agent a, float[] actionVector);
+	protected abstract void decodeAction(AgentState a, float[] actionVector);
 	protected abstract void step() throws Exception;
 	
 	public abstract void reset();
-	
-	public abstract BlockPos getSpawnPoint();
 }

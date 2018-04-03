@@ -19,24 +19,24 @@ class MinecraftEnv:
         self.action_dim = self.in_stream.read_int()
         self.action_space = states.Box(low=-1, high=1, shape=(action_dim,))
 
-    def _receive_states(self):
+    def _receive_state(self):
         return self.in_stream.read_float_array(self.state_dim)
 
-    def _receive_rewards(self):
+    def _receive_reward(self):
         return self.in_stream.read_float()
 
     def _receive_done(self):
         return self.in_stream.read_boolean()
 
-    def _send_actions(self, action):
+    def _send_action(self, action):
         self.out_stream.write_float_array(action)
 
-    def step(self, actions):
-        self._send_actions(actions)
+    def step(self, action):
+        self._send_actions(action)
         return  self._receive_state(),
                 self._receive_reward(),
                 self._receive_done(),
                 {}
 
     def reset(self):
-        return self._receive_states()
+        return self._receive_state()
