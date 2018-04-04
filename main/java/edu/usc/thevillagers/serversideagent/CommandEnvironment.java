@@ -1,5 +1,9 @@
 package edu.usc.thevillagers.serversideagent;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -8,13 +12,17 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
+import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
 public class CommandEnvironment extends CommandBase {
 	
-	private final ServerSideAgentMod mod;
+	private List<Environment> envs = new ArrayList<>();
 	
-	public CommandEnvironment(ServerSideAgentMod mod) {
-		this.mod = mod;
+	public CommandEnvironment() {
+		MinecraftForge.EVENT_BUS.register(this);
 	}
 
 	@Override
@@ -45,7 +53,7 @@ public class CommandEnvironment extends CommandBase {
 			env.setSpawnPoint(pos);
 			String cmd = "python python/"+args[1]+".py";
 			env.init(world, cmd);
-			mod.addEnv(env);
+			addEnv(env);
 		} catch (Exception e) {
 			throw new CommandException("Env "+args[0]+" not found ("+e+")", e);
 		}
@@ -55,4 +63,36 @@ public class CommandEnvironment extends CommandBase {
 	public int getRequiredPermissionLevel() {
 		return 2;
 	}
+	
+	@SubscribeEvent
+    public void serverTick(ServerTickEvent event) {
+    	tickEnvs(event.phase);
+    }
+	
+	private void tickEnvs(Phase phase) {
+    	Iterator<Environment> iter = envs.iterator();
+		while(iter.hasNext()) {
+			Environment env = iter.next();
+			try {
+				switch(phase) {
+				case START:
+					env.preTick();
+					break;
+				case END:
+					env.postTick();
+					break;
+				default:
+					break;
+				}
+			} catch(Exception e) {
+				env.terminate();
+				iter.remove();
+				System.err.println("Env "+env.name+" terminated ("+e+")");
+			}
+		}
+    }
+	
+	public void addEnv(Environment env) {
+    	envs.add(env);
+    }
 }
