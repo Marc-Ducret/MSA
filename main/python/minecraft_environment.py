@@ -21,7 +21,7 @@ class MinecraftEnv(gym.Env):
         self.action_dim = self.in_stream.read_int()
         self.action_space = spaces.Box(low=-1, high=1, shape=(self.action_dim,))
 
-        self.reward_range = (-1000, 1000) ## TODO: get from java
+        self.reward_range = (-100, 100) ## TODO: get from java
 
         self.num_envs = 1
 

@@ -27,6 +27,7 @@ public abstract class Environment {
 	
 	protected float reward;
 	protected boolean done;
+	protected int time;
 	
 	private Process process;
 	private DataOutputStream pOut;
@@ -38,7 +39,6 @@ public abstract class Environment {
 		this.stateDim = stateDim;
 		this.actionDim = actionDim;
 		
-		reward = 0;
 		done = true;
 	}
 	
@@ -100,6 +100,7 @@ public abstract class Environment {
 	
 	public final void postTick() throws Exception {
 		if(!done) {
+			time++;
 			step();
 			observe();
 		} else {
@@ -142,5 +143,6 @@ public abstract class Environment {
 		agent.moveToBlockPosAndAngles(getSpawnPoint(), 0, 0);
 		reward = 0;
 		done = false;
+		time = 0;
 	}
 }
