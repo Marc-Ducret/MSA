@@ -75,6 +75,7 @@ public class CommandFastTick extends CommandBase {
 		for(; t != ticks && fastTicking; t++) {
 			sender.getServer().tick();
 		}
+		fastTicking = false;
 		long duration = System.currentTimeMillis() - startTime;
 		float tickP = duration / (float) t;
 		float tps = t / (duration / 1000F);

@@ -8,7 +8,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockPos;
@@ -31,22 +30,14 @@ public class Agent extends EntityPlayerMP {
 		this.setPosition(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
 		this.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new NetworkManager(EnumPacketDirection.SERVERBOUND), this);
 		
-		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendPacketToAllPlayers(
-				new SPacketPlayerListItem(SPacketPlayerListItem.Action.ADD_PLAYER, new EntityPlayerMP[] {this}));
-		
-		world.spawnEntity(this);
-		getServerWorld().getPlayerChunkMap().addPlayer(this);
+		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().playerLoggedIn(this);
 	}
 	
 	public void remove() {
 		useBrain(() -> brain.terminate());
 		this.world.removeEntity(this);
 		
-		if(!this.world.isRemote) {
-			FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendPacketToAllPlayers(
-					new SPacketPlayerListItem(SPacketPlayerListItem.Action.REMOVE_PLAYER, new EntityPlayerMP[] {this}));
-			this.getServerWorld().getPlayerChunkMap().removePlayer(this);
-		}
+		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().playerLoggedOut(this);
 	}
 
 	@Override

@@ -13,7 +13,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
-public class AgentState {
+public class AgentState { //TODO refactor to actor interface?
 
 	public final int updatePeriod;
 	public final int obsDist;
@@ -63,8 +63,8 @@ public class AgentState {
 			}
 		}
 		entities = a.world.getEntitiesWithinAABBExcludingEntity(a, new AxisAlignedBB(
-				a.getPositionVector().subtract(new Vec3d(offset)), 
-				a.getPositionVector().add(new Vec3d(offset))));
+				pos.subtract(offset), 
+				pos.add(offset)));
 	}
 	
 	public IBlockState getBlockStateRelativeToAgent(int dx, int dy, int dz) {

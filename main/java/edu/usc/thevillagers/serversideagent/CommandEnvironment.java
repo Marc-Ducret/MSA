@@ -44,7 +44,7 @@ public class CommandEnvironment extends CommandBase {
 		WorldServer world = server.worlds[0];
 		BlockPos pos;
 		if(args.length > 2)  
-			pos = parseBlockPos(sender, args, 1, false);
+			pos = parseBlockPos(sender, args, 2, false);
 		else
 			pos = sender.getPosition();
 		try {
