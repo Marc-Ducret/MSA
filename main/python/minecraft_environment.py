@@ -6,8 +6,8 @@ import numpy as np
 import gym
 from gym import spaces
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+def _eprint(*args, file=None, **kwargs):
+    oldprint(*args, file=sys.stderr, **kwargs)
     sys.stderr.flush()
 
 class MinecraftEnv(gym.Env):
@@ -24,6 +24,9 @@ class MinecraftEnv(gym.Env):
         self.reward_range = (-100, 100) ## TODO: get from java
 
         self.num_envs = 1
+        __builtins__['oldprint'] = __builtins__['print']
+        __builtins__['print'] = _eprint
+        sys.stdout = sys.stderr
 
     def _receive_observation(self):
         return np.array(self.in_stream.read_float_array(self.observation_dim))

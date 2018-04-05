@@ -3,9 +3,6 @@ from minecraft_environment import *
 def train(num_timesteps, seed):
     env = MinecraftEnv()
 
-    import sys
-    sys.stdout = sys.stderr
-
     from baselines.common import tf_util as U
     from baselines.ppo1 import mlp_policy, pposgd_simple
 
