@@ -28,5 +28,6 @@ public class ServerSideAgentMod {
     	event.registerServerCommand(new CommandEnvironment());
     	event.registerServerCommand(new CommandFastTick());
     	event.registerServerCommand(new CommandTPS());
+    	event.registerServerCommand(new CommandRecord());
     }
 }
