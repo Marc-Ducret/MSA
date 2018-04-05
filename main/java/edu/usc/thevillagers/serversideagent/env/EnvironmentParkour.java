@@ -14,7 +14,7 @@ public class EnvironmentParkour extends Environment {
 	private static final int SIGHT_DIST = 1; //TODO: factorize?
 	private static final int SIGHT_WIDTH = SIGHT_DIST * 2 + 1;
 	
-	private static final float WIDTH = 7, LENGTH = 20;
+	private static final float WIDTH = 3, LENGTH = 20;
 	
 	private BlockPos ref;
 
@@ -62,14 +62,14 @@ public class EnvironmentParkour extends Environment {
 	protected void step() throws Exception {
 		float dz = (float) (agent.posZ - ref.getZ()) / LENGTH;
 		IBlockState b = world.getBlockState(agent.getPosition().down());
-		if(agent.posY < ref.getY() - .5F || time >= 500) {
-			reward = -100;
+		if(agent.posY < ref.getY() - .5F || time >= 100) {
+			reward = -10;
 			done = true;
 		} else if(b.getBlock() == Blocks.CONCRETE && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
 			reward = 100;
 			done = true;
 		} else {
-			reward = (dz - 1) * .5F;
+			reward = (dz) * 1F;
 		}
 	}
 }

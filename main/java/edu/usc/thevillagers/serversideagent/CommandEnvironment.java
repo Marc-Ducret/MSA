@@ -13,6 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
@@ -66,7 +67,9 @@ public class CommandEnvironment extends CommandBase {
 	
 	@SubscribeEvent
     public void serverTick(ServerTickEvent event) {
-    	tickEnvs(event.phase);
+		if(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getWorldTime() % 5 == 0) {
+			tickEnvs(event.phase);
+		}
     }
 	
 	private void tickEnvs(Phase phase) {

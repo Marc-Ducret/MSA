@@ -16,9 +16,9 @@ def train(num_timesteps, seed):
 
     pposgd_simple.learn(env, policy_fn,
             max_timesteps=num_timesteps,
-            timesteps_per_actorbatch=2048,
-            clip_param=0.2, entcoeff=0.0,
-            optim_epochs=10, optim_stepsize=3e-4, optim_batchsize=64,
+            timesteps_per_actorbatch=1000,
+            clip_param=0.2, entcoeff=0.01,
+            optim_epochs=8, optim_stepsize=1e-3, optim_batchsize=64,
             gamma=0.99, lam=0.95, schedule='constant',
         )
     env.close()
