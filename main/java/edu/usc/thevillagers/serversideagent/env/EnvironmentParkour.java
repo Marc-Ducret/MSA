@@ -63,13 +63,13 @@ public class EnvironmentParkour extends Environment {
 		float dz = (float) (agent.posZ - ref.getZ()) / LENGTH;
 		IBlockState b = world.getBlockState(agent.getPosition().down());
 		if(agent.posY < ref.getY() - .5F || time >= 100) {
-			reward = -10;
+			reward = 10 * dz;
 			done = true;
 		} else if(b.getBlock() == Blocks.CONCRETE && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
 			reward = 100;
 			done = true;
 		} else {
-			reward = (dz) * 1F;
+			reward = - .001F;
 		}
 	}
 }
