@@ -1,7 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
-import edu.usc.thevillagers.serversideagent.agent.AgentState;
+import edu.usc.thevillagers.serversideagent.agent.AgentActionState;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
@@ -22,15 +22,15 @@ public class EnvironmentFollow extends Environment {
 	}
 
 	@Override
-	protected void encodeState(Agent a, float[] stateVector) {
-		stateVector[0] = (float) (target.posX - a.posX) / 5F;
-		stateVector[1] = (float) (target.posZ - a.posZ) / 5F;
+	protected void encodeState(Agent agent, float[] stateVector) {
+		stateVector[0] = (float) (target.posX - agent.posX) / 5F;
+		stateVector[1] = (float) (target.posZ - agent.posZ) / 5F;
 	}
 
 	@Override
-	protected void decodeAction(AgentState s, float[] actionVector) {
-		s.forward = actionVector[0];
-		s.strafe = actionVector[1];
+	protected void decodeAction(AgentActionState actionState, float[] actionVector) {
+		actionState.forward = actionVector[0];
+		actionState.strafe = actionVector[1];
 	}
 
 	@Override

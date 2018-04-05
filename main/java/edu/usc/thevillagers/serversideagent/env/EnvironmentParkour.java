@@ -1,7 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
-import edu.usc.thevillagers.serversideagent.agent.AgentState;
+import edu.usc.thevillagers.serversideagent.agent.AgentActionState;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -41,10 +41,10 @@ public class EnvironmentParkour extends Environment {
 	}
 	
 	@Override
-	protected void encodeState(Agent a, float[] stateVector) {
-		stateVector[0] = (float) (a.posX - ref.getX()) / WIDTH;
-		stateVector[1] = (float) (a.posZ - ref.getZ()) / LENGTH;
-		BlockPos pos = a.getPosition().add(-SIGHT_DIST, -1, -SIGHT_DIST);
+	protected void encodeState(Agent agent, float[] stateVector) {
+		stateVector[0] = (float) (agent.posX - ref.getX()) / WIDTH;
+		stateVector[1] = (float) (agent.posZ - ref.getZ()) / LENGTH;
+		BlockPos pos = agent.getPosition().add(-SIGHT_DIST, -1, -SIGHT_DIST);
 		for(int z = 0; z < SIGHT_WIDTH; z++) {
 			for(int x = 0; x < SIGHT_WIDTH; x++) {
 				stateVector[2 + x + z * SIGHT_WIDTH] = encode(world.getBlockState(pos.add(x, 0, z)));
@@ -53,9 +53,9 @@ public class EnvironmentParkour extends Environment {
 	}
 
 	@Override
-	protected void decodeAction(AgentState s, float[] actionVector) {
-		s.forward = actionVector[0];
-		s.strafe = actionVector[1];
+	protected void decodeAction(AgentActionState actionState, float[] actionVector) {
+		actionState.forward = actionVector[0];
+		actionState.strafe = actionVector[1];
 	}
 
 	@Override

@@ -24,7 +24,6 @@ public class ServerSideAgentMod {
     
     @EventHandler
     public void serverLoad(FMLServerStartingEvent event) {
-    	event.registerServerCommand(new CommandSpawn());
     	event.registerServerCommand(new CommandEnvironment());
     	event.registerServerCommand(new CommandFastTick());
     	event.registerServerCommand(new CommandTPS());

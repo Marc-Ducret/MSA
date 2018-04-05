@@ -4,17 +4,17 @@ public abstract class AgentBrain {
 	
 	//TODO is it made obsolete by Environment?
 
-	private AgentState state;
+	private AgentActionState state;
 	
 	public final void init() {
 		state = initBrain();
 	}
 	
-	public AgentState getState() {
+	public AgentActionState getState() {
 		return state;
 	}
 	
-	protected abstract AgentState initBrain();
+	protected abstract AgentActionState initBrain();
 	public abstract void observe() throws Exception;
 	public abstract void act() throws Exception;
 	public abstract void terminate();

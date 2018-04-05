@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
+import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -18,25 +19,30 @@ public class Agent extends EntityPlayerMP {
 	
 	public static final float ROTATION_SPEED = 20;
 	
-	private AgentBrain brain;
-	private int brainCooldown = 1;
+	public final Environment env;
+	public final float[] stateVector;
+	public final float[] actionVector;
 	
-	public Agent(WorldServer world, String name) {
+	public final AgentActionState actionState;
+	
+	public Agent(WorldServer world, String name, Environment env) {
 		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, 
 				new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), name), new PlayerInteractionManager(world));
+		this.env = env;
+		stateVector = new float[env.stateDim];
+		actionVector = new float[env.actionDim];
+		actionState = new AgentActionState();
 	}
 	
 	public void spawn(BlockPos pos) {
 		this.setPosition(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
 		this.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new NetworkManager(EnumPacketDirection.SERVERBOUND), this);
-		
 		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().playerLoggedIn(this);
 	}
 	
 	public void remove() {
-		useBrain(() -> brain.terminate());
+		env.terminate();
 		this.world.removeEntity(this);
-		
 		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().playerLoggedOut(this);
 	}
 
@@ -45,49 +51,19 @@ public class Agent extends EntityPlayerMP {
 		super.onUpdate();
 		super.onEntityUpdate();
 		super.onLivingUpdate();
-		useBrain(() -> {
-			AgentState state = brain.getState();
-			boolean updateBrain = --brainCooldown <= 0;
-			if(updateBrain) {
-				brainCooldown = state.updatePeriod;
-				state.clamp();
-				brain.act();
-			}
-			this.setPositionAndRotation(posX, posY, posZ, 
-					rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
-					rotationPitch + state.momentumPitch * ROTATION_SPEED);
-			this.travel(state.strafe, 0, state.forward);
-			this.setJumping(state.jump);
-			this.setSneaking(state.crouch);
-			if(updateBrain) {
-				state.observe(this);
-				brain.observe();
-			}
-		});
-	}
-	
-	public void setBrain(AgentBrain brain) {
-		this.brain = brain;
-		useBrain(() -> brain.init());
+		AgentActionState state = actionState;
+		state.clamp();
+		this.setPositionAndRotation(posX, posY, posZ, 
+				rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
+				rotationPitch + state.momentumPitch * ROTATION_SPEED);
+		this.travel(state.strafe, 0, state.forward);
+		this.setJumping(state.jump);
+		this.setSneaking(state.crouch);
 	}
 	
 	@Override
 	public void onDeath(DamageSource cause) {
 		super.onDeath(cause);
 		remove();
-	}
-	
-	private void useBrain(TryRunnable run) {
-		if(brain == null) return;
-		try {
-			run.run();
-		} catch(Exception e) {
-			System.out.println("Error while using brain "+e);
-			brain = null;
-		}
-	}
-	
-	private static interface TryRunnable {
-		public void run() throws Exception;
 	}
 }

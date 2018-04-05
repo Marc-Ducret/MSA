@@ -9,8 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
-import edu.usc.thevillagers.serversideagent.agent.AgentBrainEnvironment;
-import edu.usc.thevillagers.serversideagent.agent.AgentState;
+import edu.usc.thevillagers.serversideagent.agent.AgentActionState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 
@@ -22,7 +21,6 @@ public abstract class Environment {
 	private BlockPos spawnPoint;
 	
 	protected Agent agent;
-	protected AgentBrainEnvironment brain;
 	protected WorldServer world;
 	
 	protected float reward;
@@ -53,10 +51,8 @@ public abstract class Environment {
 	}
 	
 	private void createAgent() {
-		agent = new Agent(world, name);
+		agent = new Agent(world, name, this);
 		agent.spawn(getSpawnPoint());
-		brain = new AgentBrainEnvironment(this);
-		agent.setBrain(brain);
 	}
 	
 	private void startProcess(String cmd) throws IOException {
@@ -117,8 +113,8 @@ public abstract class Environment {
 	}
 	
 	private void observe_state() throws IOException {
-		encodeState(agent, brain.stateVector);
-		for(float f : brain.stateVector)
+		encodeState(agent, agent.stateVector);
+		for(float f : agent.stateVector)
 			pOut.writeFloat(f);
 	}
 	
@@ -131,12 +127,12 @@ public abstract class Environment {
 	
 	private void act() throws IOException {
 		for(int i = 0; i < actionDim; i++)
-			brain.actionVector[i] = pIn.readFloat();
-		decodeAction(brain.getState(), brain.actionVector);
+			agent.actionVector[i] = pIn.readFloat();
+		decodeAction(agent.actionState, agent.actionVector);
 	}
 	
-	protected abstract void encodeState(Agent a, float[] stateVector);
-	protected abstract void decodeAction(AgentState a, float[] actionVector);
+	protected abstract void encodeState(Agent agent, float[] stateVector);
+	protected abstract void decodeAction(AgentActionState actionState, float[] actionVector);
 	protected abstract void step() throws Exception;
 	
 	public void reset() {
