@@ -4,7 +4,7 @@ Agents are implemented as a combination of Java and Python.
 
 ## Environment
 
-Environments or tasks should be described in Java extending the Environment class. Those define the observations, actions and rewards of the agent. For now, each agent has its own environment instance.
+Environments or tasks should be described in Java, by extending the Environment class. Those define the observations, actions and rewards of the agent. For now, each agent has its own environment instance.
 
 ## Learning Algorithms
 

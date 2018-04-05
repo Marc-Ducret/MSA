@@ -8,7 +8,7 @@ First of all, Minecraft's sources have never been released by Mojang. Fortunatel
 
 Then, if each mod was to incorporate itself by altering Minecraft's code, combining mods would require complex merging of classes that seem very hard to automate. On the other hand, Minecraft Forge provides a rich API the enable the creation of mods that are loaded by Forge and rely on events to function.
 
-While the diversity of Forge events already enables a lot of complex behaviours using events will always be limited in a sense or another. However, Forge provides tools for runtime altering of Minecraft's classes. Doing so isn't easy even for simple modifications and compatibility between mods isn't assured but it can be sometimes necessary.
+While the diversity of Forge events already enables a lot of complex behaviours, using events will always limit possibilities. However, Forge provides tools for runtime altering of Minecraft's classes. Doing so isn't easy even for simple modifications and compatibility between mods isn't assured but it can sometimes be necessary.
 
 ## Setup
 

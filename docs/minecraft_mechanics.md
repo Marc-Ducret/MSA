@@ -1,7 +1,7 @@
 # Minecraft Mechanics
 
 This document will outline how Minecraft runs and simulates its world.
-It will refer to various articles on the [official Minecraft Wiki](https://minecraft.gamepedia.com) for more details. This wiki not only aims at new players but also at the significant technical community of Minecraft. Therefore, it provides accurate information about the gameplay but also how the game engine works.
+It will refer to various articles on the [official Minecraft Wiki](https://minecraft.gamepedia.com) for more details. This wiki not only aims at new players but also at the significant technical community of Minecraft. Therefore, it provides accurate information about the gameplay but also about how the game engine works.
 
 ## Objects Representations
 
@@ -24,6 +24,6 @@ The simulation evolves with constant time steps of 50 ms. Each of those updates 
 
 ## Network Architecture
 
-Minecraft is a multiplayer game and therefore has its [server](https://minecraft.gamepedia.com/Server) and [clients](https://minecraft.gamepedia.com/Minecraft_launcher). The client acts as an interface between the players and the world. The approach is a relaxed authoritarian server in the sense that most things are totally controlled by the server while clients follow (and anticipate to some extend) their evolution but player movement and interactions are mostly decided by the player's client and only checked by the server to prevent abuse.
+Minecraft is a multiplayer game and therefore has its [server](https://minecraft.gamepedia.com/Server) and [clients](https://minecraft.gamepedia.com/Minecraft_launcher). The client acts as an interface between the player and the world. The approach is a relaxed authoritarian server in the sense that most things are totally controlled by the server while clients follow (and anticipate to some extend) their evolution but player movement and interactions are mostly decided by the player's client and only checked by the server to prevent abuse.
 
 In this setting, there is no strong synchronization between clients and server (in contrast with [Deterministic Lockstep](https://gafferongames.com/post/deterministic_lockstep/) approaches).
