@@ -1,7 +1,7 @@
 cd ..
 
-wget http://files.minecraftforge.net/maven/net/minecraftforge/forge/1.12.2-14.23.2.2611/forge-1.12.2-14.23.2.2611-mdk.zip ../forge.zip
-unzip ../forge.zip ../
+wget http://files.minecraftforge.net/maven/net/minecraftforge/forge/1.12.2-14.23.2.2611/forge-1.12.2-14.23.2.2611-mdk.zip -O ../forge.zip
+unzip ../forge.zip -d ../
 rm ../forge.zip
 
 cp -r ../gradle .
