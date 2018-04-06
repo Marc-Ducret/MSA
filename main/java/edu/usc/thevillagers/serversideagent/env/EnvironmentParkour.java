@@ -10,23 +10,30 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 
 public class EnvironmentParkour extends Environment {
-	
-	private static final int SIGHT_DIST = 1; //TODO: factorize?
-	private static final int SIGHT_WIDTH = SIGHT_DIST * 2 + 1;
-	
-	private static final float WIDTH = 3, LENGTH = 20;
-	
-	private BlockPos ref;
 
-	public EnvironmentParkour() {
-		super("Parkour", 2 + SIGHT_WIDTH * SIGHT_WIDTH, 2);
-	}
+	public final int sightDist; //TODO: factorize?
+	public final int sightWidth;
+
+	public final int width, length;
+
+	protected BlockPos ref;
 	
+	public EnvironmentParkour() {
+		this(3, 4, 15);
+	}
+
+	public EnvironmentParkour(int sightDist, int width, int length) {
+		super("Parkour", 2 + (2*sightDist+1)*(2*sightDist+1), 2);
+		this.sightDist = sightDist;
+		this.sightWidth = sightDist * 2 + 1;
+		this.width = width;
+		this.length = length;
+	}
+
 	@Override
 	public void init(WorldServer world, String cmd) {
 		super.init(world, cmd);
 		ref = getSpawnPoint();
-		System.out.println("REF: "+ref);
 	}
 
 	private int encode(IBlockState b) {
@@ -39,15 +46,15 @@ public class EnvironmentParkour extends Environment {
 			return 0;
 		}
 	}
-	
+
 	@Override
 	protected void encodeState(Agent agent, float[] stateVector) {
-		stateVector[0] = (float) (agent.posX - ref.getX()) / WIDTH;
-		stateVector[1] = (float) (agent.posZ - ref.getZ()) / LENGTH;
-		BlockPos pos = agent.getPosition().add(-SIGHT_DIST, -1, -SIGHT_DIST);
-		for(int z = 0; z < SIGHT_WIDTH; z++) {
-			for(int x = 0; x < SIGHT_WIDTH; x++) {
-				stateVector[2 + x + z * SIGHT_WIDTH] = encode(world.getBlockState(pos.add(x, 0, z)));
+		stateVector[0] = (float) (agent.posX - ref.getX()) / width;
+		stateVector[1] = (float) (agent.posZ - ref.getZ()) / length;
+		BlockPos pos = agent.getPosition().add(-sightDist, -1, -sightDist);
+		for(int z = 0; z < sightWidth; z++) {
+			for(int x = 0; x < sightWidth; x++) {
+				stateVector[2 + x + z * sightWidth] = encode(world.getBlockState(pos.add(x, 0, z)));
 			}
 		}
 	}
@@ -60,9 +67,9 @@ public class EnvironmentParkour extends Environment {
 
 	@Override
 	protected void step() throws Exception {
-		float dz = (float) (agent.posZ - ref.getZ()) / LENGTH;
+		float dz = (float) (agent.posZ - ref.getZ()) / length;
 		IBlockState b = world.getBlockState(agent.getPosition().down());
-		if(agent.posY < ref.getY() - .5F || time >= 100) {
+		if(agent.posY < ref.getY() - .01F || time >= 100) {
 			reward = 10 * dz;
 			done = true;
 		} else if(b.getBlock() == Blocks.CONCRETE && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
