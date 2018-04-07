@@ -8,6 +8,10 @@ import net.minecraft.util.math.BlockPos;
 
 public class EnvironmentParkourRandom extends EnvironmentParkour {
 	
+	public EnvironmentParkourRandom() {
+		super(5, 5, 15);
+	}
+	
 	@Override
 	public void reset() {
 		super.reset();

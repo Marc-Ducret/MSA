@@ -1,7 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
-import edu.usc.thevillagers.serversideagent.agent.AgentActionState;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -29,11 +28,11 @@ public class EnvironmentParkour extends Environment {
 		this.width = width;
 		this.length = length;
 	}
-
+	
 	@Override
-	public void init(WorldServer world, String cmd) {
-		super.init(world, cmd);
-		ref = getSpawnPoint();
+	public void init(WorldServer world) {
+		super.init(world);
+		ref = getOrigin();
 	}
 
 	private int encode(IBlockState b) {
@@ -48,35 +47,35 @@ public class EnvironmentParkour extends Environment {
 	}
 
 	@Override
-	protected void encodeState(Agent agent, float[] stateVector) {
-		stateVector[0] = (float) (agent.posX - ref.getX()) / width;
-		stateVector[1] = (float) (agent.posZ - ref.getZ()) / length;
-		BlockPos pos = agent.getPosition().add(-sightDist, -1, -sightDist);
+	public void encodeObservation(Agent agent, float[] stateVector) {
+		stateVector[0] = (float) (agent.entity.posX - ref.getX()) / width;
+		stateVector[1] = (float) (agent.entity.posZ - ref.getZ()) / length;
+		BlockPos pos = agent.entity.getPosition().add(-sightDist, -1, -sightDist);
 		for(int z = 0; z < sightWidth; z++) {
 			for(int x = 0; x < sightWidth; x++) {
-				stateVector[2 + x + z * sightWidth] = encode(world.getBlockState(pos.add(x, 0, z)));
+				stateVector[2 + x + z * sightWidth] = encode(agent.entity.world.getBlockState(pos.add(x, 0, z)));
 			}
 		}
 	}
 
 	@Override
-	protected void decodeAction(AgentActionState actionState, float[] actionVector) {
-		actionState.forward = actionVector[0];
-		actionState.strafe = actionVector[1];
+	public void decodeAction(Agent agent, float[] actionVector) {
+		agent.entity.actionState.forward = actionVector[0];
+		agent.entity.actionState.strafe = actionVector[1];
 	}
 
 	@Override
-	protected void step() throws Exception {
-		float dz = (float) (agent.posZ - ref.getZ()) / length;
-		IBlockState b = world.getBlockState(agent.getPosition().down());
-		if(agent.posY < ref.getY() - .01F || time >= 100) {
-			reward = 10 * dz;
+	protected void stepAgent(Agent agent) throws Exception {
+		float dz = (float) (agent.entity.posZ - ref.getZ()) / length;
+		IBlockState b = world.getBlockState(agent.entity.getPosition().down());
+		if(agent.entity.posY < ref.getY() - .01F || time >= 100) {
+			agent.reward = 10 * dz;
 			done = true;
 		} else if(b.getBlock() == Blocks.CONCRETE && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
-			reward = 100;
+			agent.reward = 100;
 			done = true;
 		} else {
-			reward = - .001F;
+			agent.reward = - .001F;
 		}
 	}
 }

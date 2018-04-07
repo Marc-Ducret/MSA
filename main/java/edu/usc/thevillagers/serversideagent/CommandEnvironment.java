@@ -1,9 +1,12 @@
 package edu.usc.thevillagers.serversideagent;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
+import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.EntityAgent;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -20,7 +23,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
 public class CommandEnvironment extends CommandBase {
 	
-	private List<Environment> envs = new ArrayList<>();
+	private Map<String, Environment> envs = new HashMap<>();
 	
 	public CommandEnvironment() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -33,7 +36,7 @@ public class CommandEnvironment extends CommandBase {
 
 	@Override
 	public String getUsage(ICommandSender sender) {
-		return "/e <env> <agent>";
+		return "/e <add|remove|agent> <env_id> ...";
 	}
 
 	@Override
@@ -43,20 +46,57 @@ public class CommandEnvironment extends CommandBase {
 			return;
 		}
 		WorldServer world = server.worlds[0];
-		BlockPos pos;
-		if(args.length > 2)  
-			pos = parseBlockPos(sender, args, 2, false);
-		else
-			pos = sender.getPosition();
+		String envId = args[1];
+		
+		switch(args[0]) {
+		case "add":
+			if(envs.containsKey(envId)) throw new CommandException(envId+" already exists");
+			BlockPos origin;
+			if(args.length > 3)  
+				origin = parseBlockPos(sender, args, 3, false);
+			else
+				origin = sender.getPosition();
+			Environment env = createEnvironment(args[2]);
+			env.setOrigin(origin);
+			env.init(world);
+			envs.put(envId, env);
+			break;
+			
+		case "remove":
+			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
+			envs.get(envId).terminate();
+			envs.remove(envId);
+			break;
+			
+		case "agent":
+			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
+			for(int i = 2; i < args.length; i ++) {
+				String cmd = "python python/agent_"+args[i]+".py";
+				env = envs.get(envId);
+				Agent a = new Agent(env, new EntityAgent(world, env.name));
+				try {
+					a.startProcess(cmd);
+					a.entity.spawn(env.getOrigin());
+					env.newAgent(a);
+				} catch (IOException e) {
+					throw new CommandException("Cannot start agent ("+e+")");
+				}
+			}
+			break;
+			
+		default:
+			throw new CommandException("Unknown option '"+args[0]+"'");
+		}
+	}
+	
+	private Environment createEnvironment(String name) throws CommandException {
 		try {
-			Class<?> clazz = Class.forName("edu.usc.thevillagers.serversideagent.env.Environment"+args[0]);
+			Class<?> clazz = Class.forName("edu.usc.thevillagers.serversideagent.env.Environment"+name);
 			Environment env = (Environment) clazz.newInstance();
-			env.setSpawnPoint(pos);
-			String cmd = "python python/"+args[1]+".py";
-			env.init(world, cmd);
-			addEnv(env);
+			return env;
+			
 		} catch (Exception e) {
-			throw new CommandException("Env "+args[0]+" not found ("+e+")", e);
+			throw new CommandException("Env "+name+" not found ("+e+")", e);
 		}
 	}
 	
@@ -73,7 +113,7 @@ public class CommandEnvironment extends CommandBase {
     }
 	
 	private void tickEnvs(Phase phase) {
-    	Iterator<Environment> iter = envs.iterator();
+    	Iterator<Environment> iter = envs.values().iterator();
 		while(iter.hasNext()) {
 			Environment env = iter.next();
 			try {
@@ -93,9 +133,5 @@ public class CommandEnvironment extends CommandBase {
 				System.err.println("Env "+env.name+" terminated ("+e+")");
 			}
 		}
-    }
-	
-	public void addEnv(Environment env) {
-    	envs.add(env);
     }
 }

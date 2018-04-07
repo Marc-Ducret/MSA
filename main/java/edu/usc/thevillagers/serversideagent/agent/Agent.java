@@ -1,69 +1,97 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
-import java.util.UUID;
-
-import com.mojang.authlib.GameProfile;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import edu.usc.thevillagers.serversideagent.env.Environment;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.network.NetHandlerPlayServer;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.server.management.PlayerInteractionManager;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
-public class Agent extends EntityPlayerMP {
-	
-	public static final float ROTATION_SPEED = 20;
+public class Agent {
 	
 	public final Environment env;
-	public final float[] stateVector;
-	public final float[] actionVector;
+	public final EntityAgent entity;
 	
-	public final AgentActionState actionState;
+	public final float[] observationVector, actionVector;
 	
-	public Agent(WorldServer world, String name, Environment env) {
-		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, 
-				new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), name), new PlayerInteractionManager(world));
+	private Process process;
+	private DataOutputStream pOut;
+	private DataInputStream pIn;
+	
+	public float reward;
+	
+	public boolean active;
+	public Object envData;
+	
+	public Agent(Environment env, EntityAgent entity) {
+		this.entity = entity;
 		this.env = env;
-		stateVector = new float[env.stateDim];
-		actionVector = new float[env.actionDim];
-		actionState = new AgentActionState();
+		this.observationVector = new float[env.observationDim];
+		this.actionVector = new float[env.actionDim];
+		this.active = false;
 	}
 	
-	public void spawn(BlockPos pos) {
-		this.setPosition(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
-		this.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new NetworkManager(EnumPacketDirection.SERVERBOUND), this);
-		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().playerLoggedIn(this);
+	public void startProcess(String cmd) throws IOException {
+		process = Runtime.getRuntime().exec(cmd);
+		pOut = new DataOutputStream(new BufferedOutputStream(process.getOutputStream()));
+		pIn = new DataInputStream(new BufferedInputStream(process.getInputStream()));
+		new Thread(() -> {
+			BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			String line;
+			try {
+				while((line = err.readLine()) != null)
+					System.out.println(line);
+			} catch (IOException e) {
+			}
+			System.out.println("Process "+cmd+" terminated");
+		}).start();
+		
+		pOut.writeInt(env.observationDim);
+		pOut.writeInt(env.actionDim);
+		pOut.flush();
 	}
 	
-	public void remove() {
-		env.terminate();
-		this.world.removeEntity(this);
-		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().playerLoggedOut(this);
-	}
-
-	@Override
-	public void onUpdate() {
-		super.onUpdate();
-		super.onEntityUpdate();
-		super.onLivingUpdate();
-		AgentActionState state = actionState;
-		state.clamp();
-		this.setPositionAndRotation(posX, posY, posZ, 
-				rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
-				rotationPitch + state.momentumPitch * ROTATION_SPEED);
-		this.travel(state.strafe, 0, state.forward);
-		this.setJumping(state.jump);
-		this.setSneaking(state.crouch);
+	public void terminate() {
+		if(process != null && process.isAlive()) 
+			process.destroy();
+		entity.remove();
 	}
 	
-	@Override
-	public void onDeath(DamageSource cause) {
-		super.onDeath(cause);
-		remove();
+	private void sendObservation() throws IOException {
+		env.encodeObservation(this, observationVector);
+		for(float f : observationVector)
+			pOut.writeFloat(f);
+	}
+	
+	public void observe() throws IOException {
+		sendObservation();
+		pOut.writeFloat(reward);
+		pOut.writeBoolean(env.done);
+		pOut.flush();
+	}
+	
+	public void observeNoReward() throws IOException {
+		sendObservation();
+		pOut.flush();
+	}
+	
+	public void act() throws Exception {
+		if(entity.isDead) throw new Exception("is dead");
+		for(int i = 0; i < env.actionDim; i++)
+			actionVector[i] = pIn.readFloat();
+		env.decodeAction(this, actionVector);
+	}
+	
+	public void sync(int code) throws Exception {
+		if(pIn.readInt() != code) {
+			throw new Exception("Expected reset code 0x13371337");
+		}
+	}
+	
+	public boolean hasAvailableInput() throws IOException {
+		return pIn.available() > 0;
 	}
 }
