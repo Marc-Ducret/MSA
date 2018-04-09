@@ -13,14 +13,15 @@ def train(num_timesteps, seed):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
             hid_size=64, num_hid_layers=2)
 
-    pposgd_simple.learn(env, policy_fn,
-            max_timesteps=num_timesteps,
-            timesteps_per_actorbatch=2000,
-            clip_param=0.2, entcoeff=0.0,
-            optim_epochs=10, optim_stepsize=3e-4, optim_batchsize=64,
-            gamma=0.99, lam=0.95, schedule='constant',
-        )
-    tf.train.Saver().save(sess, './tmp/model')
+    pi = policy_fn('pi', env.observation_space, env.action_space)
+    tf.train.Saver().restore(sess, './tmp/model')
+
+    while True:
+        obs = env.reset()
+        done = False
+        while not done:
+            obs, _, done, _ = env.step(pi.act(True, obs)[0])
+
     env.close()
 
 def main():
