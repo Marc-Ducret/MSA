@@ -2,7 +2,8 @@ from minecraft_environment import *
 
 def train(num_timesteps, seed):
     env = MinecraftEnv()
-    env.params()
+    params = {'filename': 'model'}
+    params.update(env.params())
 
     from baselines.common import tf_util as U
     from baselines.ppo1 import mlp_policy, pposgd_simple
@@ -15,7 +16,7 @@ def train(num_timesteps, seed):
             hid_size=64, num_hid_layers=2)
 
     pi = policy_fn('pi', env.observation_space, env.action_space)
-    tf.train.Saver().restore(sess, './tmp/model')
+    tf.train.Saver().restore(sess, './tmp/models/'+params['filename'])
 
     while True:
         obs = env.reset()
