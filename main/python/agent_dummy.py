@@ -1,6 +1,7 @@
 from minecraft_environment import *
 
 env = MinecraftEnv()
+env.params()
 
 import numpy as np
 

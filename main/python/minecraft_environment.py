@@ -28,6 +28,9 @@ class MinecraftEnv(gym.Env):
         __builtins__['print'] = _eprint
         sys.stdout = sys.stderr
 
+    def params(self):
+        return eval(self.in_stream.read_utf())
+
     def _receive_observation(self):
         return np.array(self.in_stream.read_float_array(self.observation_dim))
 

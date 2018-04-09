@@ -23,7 +23,7 @@ public abstract class Environment {
 	public boolean done;
 	public int time;
 	
-	public Environment(String name, int stateDim, int actionDim) {
+	public Environment(String name, int stateDim, int actionDim) { //TODO extract name from class name? (to mirror /e behaviour)
 		this.name = name;
 		this.observationDim = stateDim;
 		this.actionDim = actionDim;

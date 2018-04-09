@@ -38,7 +38,7 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 		this.actionState = entity instanceof EntityAgent ? ((EntityAgent)entity).actionState : new AgentActionState();
 	}
 	
-	public void startProcess(String cmd) throws IOException {
+	public void startProcess(String cmd, String params) throws IOException {
 		process = Runtime.getRuntime().exec(cmd);
 		pOut = new DataOutputStream(new BufferedOutputStream(process.getOutputStream()));
 		pIn = new DataInputStream(new BufferedInputStream(process.getInputStream()));
@@ -55,6 +55,7 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 		
 		pOut.writeInt(env.observationDim);
 		pOut.writeInt(env.actionDim);
+		pOut.writeUTF(params);
 		pOut.flush();
 	}
 	

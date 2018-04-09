@@ -73,10 +73,20 @@ public class CommandEnvironment extends CommandBase {
 			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
 			env = envs.get(envId);
 			for(int i = 2; i < args.length; i ++) {
-				String cmd = "python python/agent_"+args[i]+".py";
+				String agentStr = args[i];
+				int index = agentStr.indexOf('{');
+				String agentType, params;
+				if(index > 0) {
+					agentType = agentStr.substring(0, index);
+					params = agentStr.substring(index);
+				} else {
+					agentType = agentStr;
+					params = "{}";
+				}
+				String cmd = "python python/agent_"+agentType+".py";
 				Agent a = new Agent(env, new EntityAgent(world, env.name));
 				try {
-					a.startProcess(cmd);
+					a.startProcess(cmd, params);
 					((EntityAgent) a.entity).spawn(env.getOrigin());
 					env.newAgent(a);
 				} catch (IOException e) {

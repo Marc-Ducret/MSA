@@ -1,7 +1,24 @@
 from minecraft_environment import *
 
-def train(num_timesteps, seed):
+def train():
     env = MinecraftEnv()
+
+    params = {
+        'hid_size': 64,
+        'hid_layers': 2,
+        'total_timesteps': 10 ** 6,
+        'actorbatch_timesteps': 2000,
+        'clip': 0.2,
+        'entropy': 0.0,
+        'epochs': 10,
+        'learning_rate': 3e-4,
+        'batchsize': 64,
+        'gamma': .99,
+        'lam': .95,
+        'schedule': 'linear',
+        'filename': 'model',
+        }
+    params.update(env.params())
 
     from baselines.common import tf_util as U
     from baselines.ppo1 import mlp_policy, pposgd_simple
@@ -11,20 +28,20 @@ def train(num_timesteps, seed):
     sess.__enter__()
     def policy_fn(name, ob_space, ac_space):
         return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_size=64, num_hid_layers=2)
+            hid_size=params['hid_size'], num_hid_layers=params['hid_layers'])
 
     pposgd_simple.learn(env, policy_fn,
-            max_timesteps=num_timesteps,
-            timesteps_per_actorbatch=2000,
-            clip_param=0.2, entcoeff=0.0,
-            optim_epochs=10, optim_stepsize=3e-4, optim_batchsize=64,
-            gamma=0.99, lam=0.95, schedule='constant',
+            max_timesteps=params['total_timesteps'],
+            timesteps_per_actorbatch=params['actorbatch_timesteps'],
+            clip_param=params['clip'], entcoeff=params['entropy'],
+            optim_epochs=params['epochs'], optim_stepsize=params['learning_rate'], optim_batchsize=params['batchsize'],
+            gamma=params['gamma'], lam=params['lam'], schedule=params['schedule'],
         )
-    tf.train.Saver().save(sess, './tmp/model')
+    tf.train.Saver().save(sess, './tmp/'+params['filename'])
     env.close()
 
 def main():
-    train(num_timesteps=10 ** 5, seed=42)
+    train()
 
 if __name__ == '__main__':
     main()
