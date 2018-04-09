@@ -22,7 +22,10 @@ def train():
 
     from baselines.common import tf_util as U
     from baselines.ppo1 import mlp_policy, pposgd_simple
+    from baselines import logger
     import tensorflow as tf
+
+    logger.configure('./tmp/logs/', ['tensorboard'])
 
     sess = U.make_session(num_cpu=1)
     sess.__enter__()
@@ -37,7 +40,7 @@ def train():
             optim_epochs=params['epochs'], optim_stepsize=params['learning_rate'], optim_batchsize=params['batchsize'],
             gamma=params['gamma'], lam=params['lam'], schedule=params['schedule'],
         )
-    tf.train.Saver().save(sess, './tmp/'+params['filename'])
+    tf.train.Saver().save(sess, './tmp/models/'+params['filename'])
     env.close()
 
 def main():
