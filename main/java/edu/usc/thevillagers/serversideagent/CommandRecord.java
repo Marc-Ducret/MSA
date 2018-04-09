@@ -7,6 +7,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -15,7 +16,9 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 public class CommandRecord extends CommandBase {
 	
 	private WorldRecord record;
-	private boolean recording;
+	
+	private static enum State{IDLE, RECORDING, REPLAYING}
+	private State state = State.IDLE;
 
 	public CommandRecord() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -35,17 +38,23 @@ public class CommandRecord extends CommandBase {
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		switch(args[0]) {
 		case "start":
+			if(state != State.IDLE) throw new CommandException("Already "+state);
 			sender.sendMessage(new TextComponentString("Recording started"));
-			record = new WorldRecord(sender.getEntityWorld());
-			recording = true;
+			state = State.RECORDING;
+			record = new WorldRecord((WorldServer) sender.getEntityWorld());
 			break;
 		case "stop":
+			if(state != State.RECORDING) throw new CommandException("Actually "+state);
 			sender.sendMessage(new TextComponentString("Recording stopped"));
-			recording = false;
+			state = State.IDLE;
 			break;
 		case "replay":
+			if(state != State.IDLE) throw new CommandException("Already "+state);
 			sender.sendMessage(new TextComponentString("Replay..."));
-			record.startReplay();
+			state = State.REPLAYING;
+			record.replay();
+			sender.sendMessage(new TextComponentString("Replay done"));
+			state = State.IDLE;
 			break;
 		}
 	}
@@ -59,17 +68,17 @@ public class CommandRecord extends CommandBase {
     public void serverTick(ServerTickEvent event) {
 		switch(event.phase) {
 		case START:
-			if(recording) record.startRecordTick();
-			if(record != null) record.replayTick();
+			if(state == State.RECORDING) record.startRecordTick();
+			if(state == State.REPLAYING) record.replayTick();
 			break;
 		case END:
-			if(recording) record.endRecordTick();
+			if(state == State.RECORDING) record.endRecordTick();
 			break;
 		}
     }
 	
 	@SubscribeEvent
 	public void blockChange(BlockEvent.NeighborNotifyEvent event) {
-		if(recording) record.recordEvent(new RecordEventBlockChange(event.getPos(), event.getState()));
+		if(state == State.RECORDING) record.recordEvent(new RecordEventBlockChange(event.getPos(), event.getState()));
 	}
 }
