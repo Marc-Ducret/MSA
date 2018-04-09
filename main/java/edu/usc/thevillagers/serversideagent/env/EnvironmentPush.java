@@ -43,8 +43,8 @@ public class EnvironmentPush extends Environment {
 
 	@Override
 	public void decodeAction(Agent agent, float[] actionVector) {
-		agent.entity.actionState.forward = actionVector[0];
-		agent.entity.actionState.strafe = actionVector[1];
+		agent.actionState.forward = actionVector[0];
+		agent.actionState.strafe = actionVector[1];
 	}
 
 	@Override

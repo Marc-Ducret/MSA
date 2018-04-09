@@ -9,11 +9,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import edu.usc.thevillagers.serversideagent.env.Environment;
+import net.minecraft.entity.player.EntityPlayerMP;
 
-public class Agent {
+public class Agent { //TODO extract Actor superclass and extend it as Agent and HumanActor?
 	
 	public final Environment env;
-	public final EntityAgent entity;
+	public final EntityPlayerMP entity;
+	public final AgentActionState actionState;
 	
 	public final float[] observationVector, actionVector;
 	
@@ -26,12 +28,14 @@ public class Agent {
 	public boolean active;
 	public Object envData;
 	
-	public Agent(Environment env, EntityAgent entity) {
+	
+	public Agent(Environment env, EntityPlayerMP entity) {
 		this.entity = entity;
 		this.env = env;
 		this.observationVector = new float[env.observationDim];
 		this.actionVector = new float[env.actionDim];
 		this.active = false;
+		this.actionState = entity instanceof EntityAgent ? ((EntityAgent)entity).actionState : new AgentActionState();
 	}
 	
 	public void startProcess(String cmd) throws IOException {
@@ -57,7 +61,8 @@ public class Agent {
 	public void terminate() {
 		if(process != null && process.isAlive()) 
 			process.destroy();
-		entity.remove();
+		if(entity instanceof EntityAgent) 
+			((EntityAgent) entity).remove();
 	}
 	
 	private void sendObservation() throws IOException {
@@ -67,6 +72,7 @@ public class Agent {
 	}
 	
 	public void observe() throws IOException {
+		if(process == null) return;
 		sendObservation();
 		pOut.writeFloat(reward);
 		pOut.writeBoolean(env.done);
@@ -74,11 +80,13 @@ public class Agent {
 	}
 	
 	public void observeNoReward() throws IOException {
+		if(process == null) return;
 		sendObservation();
 		pOut.flush();
 	}
 	
 	public void act() throws Exception {
+		if(process == null) return;
 		if(entity.isDead) throw new Exception("is dead");
 		for(int i = 0; i < env.actionDim; i++)
 			actionVector[i] = pIn.readFloat();
@@ -86,12 +94,14 @@ public class Agent {
 	}
 	
 	public void sync(int code) throws Exception {
+		if(process == null) return;
 		if(pIn.readInt() != code) {
 			throw new Exception("Expected reset code 0x13371337");
 		}
 	}
 	
 	public boolean hasAvailableInput() throws IOException {
+		if(process == null) return true;
 		return pIn.available() > 0;
 	}
 }

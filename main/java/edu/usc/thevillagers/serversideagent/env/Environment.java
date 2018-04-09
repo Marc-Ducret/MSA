@@ -92,6 +92,7 @@ public abstract class Environment {
 	
 	public void resetAgent(Agent a) {
 		a.entity.moveToBlockPosAndAngles(getSpawnPoint(a), 0, 0);
+		a.entity.connection.setPlayerLocation(a.entity.posX, a.entity.posY, a.entity.posZ, a.entity.rotationYaw, a.entity.rotationPitch);
 		a.reward = 0;
 	}
 	

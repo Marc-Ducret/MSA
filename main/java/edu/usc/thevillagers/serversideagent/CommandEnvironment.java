@@ -11,6 +11,7 @@ import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
@@ -70,17 +71,27 @@ public class CommandEnvironment extends CommandBase {
 			
 		case "agent":
 			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
+			env = envs.get(envId);
 			for(int i = 2; i < args.length; i ++) {
 				String cmd = "python python/agent_"+args[i]+".py";
-				env = envs.get(envId);
 				Agent a = new Agent(env, new EntityAgent(world, env.name));
 				try {
 					a.startProcess(cmd);
-					a.entity.spawn(env.getOrigin());
+					((EntityAgent) a.entity).spawn(env.getOrigin());
 					env.newAgent(a);
 				} catch (IOException e) {
 					throw new CommandException("Cannot start agent ("+e+")");
 				}
+			}
+			break;
+			
+		case "player":
+			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
+			env = envs.get(envId);
+			for(int i = 2; i < args.length; i ++) {
+				EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(args[i]);
+				if(player == null) throw new CommandException("No such player '"+args[i]+"'");
+				env.newAgent(new Agent(env, player));
 			}
 			break;
 			
