@@ -73,12 +73,22 @@ public class CommandFastTick extends CommandBase {
     	long startTime = System.currentTimeMillis();
     	int t = 0;
 		for(; t != ticks && fastTicking; t++) {
-			sender.getServer().tick();
+			if(sender.getServer().getTickCounter() % 2 == 0) sender.getServer().tick(); //ensure that we stick to an odd value
+			else optimizedTick();
 		}
 		fastTicking = false;
 		long duration = System.currentTimeMillis() - startTime;
 		float tickP = duration / (float) t;
 		float tps = t / (duration / 1000F);
 		sender.sendMessage(new TextComponentString(String.format("%d ticks completed in %d ms (avg: %.1f ms - %.1f TPS)", t, duration, tickP, tps)));
+    }
+    
+    private void optimizedTick() {
+    	net.minecraftforge.fml.common.FMLCommonHandler.instance().onPreServerTick();
+    	MinecraftServer serv = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
+    	serv.profiler.startSection("root");
+        serv.updateTimeLightAndEntities();
+        serv.profiler.endSection();
+    	net.minecraftforge.fml.common.FMLCommonHandler.instance().onPostServerTick();
     }
 }
