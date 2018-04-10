@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class Agent { //TODO extract Actor superclass and extend it as Agent and HumanActor?
 	
@@ -89,16 +90,21 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 	public void act() throws Exception {
 		if(process == null) return;
 		if(entity.isDead) throw new Exception("is dead");
+		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("waitPython");
 		for(int i = 0; i < env.actionDim; i++)
 			actionVector[i] = pIn.readFloat();
+		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 		env.decodeAction(this, actionVector);
 	}
 	
 	public void sync(int code) throws Exception {
 		if(process == null) return;
+		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("waitPython");
 		if(pIn.readInt() != code) {
+			FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 			throw new Exception("Expected reset code 0x13371337");
 		}
+		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 	}
 	
 	public boolean hasAvailableInput() throws IOException {

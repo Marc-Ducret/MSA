@@ -84,11 +84,15 @@ public class CommandFastTick extends CommandBase {
     }
     
     private void optimizedTick() {
-    	net.minecraftforge.fml.common.FMLCommonHandler.instance().onPreServerTick();
     	MinecraftServer serv = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
     	serv.profiler.startSection("root");
+    	serv.profiler.startSection("tickEvent");
+    	net.minecraftforge.fml.common.FMLCommonHandler.instance().onPreServerTick();
+    	serv.profiler.endSection();
         serv.updateTimeLightAndEntities();
+        serv.profiler.startSection("tickEvent");
+        net.minecraftforge.fml.common.FMLCommonHandler.instance().onPostServerTick();
         serv.profiler.endSection();
-    	net.minecraftforge.fml.common.FMLCommonHandler.instance().onPostServerTick();
+        serv.profiler.endSection();
     }
 }
