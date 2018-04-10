@@ -14,3 +14,4 @@ The goal is to have the following features:
 * [Minecraft Mechanics](docs/minecraft_mechanics.md)
 * [Minecraft Forge](docs/minecraft_forge.md)
 * [Project Architecture](docs/project_architecture.md)
+* [Setup](docs/setup.md)
