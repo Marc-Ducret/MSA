@@ -45,7 +45,7 @@ class MinecraftEnv(gym.Env):
         self.out_stream.flush()
 
     def step(self, action):
-        action = action.reshape((2,))
+        action = action.reshape((self.action_dim,))
         self._send_action(action)
         return  self._receive_observation(), self._receive_reward(), self._receive_done(), {}
 
