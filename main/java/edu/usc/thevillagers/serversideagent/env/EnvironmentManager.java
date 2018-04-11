@@ -25,6 +25,13 @@ public class EnvironmentManager {
 		}
     }
 	
+	public void clearEnvs() {
+		for(Environment env : envs.values()) {
+			env.terminate();
+		}
+		envs.clear();
+	}
+	
 	private void tickEnvs(Phase phase) {
     	Iterator<Environment> iter = envs.values().iterator();
 		while(iter.hasNext()) {
@@ -32,6 +39,8 @@ public class EnvironmentManager {
 			try {
 				switch(phase) {
 				case START:
+					if(env.isAllocated() && env.isEmpty())
+						throw new Exception("Empty");
 					env.preTick();
 					break;
 				case END:
@@ -63,6 +72,7 @@ public class EnvironmentManager {
 	public void registerEnv(Environment env, String envId) {
 		if(doesEnvExists(envId)) throw new RuntimeException("Env "+envId+" already exists");
 		envs.put(envId, env);
+		env.id = envId;
 	}
 	
 	public void removeEnv(String envId) {

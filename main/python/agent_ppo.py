@@ -1,7 +1,11 @@
 from minecraft_environment import *
+from baselines.common import tf_util as U
+from baselines.ppo1 import mlp_policy, pposgd_simple
+from baselines import logger
+import tensorflow as tf
 
 def train():
-    env = MinecraftEnv()
+    env = MinecraftEnv('ParkourRandom')
 
     params = {
         'hid_size': 64,
@@ -19,11 +23,6 @@ def train():
         'filename': 'model',
         }
     params.update(env.params())
-
-    from baselines.common import tf_util as U
-    from baselines.ppo1 import mlp_policy, pposgd_simple
-    from baselines import logger
-    import tensorflow as tf
 
     logger.configure('./tmp/logs/', ['tensorboard'])
 

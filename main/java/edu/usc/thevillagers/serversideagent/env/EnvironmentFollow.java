@@ -10,7 +10,7 @@ public class EnvironmentFollow extends Environment {
 	private Entity target;
 
 	public EnvironmentFollow() {
-		super("Follow", 2, 2);
+		super(2, 2);
 	}
 	
 	@Override

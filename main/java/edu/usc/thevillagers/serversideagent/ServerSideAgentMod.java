@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 
 @Mod(modid = ServerSideAgentMod.MODID, name = ServerSideAgentMod.NAME, version = ServerSideAgentMod.VERSION, serverSideOnly = true, acceptableRemoteVersions = "*")
 public class ServerSideAgentMod {
@@ -39,5 +40,11 @@ public class ServerSideAgentMod {
     	event.registerServerCommand(new CommandFastTick());
     	event.registerServerCommand(new CommandTPS());
     	event.registerServerCommand(new CommandRecord());
+    }
+    
+    @EventHandler
+    public void serverClosing(FMLServerStoppingEvent event) throws IOException {
+    	envManager.clearEnvs();
+    	reqManager.stopRequestServer();
     }
 }

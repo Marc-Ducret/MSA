@@ -22,7 +22,7 @@ public class EnvironmentParkour extends Environment {
 	}
 
 	public EnvironmentParkour(int sightDist, int width, int length) {
-		super("Parkour", 2 + (2*sightDist+1)*(2*sightDist+1), 2);
+		super(2 + (2*sightDist+1)*(2*sightDist+1), 2);
 		this.sightDist = sightDist;
 		this.sightWidth = sightDist * 2 + 1;
 		this.width = width;

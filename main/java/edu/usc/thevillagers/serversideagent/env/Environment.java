@@ -6,13 +6,19 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.allocation.Allocator;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
 public abstract class Environment {
 	
 	public final String name;
+	public String id;
 	public final int observationDim, actionDim;
+	
+	protected Allocator allocator;
+	private boolean allocated = false;
 	
 	public WorldServer world;
 	
@@ -23,8 +29,8 @@ public abstract class Environment {
 	public boolean done;
 	public int time;
 	
-	public Environment(String name, int stateDim, int actionDim) { //TODO extract name from class name? (to mirror /e behaviour)
-		this.name = name;
+	public Environment(int stateDim, int actionDim) { //TODO extract name from class name? (to mirror /e behaviour)
+		this.name = getClass().getSimpleName().replaceFirst("Environment", "");
 		this.observationDim = stateDim;
 		this.actionDim = actionDim;
 	}
@@ -47,6 +53,7 @@ public abstract class Environment {
 	
 	public void terminate() {
 		applyToAllAgents((a) -> a.terminate());
+		if(allocator != null) allocator.free(world, origin);
 	}
 	
 	public final void preTick() throws Exception {
@@ -122,7 +129,24 @@ public abstract class Environment {
 		}
 	}
 	
+	public boolean tryAllocate(World world) {
+		if(allocator == null) return false;
+		BlockPos pos = allocator.allocate(world);
+		if(pos == null) return false;
+		setOrigin(pos);
+		allocated = true;
+		return true;
+	}
+	
 	private static interface AgentApplication { 
 		void apply(Agent a) throws Exception; 
+	}
+	
+	public boolean isAllocated() {
+		return allocated;
+	}
+	
+	public boolean isEmpty() {
+		return agents.isEmpty();
 	}
 }

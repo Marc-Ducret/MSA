@@ -12,7 +12,7 @@ public class EnvironmentPush extends Environment {
 	private Agent agentB;
 	
 	public EnvironmentPush() {
-		super("Push", 4, 2);
+		super(4, 2);
 	}
 	
 	@Override

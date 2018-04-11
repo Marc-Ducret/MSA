@@ -9,7 +9,9 @@ import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.agent.EntityAgent;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
@@ -31,22 +33,26 @@ public class RequestManager {
 	public void startRequestServer(int port) throws IOException {
 		serv = new ServerSocket(port);
 		new Thread(() -> {
-			while(true) {
+			while(!serv.isClosed()) {
 				try {
-					DataSocket sok = new DataSocket(serv.accept());
-					sok.socket.setSoTimeout(1000);
-					String envClassName = sok.in.readUTF();
-					Class<?> envClass = envManager.findEnvClass(envClassName);
-					String envId = sok.in.readBoolean() ? null : sok.in.readUTF();
-					synchronized(requests) {
-						requests.add(new Request(envClass, envId, sok));
-						lastRequestTime = System.currentTimeMillis();
-					}
-				} catch (IOException | ClassNotFoundException e) {
+					newSocket(new DataSocket(serv.accept()));
+				} catch (Exception e) {
 					System.out.println("Request failure "+e);
 				}
 			}
 		}).start();
+	}
+	
+	private void newSocket(DataSocket sok) throws Exception {
+		sok.socket.setSoTimeout(1000);
+		String envClassName = sok.in.readUTF();
+		Class<?> envClass = envManager.findEnvClass(envClassName);
+		String envId = sok.in.readBoolean() ? null : sok.in.readUTF();
+		synchronized(requests) {
+			requests.add(new Request(envClass, envId, sok));
+			System.out.println("Received request ["+envClass+" "+envId+"]");
+			lastRequestTime = System.currentTimeMillis();
+		}
 	}
 	
 	public void stopRequestServer() throws IOException {
@@ -75,10 +81,15 @@ public class RequestManager {
 				if(env.getClass() != req.envClass)
 					throw new Exception("Missmatch event types: "+env.getClass()+" | "+req.envClass);
 			} else {
-				//TODO allocate env
-				env = null;
+				env = envManager.createEnv(req.envClass);
+				WorldServer world = FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0];
+				if(!env.tryAllocate(world)) throw new Exception("Cannot allocate "+req.envClass);
+				env.init(world);
+				envManager.registerEnv(env);
 			}
-			Agent a = new Agent(env, new EntityAgent(env.world, env.name), req.sok);
+			String name = env.id;
+			if(name.length() > 16) name = name.substring(0, 16);
+			Agent a = new Agent(env, new EntityAgent(env.world, name), req.sok);
 			((EntityAgent) a.entity).spawn(env.getOrigin());
 			env.newAgent(a);
 		} catch (Exception e) {
