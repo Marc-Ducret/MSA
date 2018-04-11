@@ -1,13 +1,13 @@
-from minecraft_environment import *
-
-env = MinecraftEnv()
-env.params()
-
+import single_env_agent
 import numpy as np
 
-while True:
-    env.reset()
+def run(args, env):
     while True:
-        _, _, done, _ = env.step(np.zeros(env.action_space.shape))
-        if done:
-            break
+        env.reset()
+        while True:
+            _, _, done, _ = env.step(np.zeros(env.action_space.shape))
+            if done:
+                break
+
+if __name__ == '__main__':
+    single_env_agent.run_agent(run)

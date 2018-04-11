@@ -1,13 +1,10 @@
-from minecraft_environment import *
+import single_env_agent
+from baselines.common import tf_util as U
+from baselines.ppo1 import mlp_policy, pposgd_simple
+import tensorflow as tf
 
-def train(num_timesteps, seed):
-    env = MinecraftEnv()
+def run(args, env):
     params = {'filename': 'model'}
-    params.update(env.params())
-
-    from baselines.common import tf_util as U
-    from baselines.ppo1 import mlp_policy, pposgd_simple
-    import tensorflow as tf
 
     sess = U.make_session(num_cpu=1)
     sess.__enter__()
@@ -16,7 +13,7 @@ def train(num_timesteps, seed):
             hid_size=64, num_hid_layers=2)
 
     pi = policy_fn('pi', env.observation_space, env.action_space)
-    tf.train.Saver().restore(sess, './tmp/models/'+params['filename'])
+    tf.train.Saver().restore(sess, './tmp/models/'+args.filename)
 
     while True:
         obs = env.reset()
@@ -27,7 +24,8 @@ def train(num_timesteps, seed):
     env.close()
 
 def main():
-    train(num_timesteps=10 ** 5, seed=42)
+    params = {'filename': 'model'}
+    single_env_agent.run_agent(run, params)
 
 if __name__ == '__main__':
     main()

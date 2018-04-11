@@ -1,11 +1,12 @@
-from minecraft_environment import *
+import single_env_agent
 
-env = MinecraftEnv('Follow', 'env')
-env.params()
-
-while True:
-    env.reset()
+def run(args, env):
     while True:
-        _, _, done, _ = env.step(env.action_space.sample())
-        if done:
-            break
+        env.reset()
+        while True:
+            _, _, done, _ = env.step(env.action_space.sample())
+            if done:
+                break
+
+if __name__ == '__main__':
+    single_env_agent.run_agent(run)
