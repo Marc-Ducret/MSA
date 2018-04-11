@@ -59,7 +59,7 @@ public abstract class Environment {
 		applyToActiveAgents((a) -> a.observe());
 		if(done) {
 			applyToInactivAgents((a) -> {
-				if(a.hasAvailableInput()) a.active = true;
+				a.active = true;
 			});
 			reset();
 			applyToActiveAgents((a) -> {

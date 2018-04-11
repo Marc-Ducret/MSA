@@ -82,7 +82,7 @@ class DataOutputStream:
 
     def write_utf(self, string):
         self.stream.write(struct.pack('>H', len(string)))
-        self.stream.write(string)
+        self.stream.write(string.encode('utf-8'))
 
     def write_int(self, val):
         self.stream.write(struct.pack('>i', val))

@@ -23,6 +23,7 @@ public class EnvironmentFollow extends Environment {
 	@Override
 	public void newAgent(Agent a) {
 		super.newAgent(a);
+		done = true;
 	}
 	
 	@Override

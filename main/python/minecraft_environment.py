@@ -1,35 +1,40 @@
-from __future__ import print_function
 import sys
 from data_stream import *
+import socket
 
 import numpy as np
 import gym
 from gym import spaces
 
-def _eprint(*args, file=None, **kwargs):
-    oldprint(*args, file=sys.stderr, **kwargs)
-    sys.stderr.flush()
-
 class MinecraftEnv(gym.Env):
 
-    def __init__(self):
-        self.in_stream  = DataInputStream (sys.stdin .buffer)
-        self.out_stream = DataOutputStream(sys.stdout.buffer)
+    def __init__(self, env_type, env_id=None):
+        self.env_type = env_type
+        self.env_id = env_id
+        sok = socket.create_connection(('localhost', 1337))
+        sok.settimeout(2)
+        self.in_stream  = DataInputStream (sok.makefile(mode='rb'))
+        self.out_stream = DataOutputStream(sok.makefile(mode='wb'))
+
+        self.out_stream.write_utf(env_type)
+        if env_id is None:
+            self.out_stream.write_boolean(True)
+        else:
+            self.out_stream.write_boolean(False)
+            self.out_stream.write_utf(env_id)
+        self.out_stream.flush()
 
         self.observation_dim = self.in_stream.read_int()
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(self.observation_dim,))
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(self.observation_dim,), dtype=np.float32)
         self.action_dim = self.in_stream.read_int()
-        self.action_space = spaces.Box(low=-1, high=1, shape=(self.action_dim,))
+        self.action_space = spaces.Box(low=-1, high=1, shape=(self.action_dim,), dtype=np.float32)
 
         self.reward_range = (-100, 100) ## TODO: get from java
 
         self.num_envs = 1
-        __builtins__['oldprint'] = __builtins__['print']
-        __builtins__['print'] = _eprint
-        sys.stdout = sys.stderr
 
     def params(self):
-        return eval(self.in_stream.read_utf())
+        return {}
 
     def _receive_observation(self):
         return np.array(self.in_stream.read_float_array(self.observation_dim))

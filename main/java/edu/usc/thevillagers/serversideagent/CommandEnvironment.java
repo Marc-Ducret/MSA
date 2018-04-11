@@ -1,13 +1,8 @@
 package edu.usc.thevillagers.serversideagent;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import edu.usc.thevillagers.serversideagent.agent.Agent;
-import edu.usc.thevillagers.serversideagent.agent.EntityAgent;
 import edu.usc.thevillagers.serversideagent.env.Environment;
+import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -16,18 +11,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
 public class CommandEnvironment extends CommandBase {
 	
-	private Map<String, Environment> envs = new HashMap<>();
+	private final EnvironmentManager envManager;
 	
-	public CommandEnvironment() {
-		MinecraftForge.EVENT_BUS.register(this);
+	public CommandEnvironment(EnvironmentManager envManager) {
+		this.envManager = envManager;
 	}
 
 	@Override
@@ -37,7 +27,7 @@ public class CommandEnvironment extends CommandBase {
 
 	@Override
 	public String getUsage(ICommandSender sender) {
-		return "/e <add|remove|agent> <env_id> ...";
+		return "/e <add|remove|player> <env_id> ...";
 	}
 
 	@Override
@@ -51,7 +41,7 @@ public class CommandEnvironment extends CommandBase {
 		
 		switch(args[0]) {
 		case "add":
-			if(envs.containsKey(envId)) throw new CommandException(envId+" already exists");
+			if(envManager.doesEnvExists(envId)) throw new CommandException(envId+" already exists");
 			BlockPos origin;
 			if(args.length > 3)  
 				origin = parseBlockPos(sender, args, 3, false);
@@ -60,44 +50,18 @@ public class CommandEnvironment extends CommandBase {
 			Environment env = createEnvironment(args[2]);
 			env.setOrigin(origin);
 			env.init(world);
-			envs.put(envId, env);
+			envManager.registerEnv(env, envId);
 			break;
 			
 		case "remove":
-			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
-			envs.get(envId).terminate();
-			envs.remove(envId);
-			break;
-			
-		case "agent":
-			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
-			env = envs.get(envId);
-			for(int i = 2; i < args.length; i ++) {
-				String agentStr = args[i];
-				int index = agentStr.indexOf('{');
-				String agentType, params;
-				if(index > 0) {
-					agentType = agentStr.substring(0, index);
-					params = agentStr.substring(index);
-				} else {
-					agentType = agentStr;
-					params = "{}";
-				}
-				String cmd = "python python/agent_"+agentType+".py";
-				Agent a = new Agent(env, new EntityAgent(world, env.name));
-				try {
-					a.startProcess(cmd, params);
-					((EntityAgent) a.entity).spawn(env.getOrigin());
-					env.newAgent(a);
-				} catch (IOException e) {
-					throw new CommandException("Cannot start agent ("+e+")");
-				}
-			}
+			if(!envManager.doesEnvExists(envId)) throw new CommandException(envId+" doesn't exist");
+			envManager.getEnv(envId).terminate();
+			envManager.removeEnv(envId);
 			break;
 			
 		case "player":
-			if(!envs.containsKey(envId)) throw new CommandException(envId+" doesn't exist");
-			env = envs.get(envId);
+			if(!envManager.doesEnvExists(envId)) throw new CommandException(envId+" doesn't exist");
+			env = envManager.getEnv(envId);
 			for(int i = 2; i < args.length; i ++) {
 				EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(args[i]);
 				if(player == null) throw new CommandException("No such player '"+args[i]+"'");
@@ -125,34 +89,4 @@ public class CommandEnvironment extends CommandBase {
 	public int getRequiredPermissionLevel() {
 		return 2;
 	}
-	
-	@SubscribeEvent
-    public void serverTick(ServerTickEvent event) {
-		if(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getWorldTime() % 5 == 0) {
-			tickEnvs(event.phase);
-		}
-    }
-	
-	private void tickEnvs(Phase phase) {
-    	Iterator<Environment> iter = envs.values().iterator();
-		while(iter.hasNext()) {
-			Environment env = iter.next();
-			try {
-				switch(phase) {
-				case START:
-					env.preTick();
-					break;
-				case END:
-					env.postTick();
-					break;
-				default:
-					break;
-				}
-			} catch(Exception e) {
-				env.terminate();
-				iter.remove();
-				System.err.println("Env "+env.name+" terminated ("+e+")");
-			}
-		}
-    }
 }

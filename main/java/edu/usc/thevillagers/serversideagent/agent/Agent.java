@@ -1,14 +1,9 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import edu.usc.thevillagers.serversideagent.env.Environment;
+import edu.usc.thevillagers.serversideagent.request.DataSocket;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
@@ -20,9 +15,7 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 	
 	public final float[] observationVector, actionVector;
 	
-	private Process process;
-	private DataOutputStream pOut;
-	private DataInputStream pIn;
+	private DataSocket sok;
 	
 	public float reward;
 	
@@ -30,39 +23,33 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 	public Object envData;
 	
 	
-	public Agent(Environment env, EntityPlayerMP entity) {
+	public Agent(Environment env, EntityPlayerMP human) {
+		this(env, human, new AgentActionState());
+	}
+	
+	public Agent(Environment env, EntityAgent agent, DataSocket sok) throws IOException {
+		this(env, agent, agent.actionState);
+		this.sok = sok;
+		sok.out.writeInt(env.observationDim);
+		sok.out.writeInt(env.actionDim);
+		sok.out.flush();
+	}
+	
+	public Agent(Environment env, EntityPlayerMP entity, AgentActionState actionState) {
 		this.entity = entity;
 		this.env = env;
 		this.observationVector = new float[env.observationDim];
 		this.actionVector = new float[env.actionDim];
 		this.active = false;
-		this.actionState = entity instanceof EntityAgent ? ((EntityAgent)entity).actionState : new AgentActionState();
-	}
-	
-	public void startProcess(String cmd, String params) throws IOException {
-		process = Runtime.getRuntime().exec(cmd);
-		pOut = new DataOutputStream(new BufferedOutputStream(process.getOutputStream()));
-		pIn = new DataInputStream(new BufferedInputStream(process.getInputStream()));
-		new Thread(() -> {
-			BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			String line;
-			try {
-				while((line = err.readLine()) != null)
-					System.out.println(line);
-			} catch (IOException e) {
-			}
-			System.out.println("Process "+cmd+" terminated");
-		}).start();
-		
-		pOut.writeInt(env.observationDim);
-		pOut.writeInt(env.actionDim);
-		pOut.writeUTF(params);
-		pOut.flush();
+		this.actionState = actionState;
+		this.sok = null;
 	}
 	
 	public void terminate() {
-		if(process != null && process.isAlive()) 
-			process.destroy();
+		if(sok != null && !sok.socket.isClosed()) 
+			try {
+				sok.socket.close();
+			} catch(Exception e) {}
 		if(entity instanceof EntityAgent) 
 			((EntityAgent) entity).remove();
 	}
@@ -70,45 +57,40 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 	private void sendObservation() throws IOException {
 		env.encodeObservation(this, observationVector);
 		for(float f : observationVector)
-			pOut.writeFloat(f);
+			sok.out.writeFloat(f);
 	}
 	
 	public void observe() throws IOException {
-		if(process == null) return;
+		if(sok == null) return;
 		sendObservation();
-		pOut.writeFloat(reward);
-		pOut.writeBoolean(env.done);
-		pOut.flush();
+		sok.out.writeFloat(reward);
+		sok.out.writeBoolean(env.done);
+		sok.out.flush();
 	}
 	
 	public void observeNoReward() throws IOException {
-		if(process == null) return;
+		if(sok == null) return;
 		sendObservation();
-		pOut.flush();
+		sok.out.flush();
 	}
 	
 	public void act() throws Exception {
-		if(process == null) return;
+		if(sok == null) return;
 		if(entity.isDead) throw new Exception("is dead");
 		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("waitPython");
 		for(int i = 0; i < env.actionDim; i++)
-			actionVector[i] = pIn.readFloat();
+			actionVector[i] = sok.in.readFloat();
 		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 		env.decodeAction(this, actionVector);
 	}
 	
 	public void sync(int code) throws Exception {
-		if(process == null) return;
+		if(sok == null) return;
 		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("waitPython");
-		if(pIn.readInt() != code) {
+		if(sok.in.readInt() != code) {
 			FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
-			throw new Exception("Expected reset code 0x13371337");
+			throw new Exception("Expected sync code");
 		}
 		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
-	}
-	
-	public boolean hasAvailableInput() throws IOException {
-		if(process == null) return true;
-		return pIn.available() > 0;
 	}
 }

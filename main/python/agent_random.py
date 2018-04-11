@@ -1,6 +1,6 @@
 from minecraft_environment import *
 
-env = MinecraftEnv()
+env = MinecraftEnv('Follow', 'env')
 env.params()
 
 while True:
