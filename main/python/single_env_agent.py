@@ -12,6 +12,6 @@ def run_agent(run, params={}):
     parser.add_argument('env_type', action='store')
     params.update({'env_id': None})
     for par, default in params.items():
-        parser.add_argument('--'+par, action='store', default=default)
+        parser.add_argument('--'+par, action='store', default=default, type=type(default))
 
     _run(parser.parse_args(), run)
