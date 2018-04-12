@@ -5,7 +5,7 @@ from baselines import logger
 import tensorflow as tf
 
 def train(args, env):
-    logger.configure('./tmp/logs/', ['tensorboard'])
+    logger.configure('./tmp/logs/', ['tensorboard', 'stdout'])
 
     sess = U.make_session(num_cpu=1)
     sess.__enter__()

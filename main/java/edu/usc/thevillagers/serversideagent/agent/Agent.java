@@ -82,6 +82,7 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 			actionVector[i] = sok.in.readFloat();
 		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 		env.decodeAction(this, actionVector);
+		actionState.clamp();
 	}
 	
 	public void sync(int code) throws Exception {

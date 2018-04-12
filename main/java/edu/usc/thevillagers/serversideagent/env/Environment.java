@@ -70,7 +70,7 @@ public abstract class Environment {
 			});
 			reset();
 			applyToActiveAgents((a) -> {
-				a.sync(0x13371337);
+//				a.sync(0x13371337);
 				a.observeNoReward();
 			});
 		}

@@ -8,8 +8,8 @@ import net.minecraft.world.World;
 
 public class AllocatorEmptySpace implements Allocator {
 	
-	private static final int SAMPLES = 15;
-	private static final BlockPos SAMPLE_MIN = new BlockPos(-200, 10, -200), SAMPLE_MAX = new BlockPos(200, 200, 200);
+	private static final int SAMPLES = 30;
+	private static final BlockPos SAMPLE_MIN = new BlockPos(-0, 10, -0), SAMPLE_MAX = new BlockPos(0, 200, 0);
 	
 	private final BlockPos min, max;
 	

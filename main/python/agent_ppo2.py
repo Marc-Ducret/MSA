@@ -1,27 +1,76 @@
 from minecraft_environment import *
+from baselines.common import set_global_seeds
+from baselines.ppo2 import ppo2
+from baselines.ppo2.policies import MlpPolicy
+import concurrent.futures
+import gym
+import tensorflow as tf
 
-def train(num_timesteps, seed):
-    env = MinecraftEnv()
+from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
+from baselines.common.vec_env.vec_normalize import VecNormalize
 
-    from baselines.common import tf_util as U
-    from baselines.ppo1 import mlp_policy, pposgd_simple
+class _ParEnv:
 
-    U.make_session(num_cpu=1).__enter__()
-    def policy_fn(name, ob_space, ac_space):
-        return mlp_policy.MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
-            hid_size=64, num_hid_layers=2)
+    def __init__(self, env_type, num):
+        self.envs = [MinecraftEnv(env_type) for _ in range(num)]
+        for e in self.envs:
+            e.init_spaces()
+        self.num_envs = num
+        self.observation_space = self.envs[0].observation_space
+        self.action_space = self.envs[0].action_space
 
-    pposgd_simple.learn(env, policy_fn,
-            max_timesteps=num_timesteps,
-            timesteps_per_actorbatch=1000,
-            clip_param=0.2, entcoeff=0.01,
-            optim_epochs=8, optim_stepsize=1e-3, optim_batchsize=64,
-            gamma=0.99, lam=0.95, schedule='constant',
-        )
+        self.buf_obs = np.zeros((self.num_envs,) + tuple(self.observation_space.shape), self.observation_space.dtype)
+        self.buf_done = np.zeros((self.num_envs,), dtype=np.bool)
+        self.buf_reward = np.zeros((self.num_envs,), dtype=np.float32)
+        self.buf_info = [{} for _ in range(self.num_envs)]
+
+    def step(self, actions):
+        def step_env(env, action, i):
+            ob, reward, done, info = env.step(action)
+            if done:
+                ob = env.reset()
+            return ob, reward / 100, done, info, i
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for obs, reward, done, info, i in executor.map(
+                                    lambda i: step_env(self.envs[i], actions[i], i),
+                                    range(self.num_envs)):
+                self.buf_obs[i] = obs
+                self.buf_reward[i] = reward
+                self.buf_done[i] = done
+                self.buf_info[i] = info
+        return self.buf_obs, self.buf_reward, self.buf_done, self.buf_info
+
+    def reset(self):
+        return [e.reset() for e in self.envs]
+
+    def close(self):
+        for e in self.envs:
+            e.close()
+
+def train(env_type):
+    N = 1
+    env = _ParEnv(env_type, N)
+
+    ncpu = 4
+    config = tf.ConfigProto(allow_soft_placement=True,
+                            intra_op_parallelism_threads=ncpu,
+                            inter_op_parallelism_threads=ncpu)
+    tf.Session(config=config).__enter__()
+
+    set_global_seeds(42)
+    policy = MlpPolicy
+    ppo2.learn(policy=policy, env=env, nsteps=2048, nminibatches=64,
+        lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
+        ent_coef=0.0,
+        lr=lambda t: 3e-4,
+        cliprange=0.2,
+        total_timesteps=10 ** 6, vf_coef=.5)
+
     env.close()
 
 def main():
-    train(num_timesteps=10 ** 8, seed=42)
+    train('ParkourRandom')
 
 if __name__ == '__main__':
     main()

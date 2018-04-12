@@ -44,13 +44,13 @@ public class RequestManager {
 	}
 	
 	private void newSocket(DataSocket sok) throws Exception {
-		sok.socket.setSoTimeout(1000);
+		sok.socket.setSoTimeout(5000);
 		String envClassName = sok.in.readUTF();
 		Class<?> envClass = envManager.findEnvClass(envClassName);
 		String envId = sok.in.readBoolean() ? null : sok.in.readUTF();
 		synchronized(requests) {
 			requests.add(new Request(envClass, envId, sok));
-			System.out.println("Received request ["+envClass+" "+envId+"]");
+			System.out.println("Received request ["+envClass.getSimpleName()+" "+envId+"]");
 			lastRequestTime = System.currentTimeMillis();
 		}
 	}
@@ -63,7 +63,8 @@ public class RequestManager {
     public void serverTick(ServerTickEvent event) {
 		if(event.phase == Phase.START) {
 			synchronized(requests) {
-				if(System.currentTimeMillis() - lastRequestTime > 100) {
+				if(System.currentTimeMillis() - lastRequestTime > 100 && !requests.isEmpty()) {
+					System.out.println("Processing "+requests.size()+" requests");
 					while(!requests.isEmpty())
 						processRequest(requests.remove(0));
 				}

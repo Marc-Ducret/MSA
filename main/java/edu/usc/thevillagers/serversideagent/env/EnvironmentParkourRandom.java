@@ -21,22 +21,23 @@ public class EnvironmentParkourRandom extends EnvironmentParkour {
 	}
 
 	private void generate() {
+		int updateFlag = 3;
 		for(int z = 0; z <= length; z++) {
 			for(int x =- width; x <= width; x++) {
-				world.setBlockState(ref.add(x, -1, z), Blocks.AIR.getDefaultState());
+				world.setBlockState(ref.add(x, -1, z), Blocks.AIR.getDefaultState(), updateFlag);
 			}
 		}
-		world.setBlockState(ref.down(), Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.CYAN));
+		world.setBlockState(ref.down(), Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.CYAN), updateFlag);
 		BlockPos pos = ref.add(0, -1, 1);
-		int blocks = length + world.rand.nextInt(2 * width);
+		int blocks = length;
 		EnumFacing[] dirs = new EnumFacing[] {EnumFacing.EAST, EnumFacing.WEST, EnumFacing.SOUTH};
 		for(int i = 0; i < blocks; i ++) {
-			world.setBlockState(pos, Blocks.CONCRETE.getDefaultState());
+			world.setBlockState(pos, Blocks.STAINED_GLASS.getDefaultState(), updateFlag);
 			EnumFacing dir = dirs[world.rand.nextInt(dirs.length)];
 			BlockPos p = pos.offset(dir);
 			if(p.getX() >= ref.getX() - width && p.getX() <= ref.getX() + width && p.getZ() > ref.getZ() && p.getZ() <= ref.getZ() + length)
 				pos = p;
 		}
-		world.setBlockState(pos, Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.LIME));
+		world.setBlockState(pos, Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.LIME), updateFlag);
 	}
 }

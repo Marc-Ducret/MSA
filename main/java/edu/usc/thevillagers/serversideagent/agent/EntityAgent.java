@@ -21,8 +21,9 @@ public class EntityAgent extends EntityPlayerMP {
 	public final AgentActionState actionState;
 	
 	public EntityAgent(WorldServer world, String name) {
+		
 		super(FMLCommonHandler.instance().getMinecraftServerInstance(), world, 
-				new GameProfile(new UUID(world.rand.nextLong(), world.rand.nextLong()), name), new PlayerInteractionManager(world));
+				new GameProfile(UUID.randomUUID(), name), new PlayerInteractionManager(world));
 		actionState = new AgentActionState();
 	}
 	

@@ -37,7 +37,7 @@ public class EnvironmentParkourJump extends Environment {
 	}
 
 	private int encode(IBlockState b) {
-		if(b.getBlock() != Blocks.CONCRETE) return -1;
+		if(b.getBlock() != Blocks.STAINED_GLASS) return -1;
 		EnumDyeColor color = b.getValue(BlockColored.COLOR);
 		switch(color) {
 		case LIME:
@@ -74,7 +74,7 @@ public class EnvironmentParkourJump extends Environment {
 		if(agent.entity.posY < ref.getY() - .01F || time >= 100) {
 			agent.reward = 10 * dz;
 			done = true;
-		} else if(b.getBlock() == Blocks.CONCRETE && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
+		} else if(b.getBlock() == Blocks.STAINED_GLASS && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
 			agent.reward = 100;
 			done = true;
 		} else {
@@ -98,12 +98,12 @@ public class EnvironmentParkourJump extends Environment {
 		int blocks = length + world.rand.nextInt(2 * width);
 		EnumFacing[] dirs = new EnumFacing[] {EnumFacing.EAST, EnumFacing.WEST, EnumFacing.SOUTH};
 		for(int i = 0; i < blocks; i ++) {
-			if(i % 2 == 0) world.setBlockState(pos, Blocks.CONCRETE.getDefaultState());
+			if(i % 2 == 0) world.setBlockState(pos, Blocks.STAINED_GLASS.getDefaultState());
 			EnumFacing dir = dirs[world.rand.nextInt(dirs.length)];
 			BlockPos p = pos.offset(dir);
 			if(p.getX() >= ref.getX() - width && p.getX() <= ref.getX() + width && p.getZ() > ref.getZ() && p.getZ() <= ref.getZ() + length)
 				pos = p;
 		}
-		world.setBlockState(pos, Blocks.CONCRETE.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.LIME));
+		world.setBlockState(pos, Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.LIME));
 	}
 }

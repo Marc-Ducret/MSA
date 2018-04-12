@@ -36,7 +36,7 @@ public class EnvironmentParkour extends Environment {
 	}
 
 	private int encode(IBlockState b) {
-		if(b.getBlock() != Blocks.CONCRETE) return -1;
+		if(b.getBlock() != Blocks.STAINED_GLASS) return -1;
 		EnumDyeColor color = b.getValue(BlockColored.COLOR);
 		switch(color) {
 		case LIME:
@@ -71,7 +71,7 @@ public class EnvironmentParkour extends Environment {
 		if(agent.entity.posY < ref.getY() - .01F || time >= 100) {
 			agent.reward = 10 * dz;
 			done = true;
-		} else if(b.getBlock() == Blocks.CONCRETE && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
+		} else if(b.getBlock() == Blocks.STAINED_GLASS && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
 			agent.reward = 100;
 			done = true;
 		} else {

@@ -3,6 +3,7 @@ import argparse
 
 def _run(args, run):
     env = MinecraftEnv(args.env_type, args.env_id)
+    env.init_spaces()
     run(args, env)
     env.close()
 
