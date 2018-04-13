@@ -138,7 +138,7 @@ public abstract class Environment {
 		return true;
 	}
 	
-	private static interface AgentApplication { 
+	protected static interface AgentApplication { 
 		void apply(Agent a) throws Exception; 
 	}
 	
