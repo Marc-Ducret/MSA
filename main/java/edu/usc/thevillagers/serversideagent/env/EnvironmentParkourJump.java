@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -28,6 +29,7 @@ public class EnvironmentParkourJump extends Environment {
 		this.sightWidth = sightDist * 2 + 1;
 		this.width = width;
 		this.length = length;
+		allocator = new AllocatorEmptySpace(new BlockPos(-width-1, -1, -2), new BlockPos(width+1, 2, length+1));
 	}
 	
 	@Override
@@ -41,9 +43,9 @@ public class EnvironmentParkourJump extends Environment {
 		EnumDyeColor color = b.getValue(BlockColored.COLOR);
 		switch(color) {
 		case LIME:
-			return 1;
+			return 10;
 		default:
-			return 0;
+			return 1;
 		}
 	}
 

@@ -40,9 +40,9 @@ public class EnvironmentParkour extends Environment {
 		EnumDyeColor color = b.getValue(BlockColored.COLOR);
 		switch(color) {
 		case LIME:
-			return 1;
+			return 10;
 		default:
-			return 0;
+			return 1;
 		}
 	}
 
