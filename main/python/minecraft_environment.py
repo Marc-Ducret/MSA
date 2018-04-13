@@ -8,7 +8,7 @@ from gym import spaces
 
 class MinecraftEnv(gym.Env):
 
-    def __init__(self, env_type, env_id=None):
+    def __init__(self, env_type, env_id=""):
         self.env_type = env_type
         self.env_id = env_id
         self.sok = socket.create_connection(('localhost', 1337))
@@ -17,7 +17,7 @@ class MinecraftEnv(gym.Env):
         self.out_stream = DataOutputStream(self.sok.makefile(mode='wb'))
 
         self.out_stream.write_utf(env_type)
-        if env_id is None:
+        if env_id == "":
             self.out_stream.write_boolean(True)
         else:
             self.out_stream.write_boolean(False)
