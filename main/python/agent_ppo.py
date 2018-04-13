@@ -1,12 +1,9 @@
 import single_env_agent
 from baselines.common import tf_util as U
 from baselines.ppo1 import mlp_policy, pposgd_simple
-from baselines import logger
 import tensorflow as tf
 
 def train(args, env):
-    logger.configure('./tmp/logs/', ['tensorboard', 'stdout'])
-
     sess = U.make_session(num_cpu=1)
     sess.__enter__()
     def policy_fn(name, ob_space, ac_space):

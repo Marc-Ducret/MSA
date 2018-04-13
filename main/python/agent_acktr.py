@@ -1,5 +1,4 @@
 import tensorflow as tf
-from baselines import logger
 from baselines.acktr.acktr_cont import learn
 from baselines.acktr.policies import GaussianMlpPolicy
 from baselines.acktr.value_functions import NeuralNetValueFunction
@@ -9,7 +8,6 @@ from argparse import Namespace
 def train(args, env):
     env.spec = Namespace()
     env.spec.timestep_limit = 1000
-    logger.configure('./tmp/logs/', ['tensorboard', 'stdout'])
 
     with tf.Session(config=tf.ConfigProto()):
         ob_dim = env.observation_space.shape[0]
