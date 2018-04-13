@@ -21,8 +21,6 @@ def run(args, env):
         while not done:
             obs, _, done, _ = env.step(pi.act(True, obs)[0])
 
-    env.close()
-
 def main():
     params = {'filename': 'model'}
     single_env_agent.run_agent(run, params)
