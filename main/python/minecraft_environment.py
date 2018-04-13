@@ -55,8 +55,14 @@ class MinecraftEnv(gym.Env):
         self.out_stream.flush()
 
     def step(self, action):
+        self.step_action()
+        return self.step_result()
+
+    def step_act(self, action):
         action = action.reshape((self.action_dim,))
         self._send_action(action)
+
+    def step_result(self):
         obs, rew, done, info = self._receive_observation(), self._receive_reward(), self._receive_done(), {}
         self.ep_len += 1
         self.ep_rew += rew

@@ -25,20 +25,18 @@ class _ParEnv:
         self.buf_info = [{} for _ in range(self.num_envs)]
 
     def step(self, actions):
-        def step_env(env, action, i):
-            ob, reward, done, info = env.step(action)
-            if done:
-                ob = env.reset()
-            return ob, reward / 100, done, info, i
+        for i in range(self.num_envs):
+            self.envs[i].step_act(actions[i])
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            for obs, reward, done, info, i in executor.map(
-                                    lambda i: step_env(self.envs[i], actions[i], i),
-                                    range(self.num_envs)):
-                self.buf_obs[i] = obs
-                self.buf_reward[i] = reward
-                self.buf_done[i] = done
-                self.buf_info[i] = info
+        for i in range(self.num_envs):
+            obs, reward, done, info = self.envs[i].step_result()
+            if done:
+                obs = self.envs[i].reset()
+            self.buf_obs[i] = obs
+            self.buf_reward[i] = reward
+            self.buf_done[i] = done
+            self.buf_info[i] = info
+
         return self.buf_obs, self.buf_reward, self.buf_done, self.buf_info
 
     def reset(self):
@@ -49,7 +47,7 @@ class _ParEnv:
             e.close()
 
 def train(env_type):
-    N = 1
+    N = 16
     env = _ParEnv(env_type, N)
 
     ncpu = 4
@@ -60,10 +58,10 @@ def train(env_type):
 
     set_global_seeds(42)
     policy = MlpPolicy
-    ppo2.learn(policy=policy, env=env, nsteps=2048, nminibatches=64,
-        lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
-        ent_coef=0.0,
-        lr=lambda t: 3e-4,
+    ppo2.learn(policy=policy, env=env, nsteps=256, nminibatches=64,
+        lam=0.95, gamma=0.99, noptepochs=4, log_interval=1,
+        ent_coef=-0.0005,
+        lr=lambda t: 1e-4 * t,
         cliprange=0.2,
         total_timesteps=10 ** 6, vf_coef=.5)
 
