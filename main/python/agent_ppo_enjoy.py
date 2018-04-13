@@ -18,8 +18,11 @@ def run(args, env):
     while True:
         obs = env.reset()
         done = False
+        total_reward = 0
         while not done:
-            obs, _, done, _ = env.step(pi.act(True, obs)[0])
+            obs, rew, done, _ = env.step(pi.act(True, obs)[0])
+            total_reward += rew
+        print('Episode done with reward:', total_reward)
 
 def main():
     params = {'filename': 'model'}
