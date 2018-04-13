@@ -30,6 +30,7 @@ public class Agent { //TODO extract Actor superclass and extend it as Agent and 
 	public Agent(Environment env, EntityAgent agent, DataSocket sok) throws IOException {
 		this(env, agent, agent.actionState);
 		this.sok = sok;
+		sok.out.writeUTF(env.id);
 		sok.out.writeInt(env.observationDim);
 		sok.out.writeInt(env.actionDim);
 		sok.out.flush();

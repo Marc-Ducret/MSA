@@ -11,10 +11,10 @@ class MinecraftEnv(gym.Env):
     def __init__(self, env_type, env_id=None):
         self.env_type = env_type
         self.env_id = env_id
-        sok = socket.create_connection(('localhost', 1337))
-        sok.settimeout(5)
-        self.in_stream  = DataInputStream (sok.makefile(mode='rb'))
-        self.out_stream = DataOutputStream(sok.makefile(mode='wb'))
+        self.sok = socket.create_connection(('localhost', 1337))
+        self.sok.settimeout(5)
+        self.in_stream  = DataInputStream (self.sok.makefile(mode='rb'))
+        self.out_stream = DataOutputStream(self.sok.makefile(mode='wb'))
 
         self.out_stream.write_utf(env_type)
         if env_id is None:
@@ -30,6 +30,7 @@ class MinecraftEnv(gym.Env):
         self.ep_rew = 0
 
     def init_spaces(self):
+        self.env_id = self.in_stream.read_utf()
         self.observation_dim = self.in_stream.read_int()
         self.observation_space = spaces.Box(low=-1, high=1, shape=(self.observation_dim,), dtype=np.float32)
         self.action_dim = self.in_stream.read_int()
@@ -69,3 +70,6 @@ class MinecraftEnv(gym.Env):
         #self.out_stream.write_int(0x13371337)
         #self.out_stream.flush()
         return self._receive_observation()
+
+    def close(self):
+        self.sok.close()

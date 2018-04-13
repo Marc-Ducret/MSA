@@ -44,7 +44,7 @@ public class RequestManager {
 	}
 	
 	private void newSocket(DataSocket sok) throws Exception {
-		sok.socket.setSoTimeout(5000);
+		sok.socket.setSoTimeout(3000);
 		String envClassName = sok.in.readUTF();
 		Class<?> envClass = envManager.findEnvClass(envClassName);
 		String envId = sok.in.readBoolean() ? null : sok.in.readUTF();
