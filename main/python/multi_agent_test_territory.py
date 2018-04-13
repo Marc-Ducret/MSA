@@ -1,7 +1,10 @@
 from minecraft_environment import *
 import concurrent.futures
+import sys
 
-N = 40
+N = 5
+if len(sys.argv) > 1:
+    N = int(sys.argv[1])
 
 dummy = MinecraftEnv('Territory')
 dummy.init_spaces()
@@ -12,14 +15,9 @@ for env in envs:
     env.init_spaces()
 
 while True:
-    def step_env(env, action, i):
-        ob, reward, done, info = env.step(action)
+    for env in envs:
+        env.step_act(env.action_space.sample())
+    for env in envs:
+        ob, reward, done, info = env.step_result()
         if done:
             ob = env.reset()
-        return ob, reward, done, info, i
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        for obs, reward, done, info, i in executor.map(
-                                lambda i: step_env(envs[i], envs[i].action_space.sample(), i),
-                                range(N)):
-            pass

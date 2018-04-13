@@ -5,9 +5,7 @@ import java.util.UUID;
 import com.mojang.authlib.GameProfile;
 
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NetHandlerPlayServer;
-import net.minecraft.network.NetworkManager;
 import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockPos;
@@ -29,7 +27,7 @@ public class EntityAgent extends EntityPlayerMP {
 	
 	public void spawn(BlockPos pos) {
 		this.setPosition(pos.getX() + .5, pos.getY() + 1, pos.getZ() + .5);
-		this.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new NetworkManager(EnumPacketDirection.SERVERBOUND), this);
+		this.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new DummyNetworkManager(), this);
 		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().playerLoggedIn(this);
 	}
 	
