@@ -11,7 +11,7 @@ public class EnvironmentParkourRandom extends EnvironmentParkour {
 	
 	public EnvironmentParkourRandom() {
 		super(5, 5, 15);
-		allocator = new AllocatorEmptySpace(new BlockPos(-width-1, -2, -2), new BlockPos(width+1, 2, length+1));
+		allocator = new AllocatorEmptySpace(new BlockPos(-width-1, -1, -2), new BlockPos(width+1, 2, length+1));
 	}
 	
 	@Override
