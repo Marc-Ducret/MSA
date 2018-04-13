@@ -55,7 +55,7 @@ class MinecraftEnv(gym.Env):
         self.out_stream.flush()
 
     def step(self, action):
-        self.step_action()
+        self.step_act(action)
         return self.step_result()
 
     def step_act(self, action):
