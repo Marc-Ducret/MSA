@@ -13,6 +13,8 @@ import net.minecraft.world.WorldServer;
 
 public abstract class Environment {
 	
+	public long emptyTime = 0;
+	
 	public final String name;
 	public String id;
 	public final int observationDim, actionDim;
@@ -29,7 +31,7 @@ public abstract class Environment {
 	public boolean done;
 	public int time;
 	
-	public Environment(int stateDim, int actionDim) { //TODO extract name from class name? (to mirror /e behaviour)
+	public Environment(int stateDim, int actionDim) {
 		this.name = getClass().getSimpleName().replaceFirst("Environment", "");
 		this.observationDim = stateDim;
 		this.actionDim = actionDim;

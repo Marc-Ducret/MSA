@@ -22,7 +22,7 @@ public class EnvironmentTerritory extends Environment {
 	protected BlockPos ref;
 	
 	public EnvironmentTerritory() {
-		this(5, 4);
+		this(5, 8);
 	}
 
 	public EnvironmentTerritory(int sightDist, int size) {
@@ -151,8 +151,8 @@ public class EnvironmentTerritory extends Environment {
 		int[] buildCd = (int[]) agent.envData;
 		if(buildCd[0] > 0)
 			buildCd[0]--;
-		else if(agent.actionVector[4] > .5) {
-			buildCd[0] = 2;
+		else if(agent.actionVector[4] > .9F) {
+			buildCd[0] = 0;
 			BlockPos p = agent.entity.getPosition().offset(agent.entity.getHorizontalFacing());
 			if(world.getBlockState(p).getBlock() == Blocks.AIR) {
 				world.setBlockState(p, Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.RED));
