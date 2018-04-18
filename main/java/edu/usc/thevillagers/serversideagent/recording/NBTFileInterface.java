@@ -1,6 +1,12 @@
 package edu.usc.thevillagers.serversideagent.recording;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import net.minecraft.nbt.CompressedStreamTools;
@@ -19,14 +25,29 @@ public abstract class NBTFileInterface<T> extends FileInterface {
 
 	@Override
 	public final void write() throws IOException {
-		NBTTagCompound compound = new NBTTagCompound();
-		writeNBT(compound);
-		CompressedStreamTools.write(compound, file);
+		
+		DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+		try {
+			NBTTagCompound compound = new NBTTagCompound();
+			writeNBT(compound);
+			CompressedStreamTools.write(compound, stream);
+		} finally {
+			stream.close();
+		}
+		
+		
+		
 	}
 
 	@Override
 	public final void read() throws IOException {
-		readNBT(CompressedStreamTools.read(file));
+		DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+		try {
+			NBTTagCompound comp = CompressedStreamTools.read(stream);
+			readNBT(comp);
+		} finally {
+			stream.close();
+		}
 	}
 
 	@Override

@@ -99,7 +99,8 @@ public class WorldRecord {
 	}
 	
 	public void recordEvent(RecordEvent event) {
-		currentTickEvents.add(event);
+		if(currentTickEvents != null)
+			currentTickEvents.add(event);
 	}
 	
 	private void recordEntities() {
