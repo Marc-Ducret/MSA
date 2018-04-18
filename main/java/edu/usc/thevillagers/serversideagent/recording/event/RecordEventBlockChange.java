@@ -1,5 +1,7 @@
-package edu.usc.thevillagers.serversideagent.recording;
+package edu.usc.thevillagers.serversideagent.recording.event;
 
+import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
@@ -7,8 +9,8 @@ import net.minecraft.util.math.BlockPos;
 
 public class RecordEventBlockChange extends RecordEvent {
 	
-	public BlockPos pos;
-	public IBlockState state;
+	private BlockPos pos;
+	private IBlockState state;
 	
 	public RecordEventBlockChange() {
 	}

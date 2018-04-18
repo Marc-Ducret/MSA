@@ -2,8 +2,8 @@ package edu.usc.thevillagers.serversideagent;
 
 import java.util.List;
 
-import edu.usc.thevillagers.serversideagent.recording.RecordEventBlockChange;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.event.RecordEventBlockChange;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;

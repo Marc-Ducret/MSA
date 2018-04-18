@@ -1,5 +1,6 @@
-package edu.usc.thevillagers.serversideagent.recording;
+package edu.usc.thevillagers.serversideagent.recording.event;
 
+import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
 import net.minecraft.nbt.NBTTagCompound;
 
 public abstract class RecordEvent {
@@ -9,7 +10,10 @@ public abstract class RecordEvent {
 	public abstract void read(NBTTagCompound compound);
 	
 	private static final Class<?>[] classes = new Class<?>[] {
-		RecordEventBlockChange.class
+		RecordEventBlockChange.class,
+		RecordEventEntitySpawn.class,
+		RecordEventEntityUpdate.class,
+		RecordEventEntityDie.class
 	};
 	
 	public static Class<?> getClassFromId(int id) {

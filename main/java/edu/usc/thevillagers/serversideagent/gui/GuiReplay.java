@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.gui;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -8,17 +9,18 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
 import edu.usc.thevillagers.serversideagent.recording.ChangeSet;
-import edu.usc.thevillagers.serversideagent.recording.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
 import edu.usc.thevillagers.serversideagent.recording.Snapshot;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -46,11 +48,21 @@ public class GuiReplay extends GuiScreen {
 			changeSet.read();
 			
 			camPos = new Vec3d(record.from.add(record.to)).scale(.5);
-			
-			Mouse.setGrabbed(true);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	@Override
+	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+		super.mouseClicked(mouseX, mouseY, mouseButton);
+		Mouse.setGrabbed(mouseButton == 0);
+	}
+	
+	@Override
+	public void onGuiClosed() {
+		super.onGuiClosed();
+		Mouse.setGrabbed(false);
 	}
 	
 	@Override
@@ -68,15 +80,18 @@ public class GuiReplay extends GuiScreen {
 		prevCamYaw = camYaw;
 		prevCamPitch = camPitch;
 		
-		camPos = camPos.add(move.rotateYaw((float)Math.toRadians(-camYaw)).scale(.5));
-		
-		camYaw += Mouse.getDX() * .2;
-		camPitch += Mouse.getDY() * .2;
+		if(Mouse.isGrabbed()) {
+			camPos = camPos.add(move.rotateYaw((float)Math.toRadians(-camYaw)).scale(.5));
+			
+			camYaw += Mouse.getDX() * .2;
+			camPitch += Mouse.getDY() * .2;
+		}
 		
 		if(!changeSet.data.isEmpty())
 			for(RecordEvent e : changeSet.data.remove(0)) {
 				e.replay(record);
 			}
+		record.endReplayTick();
 	}
 	
 	@Override
@@ -97,11 +112,10 @@ public class GuiReplay extends GuiScreen {
 	        GlStateManager.translate(0, 0.0F, 0F);
 	        
             GlStateManager.enableDepth();
-            RenderHelper.disableStandardItemLighting();
-            this.mc.entityRenderer.enableLightmap(); 
-            GlStateManager.shadeModel(7425);
+            this.mc.entityRenderer.enableLightmap();
             GlStateManager.enableAlpha();
             GlStateManager.enableBlend();
+            
             mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 			
 			BufferBuilder buffer = Tessellator.getInstance().getBuffer();
@@ -121,7 +135,12 @@ public class GuiReplay extends GuiScreen {
 			}
 			Tessellator.getInstance().draw();
 			
+			this.mc.entityRenderer.disableLightmap();
+			for(Entity e : record.getReplayWorld().getEntities())
+				if(!(e instanceof EntityPlayer)) mc.getRenderManager().renderEntityStatic(e, partialTicks, true);
+			
 			GlStateManager.popMatrix();
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
