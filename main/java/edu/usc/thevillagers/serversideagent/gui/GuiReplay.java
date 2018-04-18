@@ -13,6 +13,8 @@ import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
 import edu.usc.thevillagers.serversideagent.recording.Snapshot;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -23,6 +25,7 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -93,6 +96,8 @@ public class GuiReplay extends GuiScreen {
 				e.replay(record);
 			}
 		record.endReplayTick();
+		
+		mc.getTextureMapBlocks().tick();
 	}
 	
 	private void setupCamera(float partialTicks) {
@@ -123,16 +128,22 @@ public class GuiReplay extends GuiScreen {
         
         mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 		
+		renderBlocksPass(world, EnumBlockRenderType.MODEL);
+		renderBlocksPass(world, EnumBlockRenderType.LIQUID);
+	}
+	
+	private void renderBlocksPass(ReplayWorldAccess world, EnumBlockRenderType type) {
 		BufferBuilder buffer = Tessellator.getInstance().getBuffer();
 		buffer.begin(7, DefaultVertexFormats.BLOCK);
 		buffer.setTranslation(0, 0, 0);
-		buffer.noColor();
-		
-		
+		if(type == EnumBlockRenderType.MODEL) buffer.noColor();
 		
 		for(BlockPos p : BlockPos.getAllInBoxMutable(record.from, record.to)) {
-			mc.getBlockRendererDispatcher().renderBlock(world.getBlockState(p), p, world, Tessellator.getInstance().getBuffer());
+			IBlockState state = world.getBlockState(p);
+			if(state.getRenderType() == type)
+				mc.getBlockRendererDispatcher().renderBlock(state, p, world, buffer);
 		}
+		
 		Tessellator.getInstance().draw();
 	}
 	
