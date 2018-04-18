@@ -14,7 +14,6 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntitySpa
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntityUpdate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
-import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -71,12 +70,12 @@ public class WorldRecord {
 		comp.setTag("To"  , NBTUtil.createPosTag(to  ));
 		comp.setInteger("SnapshotLenght", snapshotLenght);
 		comp.setInteger("Duration", duration);
-		CompressedStreamTools.write(comp, infoFile);
+		NBTFileInterface.writeToFile(comp, infoFile);
 	}
 	
 	public void readInfo() throws IOException {
 		File infoFile = new File(saveFolder, "record.info");
-		NBTTagCompound comp = CompressedStreamTools.read(infoFile);
+		NBTTagCompound comp = NBTFileInterface.readFromFile(infoFile);
 		from = NBTUtil.getPosFromTag(comp.getCompoundTag("From"));
 		to   = NBTUtil.getPosFromTag(comp.getCompoundTag("To"  ));
 		snapshotLenght = comp.getInteger("SnapshotLenght");
@@ -84,17 +83,23 @@ public class WorldRecord {
 		world = new ReplayWorldAccess(from, to);
 	}
 	
+	public void startRecord() {
+		entitiesData = computeEntitiesData((World) world);
+	}
+	
+	private void newSnapshot() throws IOException {
+		writeInfo();
+		Snapshot snapshot = new Snapshot(new File(saveFolder, currentTick / snapshotLenght + ".snapshot"));
+		snapshot.setDataFromWorld(this);
+		snapshot.write();
+		if(currentChangeSet != null)
+			currentChangeSet.write();
+		currentChangeSet = new ChangeSet(new File(saveFolder, currentTick / snapshotLenght + ".changeset"));
+		currentChangeSet.resetEventList();
+	}
+	
 	public void startRecordTick() throws IOException {
-		if(currentTick % snapshotLenght == 0) {
-			writeInfo();
-			Snapshot snapshot = new Snapshot(new File(saveFolder, currentTick / snapshotLenght + ".snapshot"));
-			snapshot.setDataFromWorld(world, from, to);
-			snapshot.write();
-			if(currentChangeSet != null)
-				currentChangeSet.write();
-			currentChangeSet = new ChangeSet(new File(saveFolder, currentTick / snapshotLenght + ".changeset"));
-			currentChangeSet.resetEventList();
-		}
+		if(currentTick % snapshotLenght == 0) newSnapshot();
 		currentTickEvents = new ArrayList<>();
 	}
 	
@@ -103,12 +108,17 @@ public class WorldRecord {
 			currentTickEvents.add(event);
 	}
 	
+	public Map<Integer, NBTTagCompound> computeEntitiesData(World world) {
+		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(from, to));
+		Map<Integer, NBTTagCompound> data = new HashMap<>();
+		for(Entity e : entities)
+			data.put(e.getEntityId(), e.writeToNBT(new NBTTagCompound()));
+		return data;
+	}
+	
 	private void recordEntities() {
 		World world = (World) this.world;
-		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(from, to));
-		Map<Integer, NBTTagCompound> newData = new HashMap<>();
-		for(Entity e : entities)
-			newData.put(e.getEntityId(), e.writeToNBT(new NBTTagCompound()));
+		Map<Integer, NBTTagCompound> newData = computeEntitiesData(world);
 		for(Entry<Integer, NBTTagCompound> entry : newData.entrySet()) {
 			if(!entitiesData.containsKey(entry.getKey())) {
 				int type = EntityList.getID(world.getEntityByID(entry.getKey()).getClass());

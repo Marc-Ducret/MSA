@@ -54,6 +54,7 @@ public class CommandRecord extends CommandBase {
 											Math.max(pA.getY(), pB.getY()), 
 											Math.max(pA.getZ(), pB.getZ()));
 			record = new WorldRecord((WorldServer) sender.getEntityWorld(), from, to);
+			record.startRecord();
 			state = State.RECORDING;
 			sender.sendMessage(new TextComponentString("Recording started"));
 			break;
@@ -91,10 +92,9 @@ public class CommandRecord extends CommandBase {
 	@SubscribeEvent
     public void serverTick(ServerTickEvent event) {
 		try {
-		switch(event.phase) {
+			switch(event.phase) {
 			case START:
-				if(state == State.RECORDING)
-						record.startRecordTick();
+				if(state == State.RECORDING) record.startRecordTick();
 				break;
 			case END:
 				if(state == State.RECORDING) record.endRecordTick();

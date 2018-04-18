@@ -31,10 +31,7 @@ public class ChangeSet extends NBTFileInterface<List<List<RecordEvent>>> {
 		for(List<RecordEvent> evs : data) {
 			NBTTagList listEvent = new NBTTagList();
 			for(RecordEvent e : evs) {
-				NBTTagCompound nbtEvent = new NBTTagCompound();
-				e.write(nbtEvent);
-				nbtEvent.setInteger("RecordEventId", RecordEvent.getClassId(e.getClass()));
-				listEvent.appendTag(nbtEvent);
+				listEvent.appendTag(RecordEvent.toNBT(e));
 			}
 			listList.appendTag(listEvent);
 		}
@@ -49,10 +46,7 @@ public class ChangeSet extends NBTFileInterface<List<List<RecordEvent>>> {
 			NBTTagList listEvent = (NBTTagList) nbt;
 			List<RecordEvent> evs = new ArrayList<>();
 			for(NBTBase nbtEv : listEvent) {
-				NBTTagCompound compEv = (NBTTagCompound) nbtEv;
-				RecordEvent ev = RecordEvent.instantiate(compEv.getInteger("RecordEventId"));
-				ev.read(compEv);
-				evs.add(ev);
+				evs.add(RecordEvent.fromNBT((NBTTagCompound) nbtEv));
 			}
 			data.add(evs);
 		}

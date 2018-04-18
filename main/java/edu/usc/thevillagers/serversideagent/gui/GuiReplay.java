@@ -45,7 +45,7 @@ public class GuiReplay extends GuiScreen {
 			record.readInfo();
 			Snapshot snapshot = new Snapshot(new File(record.saveFolder, "0.snapshot"));
 			snapshot.read();
-			snapshot.applyDataToWorld((ReplayWorldAccess) record.world, record.from, record.to);
+			snapshot.applyDataToWorld(record);
 			changeSet = new ChangeSet(new File(record.saveFolder, "0.changeset"));
 			changeSet.read();
 			

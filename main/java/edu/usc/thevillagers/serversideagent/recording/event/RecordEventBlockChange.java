@@ -1,6 +1,5 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -22,7 +21,7 @@ public class RecordEventBlockChange extends RecordEvent {
 
 	@Override
 	public void replay(WorldRecord wr) {
-		((ReplayWorldAccess) wr.world).setBlockState(pos, state);
+		wr.getReplayWorld().setBlockState(pos, state);
 	}
 
 	@Override

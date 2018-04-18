@@ -16,23 +16,36 @@ public abstract class RecordEvent {
 		RecordEventEntityDie.class
 	};
 	
-	public static Class<?> getClassFromId(int id) {
+	private static Class<?> getClassFromId(int id) {
 		if(id < 0 || id >= classes.length) throw new IllegalArgumentException("Unknown event id "+id);
 		return classes[id];
 	}
 	
-	public static int getClassId(Class<?> c) {
+	private static int getClassId(Class<?> c) {
 		for(int id = 0; id < classes.length; id++)
 			if(classes[id] == c)
 				return id;
 		throw new IllegalArgumentException("Unknown event class "+c);
 	}
 	
-	public static RecordEvent instantiate(int id) {
+	private static RecordEvent instantiate(int id) {
 		try {
 			return (RecordEvent) getClassFromId(id).newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			throw new IllegalArgumentException("Can't instantiate event with id "+id, e);
 		}
+	}
+	
+	public static NBTTagCompound toNBT(RecordEvent event) {
+		NBTTagCompound comp = new NBTTagCompound();
+		event.write(comp);
+		comp.setInteger("RecordEventId", RecordEvent.getClassId(event.getClass()));
+		return comp;
+	}
+	
+	public static RecordEvent fromNBT(NBTTagCompound comp) {
+		RecordEvent event = RecordEvent.instantiate(comp.getInteger("RecordEventId"));
+		event.read(comp);
+		return event;
 	}
 }

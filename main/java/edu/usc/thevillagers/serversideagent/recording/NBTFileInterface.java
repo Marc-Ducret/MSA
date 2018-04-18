@@ -25,29 +25,15 @@ public abstract class NBTFileInterface<T> extends FileInterface {
 
 	@Override
 	public final void write() throws IOException {
-		
-		DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-		try {
-			NBTTagCompound compound = new NBTTagCompound();
-			writeNBT(compound);
-			CompressedStreamTools.write(compound, stream);
-		} finally {
-			stream.close();
-		}
-		
-		
-		
+		NBTTagCompound compound = new NBTTagCompound();
+		writeNBT(compound);
+		writeToFile(compound, file);
 	}
 
 	@Override
 	public final void read() throws IOException {
-		DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-		try {
-			NBTTagCompound comp = CompressedStreamTools.read(stream);
-			readNBT(comp);
-		} finally {
-			stream.close();
-		}
+		NBTTagCompound comp = readFromFile(file);
+		readNBT(comp);
 	}
 
 	@Override
@@ -58,5 +44,23 @@ public abstract class NBTFileInterface<T> extends FileInterface {
 	@Override
 	public final boolean hasData() {
 		return data != null;
+	}
+	
+	public static void writeToFile(NBTTagCompound compound, File file) throws IOException {
+		DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+		try {
+			CompressedStreamTools.write(compound, stream);
+		} finally {
+			stream.close();
+		}
+	}
+	
+	public static NBTTagCompound readFromFile(File file) throws IOException {
+		DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+		try {
+			return CompressedStreamTools.read(stream);
+		} finally {
+			stream.close();
+		}
 	}
 }
