@@ -24,7 +24,7 @@ import net.minecraft.world.World;
 
 public class WorldRecord {
 	
-	private int snapshotLenght = 1 * 60 * 20; // one minute
+	private int snapshotLenght = 5 * 60 * 20; // five minute
 	
 	public IBlockAccess world;
 	public BlockPos from, to;
@@ -113,8 +113,9 @@ public class WorldRecord {
 				int type = EntityList.getID(world.getEntityByID(entry.getKey()).getClass());
 				recordEvent(new RecordEventEntitySpawn(entry.getKey(), type, entry.getValue()));
 			} else {
-				recordEvent(new RecordEventEntityUpdate(entry.getKey(), 
-						computeDifferentialCompound(entitiesData.get(entry.getKey()), entry.getValue())));
+				NBTTagCompound diffData = computeDifferentialCompound(entitiesData.get(entry.getKey()), entry.getValue());
+				if(diffData.getKeySet().size() > 0)
+					recordEvent(new RecordEventEntityUpdate(entry.getKey(), diffData));
 			}
 		}
 		for(int id : entitiesData.keySet())

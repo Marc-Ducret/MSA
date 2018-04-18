@@ -39,6 +39,8 @@ public class ReplayWorldAccess implements IBlockAccess {
 	private final IBlockState[] blockBuffer;
 	private final Map<Integer, Entity> entities;
 	public WorldClient fakeWorld;
+	public EntityPlayerSP fakePlayer;
+	public PlayerControllerMP fakePlayerController;
 	
 	public ReplayWorldAccess(BlockPos from, BlockPos to) {
 		this.from = from.toImmutable();
@@ -53,9 +55,8 @@ public class ReplayWorldAccess implements IBlockAccess {
 		Minecraft mc = Minecraft.getMinecraft();
 		NetHandlerPlayClient nethandler = new NetHandlerPlayClient(mc, mc.currentScreen, new NetworkManager(EnumPacketDirection.CLIENTBOUND), profile);
 		fakeWorld = new WorldClient(nethandler, settings, 0, EnumDifficulty.PEACEFUL, mc.mcProfiler);
-		mc.world = fakeWorld;
-		mc.player = new EntityPlayerSP(mc, fakeWorld, nethandler, new StatisticsManager(), new RecipeBook());
-		mc.playerController = new PlayerControllerMP(mc, nethandler);
+		fakePlayer = new EntityPlayerSP(mc, fakeWorld, nethandler, new StatisticsManager(), new RecipeBook());
+		fakePlayerController = new PlayerControllerMP(mc, nethandler);
 	}
 
 	@Override
@@ -129,7 +130,7 @@ public class ReplayWorldAccess implements IBlockAccess {
 	
 	public void updateEntity(int id, NBTTagCompound data) {
 		if(entities.containsKey(id)) entities.get(id).readFromNBT(data);
-//		else System.out.println("strange"); //TODO
+		else System.out.println("Missing id: "+id);
 	}
 	
 	public Collection<Entity> getEntities() {

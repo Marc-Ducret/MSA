@@ -16,11 +16,13 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -37,7 +39,6 @@ public class GuiReplay extends GuiScreen {
 	@Override
 	public void initGui() {
 		super.initGui();
-		System.out.println("New gui replay");
 		try {
 			record = new WorldRecord(new File("tmp/rec"));
 			record.readInfo();
@@ -94,56 +95,90 @@ public class GuiReplay extends GuiScreen {
 		record.endReplayTick();
 	}
 	
+	private void setupCamera(float partialTicks) {
+		GlStateManager.matrixMode(GL11.GL_PROJECTION);
+        GlStateManager.loadIdentity();
+        Project.gluPerspective(90, (float)this.mc.displayWidth / (float)this.mc.displayHeight, 0.05F, 1000 * 2.0F);
+        
+        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+		
+		
+		GlStateManager.loadIdentity();
+		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.translate(0, 0.0F, 0F);
+        
+        float curCamPitch = prevCamPitch + (camPitch - prevCamPitch) * partialTicks;
+		float curCamYaw   = prevCamYaw	 + (camYaw   - prevCamYaw  ) * partialTicks;
+		GlStateManager.rotate(-curCamPitch, 1, 0, 0);
+		GlStateManager.rotate(curCamYaw, 0, 1, 0);
+		Vec3d curCamPos = prevCamPos.add(camPos.subtract(prevCamPos).scale(partialTicks));
+		GlStateManager.translate(-curCamPos.x, -curCamPos.y, -curCamPos.z);
+	}
+	
+	private void renderBlocks(ReplayWorldAccess world) {
+		GlStateManager.enableDepth();
+        this.mc.entityRenderer.enableLightmap();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableBlend();
+        
+        mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+		
+		BufferBuilder buffer = Tessellator.getInstance().getBuffer();
+		buffer.begin(7, DefaultVertexFormats.BLOCK);
+		buffer.setTranslation(0, 0, 0);
+		buffer.noColor();
+		
+		
+		
+		for(BlockPos p : BlockPos.getAllInBoxMutable(record.from, record.to)) {
+			mc.getBlockRendererDispatcher().renderBlock(world.getBlockState(p), p, world, Tessellator.getInstance().getBuffer());
+		}
+		Tessellator.getInstance().draw();
+	}
+	
+	private void renderEntities(ReplayWorldAccess world) {
+		RenderHelper.enableStandardItemLighting();
+		RenderManager renderManager = mc.getRenderManager();
+		renderManager.setPlayerViewY(180);
+		renderManager.setRenderShadow(false);
+		renderManager.renderViewEntity = world.fakePlayer;
+		renderManager.setRenderPosition(0, 0, 0);
+		for(Entity e : world.getEntities()) {
+			this.mc.entityRenderer.disableLightmap();
+			renderManager.renderEntityStatic(e, 1, false);
+		}
+		renderManager.setRenderShadow(true);
+		
+		RenderHelper.disableStandardItemLighting();
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        GlStateManager.disableTexture2D();
+        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+	}
+	
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		drawDefaultBackground();
 		
+		ReplayWorldAccess world = record.getReplayWorld();
+		mc.world = world.fakeWorld;
+		mc.player = world.fakePlayer;
+		mc.playerController = world.fakePlayerController;
+		
 		try {
-			GlStateManager.matrixMode(GL11.GL_PROJECTION);
-            GlStateManager.loadIdentity();
-            Project.gluPerspective(90, (float)this.mc.displayWidth / (float)this.mc.displayHeight, 0.05F, 1000 * 2.0F);
-            
-            GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-			
 			GlStateManager.pushMatrix();
-			GlStateManager.loadIdentity();
-			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-	        GlStateManager.translate(0, 0.0F, 0F);
-	        
-            GlStateManager.enableDepth();
-            this.mc.entityRenderer.enableLightmap();
-            GlStateManager.enableAlpha();
-            GlStateManager.enableBlend();
-            
-            mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-			
-			BufferBuilder buffer = Tessellator.getInstance().getBuffer();
-			buffer.begin(7, DefaultVertexFormats.BLOCK);
-			buffer.setTranslation(0, 0, 0);
-			buffer.noColor();
-			
-			float curCamPitch = prevCamPitch + (camPitch - prevCamPitch) * partialTicks;
-			float curCamYaw   = prevCamYaw	 + (camYaw   - prevCamYaw  ) * partialTicks;
-			GlStateManager.rotate(-curCamPitch, 1, 0, 0);
-			GlStateManager.rotate(curCamYaw, 0, 1, 0);
-			Vec3d curCamPos = prevCamPos.add(camPos.subtract(prevCamPos).scale(partialTicks));
-			GlStateManager.translate(-curCamPos.x, -curCamPos.y, -curCamPos.z);
-			
-			for(BlockPos p : BlockPos.getAllInBoxMutable(record.from, record.to)) {
-				mc.getBlockRendererDispatcher().renderBlock(record.world.getBlockState(p), p, record.world, Tessellator.getInstance().getBuffer());
-			}
-			Tessellator.getInstance().draw();
-			
-			this.mc.entityRenderer.disableLightmap();
-			for(Entity e : record.getReplayWorld().getEntities())
-				if(!(e instanceof EntityPlayer)) mc.getRenderManager().renderEntityStatic(e, partialTicks, true);
-			
+			setupCamera(partialTicks);
+	        renderBlocks(world);
+	        renderEntities(world);
 			GlStateManager.popMatrix();
-			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+		
+		mc.world = null;
+		mc.player = null;
+		mc.playerController = null;
 	}
 	
 	@Override

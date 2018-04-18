@@ -29,8 +29,8 @@ public class RecordEventEntitySpawn extends RecordEvent {
 		Entity e;
 		if(type < 0) e = new EntityOtherPlayerMP(wr.getReplayWorld().fakeWorld, new GameProfile(UUID.randomUUID(), "PlayerName"));
 		else e = EntityList.createEntityByID(type, wr.getReplayWorld().fakeWorld);
+		e.setEntityId(id);
 		wr.getReplayWorld().spawnEntity(e);
-		System.out.println(id+" SPAWN "+e);
 		wr.entitiesData.put(id, data);
 	}
 
