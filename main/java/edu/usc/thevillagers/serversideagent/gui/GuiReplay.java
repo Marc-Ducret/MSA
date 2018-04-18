@@ -36,12 +36,16 @@ public class GuiReplay extends GuiScreen {
 	private Vec3d camPos = Vec3d.ZERO.addVector(0, 10, 0), prevCamPos = camPos;
 	private float camYaw = 0, prevCamYaw = camYaw;
 	private float camPitch = -90, prevCamPitch = camPitch;
+	
+	
+	public GuiReplay(File recordFolder) {
+		record = new WorldRecord(recordFolder);
+	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
 		try {
-			record = new WorldRecord(new File("tmp/rec"));
 			record.readInfo();
 			Snapshot snapshot = new Snapshot(new File(record.saveFolder, "0.snapshot"));
 			snapshot.read();
@@ -161,7 +165,6 @@ public class GuiReplay extends GuiScreen {
 	
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		super.drawScreen(mouseX, mouseY, partialTicks);
 		drawDefaultBackground();
 		
 		ReplayWorldAccess world = record.getReplayWorld();
@@ -182,6 +185,7 @@ public class GuiReplay extends GuiScreen {
 		mc.world = null;
 		mc.player = null;
 		mc.playerController = null;
+		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 	
 	@Override

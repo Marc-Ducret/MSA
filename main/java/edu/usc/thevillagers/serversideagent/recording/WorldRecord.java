@@ -3,6 +3,7 @@ package edu.usc.thevillagers.serversideagent.recording;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,8 @@ public class WorldRecord {
 		this.world = world;
 		this.from = from;
 		this.to = to;
-		this.saveFolder = new File("tmp/rec");
+		String name = String.format("%1$ty_%1$tm_%1$td-%1$tH_%1$tM_%1$tS", Calendar.getInstance());
+		this.saveFolder = new File("tmp/records/"+name);
 		this.currentTick = 0;
 		entitiesData = new HashMap<>();
 	}

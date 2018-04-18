@@ -2,7 +2,7 @@ package edu.usc.thevillagers.serversideagent;
 
 import org.lwjgl.input.Keyboard;
 
-import edu.usc.thevillagers.serversideagent.gui.GuiReplay;
+import edu.usc.thevillagers.serversideagent.gui.GuiChooseRecord;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.GuiScreenEvent;
@@ -15,7 +15,7 @@ public class ClientProxy {
     	char c = Keyboard.getEventCharacter();
     	if(c == 18 && GuiScreen.isCtrlKeyDown()) {
     		event.setCanceled(true);
-    		Minecraft.getMinecraft().addScheduledTask(() -> Minecraft.getMinecraft().displayGuiScreen(new GuiReplay()));
+    		Minecraft.getMinecraft().addScheduledTask(() -> Minecraft.getMinecraft().displayGuiScreen(new GuiChooseRecord()));
     	}
     }
 }
