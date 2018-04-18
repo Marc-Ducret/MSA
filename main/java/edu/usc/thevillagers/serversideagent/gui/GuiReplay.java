@@ -13,7 +13,6 @@ import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
 import edu.usc.thevillagers.serversideagent.recording.Snapshot;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -25,7 +24,6 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -125,23 +123,17 @@ public class GuiReplay extends GuiScreen {
         this.mc.entityRenderer.enableLightmap();
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
-        
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        	
         mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 		
-		renderBlocksPass(world, EnumBlockRenderType.MODEL);
-		renderBlocksPass(world, EnumBlockRenderType.LIQUID);
-	}
-	
-	private void renderBlocksPass(ReplayWorldAccess world, EnumBlockRenderType type) {
-		BufferBuilder buffer = Tessellator.getInstance().getBuffer();
+        BufferBuilder buffer = Tessellator.getInstance().getBuffer();
 		buffer.begin(7, DefaultVertexFormats.BLOCK);
 		buffer.setTranslation(0, 0, 0);
-		if(type == EnumBlockRenderType.MODEL) buffer.noColor();
 		
 		for(BlockPos p : BlockPos.getAllInBoxMutable(record.from, record.to)) {
 			IBlockState state = world.getBlockState(p);
-			if(state.getRenderType() == type)
-				mc.getBlockRendererDispatcher().renderBlock(state, p, world, buffer);
+			mc.getBlockRendererDispatcher().renderBlock(state, p, world, buffer);
 		}
 		
 		Tessellator.getInstance().draw();

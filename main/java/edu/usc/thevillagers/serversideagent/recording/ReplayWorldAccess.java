@@ -66,9 +66,7 @@ public class ReplayWorldAccess implements IBlockAccess {
 
 	@Override
 	public int getCombinedLight(BlockPos pos, int lightValue) {
-		lightValue = Math.max(lightValue, 0x7);
-		if(isAirBlock(pos)) lightValue = Math.max(lightValue, 0xA);
-		return lightValue << 4;
+		return 0xF << 4;
 	}
 	
 	private int index(BlockPos pos) {
