@@ -198,6 +198,7 @@ public class GuiReplay extends GuiScreen {
 		TileEntityRendererDispatcher.instance.preDrawBatch();
 		GlStateManager.translate(TileEntityRendererDispatcher.staticPlayerX, TileEntityRendererDispatcher.staticPlayerY, TileEntityRendererDispatcher.staticPlayerZ);
 		for(TileEntity tileEntity : world.getTileEntities()) {
+			this.mc.entityRenderer.disableLightmap();
 			TileEntityRendererDispatcher.instance.render(tileEntity, 0, -1);
 		}
 		TileEntityRendererDispatcher.instance.drawBatch(0);

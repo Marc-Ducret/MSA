@@ -109,6 +109,7 @@ public class CommandRecord extends CommandBase {
 	
 	@SubscribeEvent
 	public void blockChange(BlockEvent.NeighborNotifyEvent event) {
-		if(state == State.RECORDING) record.recordEvent(new RecordEventBlockChange(event.getPos(), event.getState()));
+		if(state == State.RECORDING && !event.getWorld().isRemote) 
+			record.recordEvent(new RecordEventBlockChange(event.getPos(), event.getState()));
 	}
 }

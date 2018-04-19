@@ -33,7 +33,7 @@ import net.minecraft.world.World;
 
 public class WorldRecord {
 	
-	private int snapshotLenght = 1 * 20; // one minute
+	private int snapshotLenght = 1 * 60 * 20; // one minute
 	
 	public IBlockAccess world;
 	public BlockPos from, to;
