@@ -2,17 +2,15 @@ package edu.usc.thevillagers.serversideagent.gui;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
-import edu.usc.thevillagers.serversideagent.recording.ChangeSet;
 import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
-import edu.usc.thevillagers.serversideagent.recording.Snapshot;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
-import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -31,8 +29,6 @@ public class GuiReplay extends GuiScreen {
 	
 	private WorldRecord record;
 	
-	private ChangeSet changeSet;
-	
 	private Vec3d camPos = Vec3d.ZERO.addVector(0, 10, 0), prevCamPos = camPos;
 	private float camYaw = 0, prevCamYaw = camYaw;
 	private float camPitch = -90, prevCamPitch = camPitch;
@@ -47,11 +43,7 @@ public class GuiReplay extends GuiScreen {
 		super.initGui();
 		try {
 			record.readInfo();
-			Snapshot snapshot = new Snapshot(new File(record.saveFolder, "0.snapshot"));
-			snapshot.read();
-			snapshot.applyDataToWorld(record);
-			changeSet = new ChangeSet(new File(record.saveFolder, "0.changeset"));
-			changeSet.read();
+			record.seek(0);
 			
 			camPos = new Vec3d(record.from.add(record.to)).scale(.5);
 		} catch(Exception e) {
@@ -93,11 +85,13 @@ public class GuiReplay extends GuiScreen {
 			camPitch += Mouse.getDY() * .2;
 		}
 		
-		if(!changeSet.data.isEmpty())
-			for(RecordEvent e : changeSet.data.remove(0)) {
-				e.replay(record);
-			}
-		record.endReplayTick();
+		try {
+			int speed = 1;
+			for(int i = 0; i < speed; i ++)
+				record.endReplayTick();
+		} catch (InterruptedException | ExecutionException e) {
+			throw new RuntimeException("Replay tick failure", e);
+		}
 		
 		mc.getTextureMapBlocks().tick();
 	}

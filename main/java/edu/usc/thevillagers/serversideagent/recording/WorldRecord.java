@@ -8,6 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntityDie;
@@ -24,7 +28,7 @@ import net.minecraft.world.World;
 
 public class WorldRecord {
 	
-	private int snapshotLenght = 5 * 60 * 20; // five minute
+	private int snapshotLenght = 1 * 20; // one minute
 	
 	public IBlockAccess world;
 	public BlockPos from, to;
@@ -38,6 +42,10 @@ public class WorldRecord {
 	private ChangeSet currentChangeSet;
 	
 	public Map<Integer, NBTTagCompound> entitiesData;
+	
+	private Future<ChangeSet> nextChangeSet;
+	
+	private ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
 	
 	public WorldRecord(IBlockAccess world, BlockPos from, BlockPos to) {
 		this.world = world;
@@ -85,18 +93,42 @@ public class WorldRecord {
 		world = new ReplayWorldAccess(from, to);
 	}
 	
+	private ChangeSet changeSet(int tick) {
+		return new ChangeSet(new File(saveFolder, tick / snapshotLenght + ".changeset"));
+	}
+	
+	private Snapshot snapshot(int tick) {
+		return new Snapshot(new File(saveFolder, tick / snapshotLenght + ".snapshot"));
+	}
+	
 	public void startRecord() {
 		entitiesData = computeEntitiesData((World) world);
 	}
 	
 	private void newSnapshot() throws IOException {
 		writeInfo();
-		Snapshot snapshot = new Snapshot(new File(saveFolder, currentTick / snapshotLenght + ".snapshot"));
+		Snapshot snapshot = snapshot(currentTick);
 		snapshot.setDataFromWorld(this);
-		snapshot.write();
-		if(currentChangeSet != null)
-			currentChangeSet.write();
-		currentChangeSet = new ChangeSet(new File(saveFolder, currentTick / snapshotLenght + ".changeset"));
+		ioExecutor.execute(() -> {
+			try {
+				snapshot.write();
+			} catch (IOException e) {
+				System.err.println("Cannot write snapshot");
+				e.printStackTrace();
+			}
+		});
+		if(currentChangeSet != null) {
+			ChangeSet changeSet = currentChangeSet;
+			ioExecutor.execute(() -> {
+				try {
+					changeSet.write();
+				} catch (IOException e) {
+					System.err.println("Cannot write change set");
+					e.printStackTrace();
+				}
+			});
+		}
+		currentChangeSet = changeSet(currentTick);
 		currentChangeSet.resetEventList();
 	}
 	
@@ -153,10 +185,42 @@ public class WorldRecord {
 		System.out.println("Recording completed ("+(duration / 20)+" seconds)");
 	}
 	
-	public void endReplayTick() {
-		ReplayWorldAccess world = (ReplayWorldAccess) this.world;
+	public void endReplayTick() throws InterruptedException, ExecutionException {
+		if(currentTick >= duration) return;
+		int phase = currentTick % snapshotLenght;
+		if(phase == 0) {
+			currentChangeSet = nextChangeSet.get();
+			if(currentTick + snapshotLenght < duration) {
+				ChangeSet changeSet = changeSet(currentTick + snapshotLenght);
+				nextChangeSet = ioExecutor.submit(() -> {
+					changeSet.read();
+					return changeSet;
+				});
+			}
+		}
+		for(RecordEvent event : currentChangeSet.data.get(phase))
+			event.replay(this);
+		ReplayWorldAccess world = getReplayWorld();
 		for(Entry<Integer, NBTTagCompound> entry : entitiesData.entrySet())
 			world.updateEntity(entry.getKey(), entry.getValue());
+		currentTick++;
+	}
+	
+	public void seek(int tick) throws IOException {
+		currentTick = tick;
+		if(tick >= duration) return;
+		Snapshot snapshot = snapshot(tick / snapshotLenght);
+		snapshot.read();
+		snapshot.applyDataToWorld(this);
+		if(tick % snapshotLenght != 0) {
+			currentChangeSet = changeSet(tick / snapshotLenght);
+			currentChangeSet.read();
+		}
+		ChangeSet changeSet = changeSet((tick + 1 - snapshotLenght) / snapshotLenght);
+		nextChangeSet = ioExecutor.submit(() -> {
+			changeSet.read();
+			return changeSet;
+		});
 	}
 	
 	public static NBTTagCompound computeDifferentialCompound(NBTTagCompound oldComp, NBTTagCompound newComp) {
