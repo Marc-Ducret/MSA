@@ -21,8 +21,10 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.client.config.GuiSlider;
@@ -156,6 +158,8 @@ public class GuiReplay extends GuiScreen {
 		GlStateManager.rotate(curCamYaw, 0, 1, 0);
 		Vec3d curCamPos = prevCamPos.add(camPos.subtract(prevCamPos).scale(partialTicks));
 		GlStateManager.translate(-curCamPos.x, -curCamPos.y, -curCamPos.z);
+		
+		record.getReplayWorld().fakePlayer.setPosition(curCamPos.x, curCamPos.y, curCamPos.z);
 	}
 	
 	private void renderBlocks(ReplayWorldAccess world) {
@@ -190,6 +194,13 @@ public class GuiReplay extends GuiScreen {
 			this.mc.entityRenderer.disableLightmap();
 			renderManager.renderEntityStatic(e, 1, false);
 		}
+		TileEntityRendererDispatcher.instance.prepare(world.fakeWorld, mc.getTextureManager(), mc.fontRenderer, world.fakePlayer, null, 1);
+		TileEntityRendererDispatcher.instance.preDrawBatch();
+		GlStateManager.translate(TileEntityRendererDispatcher.staticPlayerX, TileEntityRendererDispatcher.staticPlayerY, TileEntityRendererDispatcher.staticPlayerZ);
+		for(TileEntity tileEntity : world.getTileEntities()) {
+			TileEntityRendererDispatcher.instance.render(tileEntity, 0, -1);
+		}
+		TileEntityRendererDispatcher.instance.drawBatch(0);
 		renderManager.setRenderShadow(true);
 		
 		RenderHelper.disableStandardItemLighting();

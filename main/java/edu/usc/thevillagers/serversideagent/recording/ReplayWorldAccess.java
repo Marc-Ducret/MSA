@@ -59,14 +59,20 @@ public class ReplayWorldAccess implements IBlockAccess {
 		GameProfile profile = new GameProfile(UUID.randomUUID(), "dummy");
 		Minecraft mc = Minecraft.getMinecraft();
 		NetHandlerPlayClient nethandler = new NetHandlerPlayClient(mc, mc.currentScreen, new NetworkManager(EnumPacketDirection.CLIENTBOUND), profile);
-		fakeWorld = new WorldClient(nethandler, settings, 0, EnumDifficulty.PEACEFUL, mc.mcProfiler);
+		fakeWorld = new WorldClient(nethandler, settings, 0, EnumDifficulty.PEACEFUL, mc.mcProfiler) {
+			
+			@Override
+			public IBlockState getBlockState(BlockPos pos) {
+				return ReplayWorldAccess.this.getBlockState(pos);
+			}
+		};
 		fakePlayer = new EntityPlayerSP(mc, fakeWorld, nethandler, new StatisticsManager(), new RecipeBook());
 		fakePlayerController = new PlayerControllerMP(mc, nethandler);
 	}
 
 	@Override
 	public TileEntity getTileEntity(BlockPos pos) {
-		return null;
+		return tileEntities.get(pos);
 	}
 
 	@Override
@@ -151,6 +157,10 @@ public class ReplayWorldAccess implements IBlockAccess {
 	public void updateTileEntity(BlockPos pos, NBTTagCompound data) {
 		if(tileEntities.containsKey(pos)) tileEntities.get(pos).readFromNBT(data);
 		else System.out.println("Missing tile entity at: "+pos);
+	}
+	
+	public Collection<TileEntity> getTileEntities() {
+		return tileEntities.values();
 	}
 
 	public void reset() {
