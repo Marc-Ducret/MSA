@@ -206,21 +206,20 @@ public class WorldRecord {
 		currentTick++;
 	}
 	
-	public void seek(int tick) throws IOException {
-		currentTick = tick;
-		if(tick >= duration) return;
+	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {
+		if(tick >= duration) tick = duration - 1;
+		currentTick = tick - (tick % snapshotLenght);
 		Snapshot snapshot = snapshot(tick);
 		snapshot.read();
 		snapshot.applyDataToWorld(this);
-		if(tick % snapshotLenght != 0) {
-			currentChangeSet = changeSet(tick);
-			currentChangeSet.read();
-		}
-		ChangeSet changeSet = changeSet(tick + 1 - snapshotLenght);
+		currentChangeSet = null;
+		ChangeSet changeSet = changeSet(currentTick);
 		nextChangeSet = ioExecutor.submit(() -> {
 			changeSet.read();
 			return changeSet;
 		});
+		while(currentTick < tick)
+			endReplayTick();
 	}
 	
 	public static NBTTagCompound computeDifferentialCompound(NBTTagCompound oldComp, NBTTagCompound newComp) {

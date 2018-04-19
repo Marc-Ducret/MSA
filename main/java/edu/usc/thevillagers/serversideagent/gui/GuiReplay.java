@@ -63,7 +63,7 @@ public class GuiReplay extends GuiScreen {
 				mc.addScheduledTask(() -> {
 					try {
 						record.seek((int) Math.round(getValue() * 20));
-					} catch (IOException e) {
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				});
