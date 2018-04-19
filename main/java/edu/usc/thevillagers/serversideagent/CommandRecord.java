@@ -102,6 +102,7 @@ public class CommandRecord extends CommandBase {
 			}
 		} catch (Exception e) {
 			System.out.println("Recording failed "+e);
+			e.printStackTrace();
 			state = State.IDLE;
 		}
     }

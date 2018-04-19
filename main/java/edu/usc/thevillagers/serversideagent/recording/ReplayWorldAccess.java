@@ -37,8 +37,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ReplayWorldAccess implements IBlockAccess {
 	
 	public final BlockPos from, to, diff;
+	
 	private final IBlockState[] blockBuffer;
 	private final Map<Integer, Entity> entities;
+	private final Map<BlockPos, TileEntity> tileEntities;
+	
 	public WorldClient fakeWorld;
 	public EntityPlayerSP fakePlayer;
 	public PlayerControllerMP fakePlayerController;
@@ -50,6 +53,7 @@ public class ReplayWorldAccess implements IBlockAccess {
 		diff = to.subtract(from).add(1, 1, 1);
 		blockBuffer = new IBlockState[diff.getX() * diff.getY() * diff.getZ()];
 		entities = new HashMap<>();
+		tileEntities = new HashMap<>();
 		
 		WorldSettings settings = new WorldSettings(0, GameType.NOT_SET, false, false, WorldType.FLAT);
 		GameProfile profile = new GameProfile(UUID.randomUUID(), "dummy");
@@ -129,11 +133,24 @@ public class ReplayWorldAccess implements IBlockAccess {
 	
 	public void updateEntity(int id, NBTTagCompound data) {
 		if(entities.containsKey(id)) entities.get(id).readFromNBT(data);
-		else System.out.println("Missing id: "+id);
+		else System.out.println("Missing entity with id: "+id);
 	}
 	
 	public Collection<Entity> getEntities() {
 		return entities.values();
+	}
+	
+	public void spawnTileEntity(TileEntity tileEntity) {
+		tileEntities.put(tileEntity.getPos(), tileEntity);
+	}
+	
+	public void killTileEntity(BlockPos pos) {
+		tileEntities.remove(pos);
+	}
+	
+	public void updateTileEntity(BlockPos pos, NBTTagCompound data) {
+		if(tileEntities.containsKey(pos)) tileEntities.get(pos).readFromNBT(data);
+		else System.out.println("Missing tile entity at: "+pos);
 	}
 
 	public void reset() {

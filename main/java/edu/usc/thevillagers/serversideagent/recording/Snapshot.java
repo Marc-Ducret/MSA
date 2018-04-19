@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntitySpawn;
+import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntitySpawn;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityList;
@@ -41,11 +42,15 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 			int type = EntityList.getID(wr.getRecordWorld().getEntityByID(entry.getKey()).getClass());
 			data.spawnEvents.add(new RecordEventEntitySpawn(entry.getKey(), type, entry.getValue()));
 		}
+		for(Entry<BlockPos, NBTTagCompound> entry : wr.computeTileEntitiesData(wr.getRecordWorld()).entrySet()) {
+			data.spawnEvents.add(new RecordEventTileEntitySpawn(entry.getKey(), entry.getValue()));
+		}
 	}
 	
 	public void applyDataToWorld(WorldRecord wr) {
 		ReplayWorldAccess world = wr.getReplayWorld();
 		wr.entitiesData.clear();
+		wr.tileEntitiesData.clear();
 		world.reset();
 		int index = 0;
 		for(BlockPos p : BlockPos.getAllInBoxMutable(wr.from, wr.to)) {

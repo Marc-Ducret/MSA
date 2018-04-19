@@ -17,12 +17,17 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntityDie;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntitySpawn;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntityUpdate;
+import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntityDie;
+import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntitySpawn;
+import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntityUpdate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -42,6 +47,7 @@ public class WorldRecord {
 	private ChangeSet currentChangeSet;
 	
 	public Map<Integer, NBTTagCompound> entitiesData;
+	public Map<BlockPos, NBTTagCompound> tileEntitiesData;
 	
 	private Future<ChangeSet> nextChangeSet;
 	
@@ -55,6 +61,7 @@ public class WorldRecord {
 		this.saveFolder = new File("tmp/records/"+name);
 		this.currentTick = 0;
 		entitiesData = new HashMap<>();
+		tileEntitiesData = new HashMap<>();
 	}
 	
 	public WorldRecord(File saveFolder) {
@@ -62,6 +69,7 @@ public class WorldRecord {
 		this.saveFolder = saveFolder;
 		this.currentTick = 0;
 		entitiesData = new HashMap<>();
+		tileEntitiesData = new HashMap<>();
 	}
 	
 	public World getRecordWorld() {
@@ -102,7 +110,8 @@ public class WorldRecord {
 	}
 	
 	public void startRecord() {
-		entitiesData = computeEntitiesData((World) world);
+		entitiesData = computeEntitiesData(getRecordWorld());
+		tileEntitiesData = computeTileEntitiesData(getRecordWorld());
 	}
 	
 	private void newSnapshot() throws IOException {
@@ -150,8 +159,18 @@ public class WorldRecord {
 		return data;
 	}
 	
+	public Map<BlockPos, NBTTagCompound> computeTileEntitiesData(World world) {
+		//TODO optimise by only looking up TileEntities within concerned chunks
+		Map<BlockPos, NBTTagCompound> data = new HashMap<>();
+		AxisAlignedBB bounds = new AxisAlignedBB(from, to);
+		for(TileEntity tileEntity : world.loadedTileEntityList)
+			if(bounds.contains(new Vec3d(tileEntity.getPos())))
+				data.put(tileEntity.getPos(), tileEntity.writeToNBT(new NBTTagCompound()));
+		return data;
+	}
+	
 	private void recordEntities() {
-		World world = (World) this.world;
+		World world = getRecordWorld();
 		Map<Integer, NBTTagCompound> newData = computeEntitiesData(world);
 		for(Entry<Integer, NBTTagCompound> entry : newData.entrySet()) {
 			if(!entitiesData.containsKey(entry.getKey())) {
@@ -170,9 +189,30 @@ public class WorldRecord {
 		entitiesData = newData;
 	}
 	
+	private void recordTileEntities() {
+		World world = getRecordWorld();
+		Map<BlockPos, NBTTagCompound> newData = computeTileEntitiesData(world);
+		for(Entry<BlockPos, NBTTagCompound> entry : newData.entrySet()) {
+			if(		!tileEntitiesData.containsKey(entry.getKey()) || 
+					!tileEntitiesData.get(entry.getKey()).getString("id").equals(entry.getValue().getString("id"))) {
+				recordEvent(new RecordEventTileEntitySpawn(entry.getKey(), entry.getValue()));
+			} else {
+				NBTTagCompound diffData = computeDifferentialCompound(tileEntitiesData.get(entry.getKey()), entry.getValue());
+				if(diffData.getKeySet().size() > 0)
+					recordEvent(new RecordEventTileEntityUpdate(entry.getKey(), diffData));
+			}
+		}
+		for(BlockPos pos : tileEntitiesData.keySet())
+			if(!newData.containsKey(pos))
+				recordEvent(new RecordEventTileEntityDie(pos));
+		
+		tileEntitiesData = newData;
+	}
+	
 	public void endRecordTick() {
 		if(currentTickEvents == null) return;
 		recordEntities();
+		recordTileEntities();
 		currentChangeSet.appendChanges(currentTickEvents);
 		currentTick++;
 		duration = currentTick;
@@ -203,6 +243,8 @@ public class WorldRecord {
 		ReplayWorldAccess world = getReplayWorld();
 		for(Entry<Integer, NBTTagCompound> entry : entitiesData.entrySet())
 			world.updateEntity(entry.getKey(), entry.getValue());
+		for(Entry<BlockPos, NBTTagCompound> entry : tileEntitiesData.entrySet())
+			world.updateTileEntity(entry.getKey(), entry.getValue());
 		currentTick++;
 	}
 	
@@ -225,7 +267,7 @@ public class WorldRecord {
 	public static NBTTagCompound computeDifferentialCompound(NBTTagCompound oldComp, NBTTagCompound newComp) {
 		NBTTagCompound diffComp = newComp.copy();
 		for(String key : newComp.getKeySet())
-			if(oldComp.getTag(key).equals(newComp.getTag(key)))
+			if(newComp.getTag(key).equals(oldComp.getTag(key)))
 				diffComp.removeTag(key);
 		return diffComp;
 	}

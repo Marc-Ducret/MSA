@@ -13,7 +13,10 @@ public abstract class RecordEvent {
 		RecordEventBlockChange.class,
 		RecordEventEntitySpawn.class,
 		RecordEventEntityUpdate.class,
-		RecordEventEntityDie.class
+		RecordEventEntityDie.class,
+		RecordEventTileEntitySpawn.class,
+		RecordEventTileEntityUpdate.class,
+		RecordEventTileEntityDie.class,
 	};
 	
 	private static Class<?> getClassFromId(int id) {
