@@ -35,8 +35,8 @@ public class WorldRecord {
 	
 	public final File saveFolder;
 	
-	private int duration;
-	private int currentTick;
+	public int duration;
+	public int currentTick;
 	
 	private List<RecordEvent> currentTickEvents;
 	private ChangeSet currentChangeSet;
@@ -209,14 +209,14 @@ public class WorldRecord {
 	public void seek(int tick) throws IOException {
 		currentTick = tick;
 		if(tick >= duration) return;
-		Snapshot snapshot = snapshot(tick / snapshotLenght);
+		Snapshot snapshot = snapshot(tick);
 		snapshot.read();
 		snapshot.applyDataToWorld(this);
 		if(tick % snapshotLenght != 0) {
-			currentChangeSet = changeSet(tick / snapshotLenght);
+			currentChangeSet = changeSet(tick);
 			currentChangeSet.read();
 		}
-		ChangeSet changeSet = changeSet((tick + 1 - snapshotLenght) / snapshotLenght);
+		ChangeSet changeSet = changeSet(tick + 1 - snapshotLenght);
 		nextChangeSet = ioExecutor.submit(() -> {
 			changeSet.read();
 			return changeSet;

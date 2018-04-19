@@ -12,6 +12,7 @@ import org.lwjgl.util.glu.Project;
 import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -24,18 +25,22 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.fml.client.config.GuiSlider;
 
 public class GuiReplay extends GuiScreen {
 	
 	private WorldRecord record;
+	private int speed;
 	
 	private Vec3d camPos = Vec3d.ZERO.addVector(0, 10, 0), prevCamPos = camPos;
 	private float camYaw = 0, prevCamYaw = camYaw;
 	private float camPitch = -90, prevCamPitch = camPitch;
 	
+	private GuiSlider seekSlider;
 	
 	public GuiReplay(File recordFolder) {
 		record = new WorldRecord(recordFolder);
+		speed = 1;
 	}
 
 	@Override
@@ -49,11 +54,49 @@ public class GuiReplay extends GuiScreen {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+		addButton(new GuiButton(0, 0, height-20, 20, 20, "<"));
+		addButton(new GuiButton(1, 50, height-20, 20, 20, ">"));
+		seekSlider = new GuiSlider(2, width/2 - 100, height-20, 200, 20, "", " s", 0, record.duration / 20F, 10, false, true) {
+			@Override
+			public void mouseReleased(int x, int y) {
+				super.mouseReleased(x, y);
+				mc.addScheduledTask(() -> {
+					try {
+						record.seek((int) Math.round(getValue() * 20));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
+			}
+		};
+		addButton(seekSlider);
+	}
+	
+	@Override
+	protected void actionPerformed(GuiButton button) throws IOException {
+		super.actionPerformed(button);
+		switch(button.id) {
+		case 0:
+			if(speed > 1)
+				speed /= 2;
+			else
+				speed = 0;
+			break;
+		case 1:
+			if(speed < 2048)
+				speed *= 2;
+			if(speed == 0)
+				speed = 1;
+			break;
+		}
 	}
 	
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
 		super.mouseClicked(mouseX, mouseY, mouseButton);
+		for(GuiButton b : buttonList)
+			if(b.isMouseOver())
+				return;
 		Mouse.setGrabbed(mouseButton == 0);
 	}
 	
@@ -86,9 +129,10 @@ public class GuiReplay extends GuiScreen {
 		}
 		
 		try {
-			int speed = 1;
 			for(int i = 0; i < speed; i ++)
 				record.endReplayTick();
+			seekSlider.setValue(record.currentTick / 20F);
+			seekSlider.updateSlider();
 		} catch (InterruptedException | ExecutionException e) {
 			throw new RuntimeException("Replay tick failure", e);
 		}
@@ -98,16 +142,14 @@ public class GuiReplay extends GuiScreen {
 	
 	private void setupCamera(float partialTicks) {
 		GlStateManager.matrixMode(GL11.GL_PROJECTION);
+		GlStateManager.pushMatrix();
         GlStateManager.loadIdentity();
         Project.gluPerspective(90, (float)this.mc.displayWidth / (float)this.mc.displayHeight, 0.05F, 1000 * 2.0F);
         
         GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-		
-		
+        GlStateManager.pushMatrix();
 		GlStateManager.loadIdentity();
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.translate(0, 0.0F, 0F);
-        
         float curCamPitch = prevCamPitch + (camPitch - prevCamPitch) * partialTicks;
 		float curCamYaw   = prevCamYaw	 + (camYaw   - prevCamYaw  ) * partialTicks;
 		GlStateManager.rotate(-curCamPitch, 1, 0, 0);
@@ -167,11 +209,14 @@ public class GuiReplay extends GuiScreen {
 		mc.playerController = world.fakePlayerController;
 		
 		try {
-			GlStateManager.pushMatrix();
 			setupCamera(partialTicks);
 	        renderBlocks(world);
 	        renderEntities(world);
+	        GlStateManager.matrixMode(GL11.GL_PROJECTION);
 			GlStateManager.popMatrix();
+			GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+			GlStateManager.popMatrix();
+			GlStateManager.disableDepth();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -180,6 +225,7 @@ public class GuiReplay extends GuiScreen {
 		mc.player = null;
 		mc.playerController = null;
 		super.drawScreen(mouseX, mouseY, partialTicks);
+		drawCenteredString(mc.fontRenderer, speed+"*", 35, height-14, 0xFFFFFF);
 	}
 	
 	@Override

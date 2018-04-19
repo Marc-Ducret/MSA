@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.recording;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -133,5 +134,10 @@ public class ReplayWorldAccess implements IBlockAccess {
 	
 	public Collection<Entity> getEntities() {
 		return entities.values();
+	}
+
+	public void reset() {
+		Arrays.fill(blockBuffer, Blocks.AIR.getDefaultState());
+		entities.clear();
 	}
 }

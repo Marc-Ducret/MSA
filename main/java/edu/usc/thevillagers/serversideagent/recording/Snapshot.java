@@ -46,7 +46,7 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 	public void applyDataToWorld(WorldRecord wr) {
 		int index = 0;
 		ReplayWorldAccess world = wr.getReplayWorld();
-		//TODO world.reset
+		world.reset();
 		for(BlockPos p : BlockPos.getAllInBoxMutable(wr.from, wr.to)) {
 			world.setBlockState(p, data.blockStates[index++]);
 		}
