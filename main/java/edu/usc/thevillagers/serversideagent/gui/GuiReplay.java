@@ -11,25 +11,25 @@ import org.lwjgl.util.glu.Project;
 
 import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.client.config.GuiSlider;
 
 public class GuiReplay extends GuiScreen {
+	
+	private int renderDistance = 256;
 	
 	private WorldRecord record;
 	private int speed;
@@ -37,6 +37,8 @@ public class GuiReplay extends GuiScreen {
 	private Vec3d camPos = Vec3d.ZERO.addVector(0, 10, 0), prevCamPos = camPos;
 	private float camYaw = 0, prevCamYaw = camYaw;
 	private float camPitch = -90, prevCamPitch = camPitch;
+	
+	private BlockPos renderFrom, renderTo;
 	
 	private GuiSlider seekSlider;
 	
@@ -50,7 +52,13 @@ public class GuiReplay extends GuiScreen {
 		super.initGui();
 		try {
 			record.readInfo();
+			
 			record.seek(0);
+			mc.renderGlobal.setWorldAndLoadRenderers(record.getReplayWorld().fakeWorld);
+			for(int chunkZ = record.from.getZ() >> 4; chunkZ < record.to.getZ() >> 4; chunkZ++)
+				for(int chunkY = record.from.getY() >> 4; chunkY < record.to.getY() >> 4; chunkY++)
+					for(int chunkX = record.from.getX() >> 4; chunkX < record.to.getX() >> 4; chunkX++)
+						record.getReplayWorld().chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
 			
 			camPos = new Vec3d(record.from.add(record.to)).scale(.5);
 		} catch(Exception e) {
@@ -129,6 +137,17 @@ public class GuiReplay extends GuiScreen {
 			camYaw += Mouse.getDX() * .2;
 			camPitch += Mouse.getDY() * .2;
 		}
+		EntityPlayerSP fakePlayer = record.getReplayWorld().fakePlayer;
+		fakePlayer.prevRotationPitch 	= fakePlayer.rotationPitch;
+		fakePlayer.prevRotationYaw 		= fakePlayer.rotationYaw;
+		fakePlayer.lastTickPosX			= fakePlayer.posX;
+		fakePlayer.lastTickPosY 		= fakePlayer.posY;
+		fakePlayer.lastTickPosZ 		= fakePlayer.posZ;
+		fakePlayer.rotationYaw 			= 180+camYaw;
+		fakePlayer.rotationPitch 		= -camPitch;
+		fakePlayer.posX					= camPos.x;
+		fakePlayer.posY 				= camPos.y;
+		fakePlayer.posZ					= camPos.z;
 		
 		try {
 			for(int i = 0; i < speed; i ++)
@@ -159,11 +178,17 @@ public class GuiReplay extends GuiScreen {
 		Vec3d curCamPos = prevCamPos.add(camPos.subtract(prevCamPos).scale(partialTicks));
 		GlStateManager.translate(-curCamPos.x, -curCamPos.y, -curCamPos.z);
 		
-		record.getReplayWorld().fakePlayer.setPosition(curCamPos.x, curCamPos.y, curCamPos.z);
+		renderFrom = new BlockPos(	Math.max(record.from.getX(), (int) Math.floor(curCamPos.x) - renderDistance),
+									Math.max(record.from.getY(), (int) Math.floor(curCamPos.y) - renderDistance),
+									Math.max(record.from.getZ(), (int) Math.floor(curCamPos.z) - renderDistance));
+		renderTo = new BlockPos(	Math.min(record.to  .getX(), (int) Math.floor(curCamPos.x) + renderDistance),
+									Math.min(record.to  .getY(), (int) Math.floor(curCamPos.y) + renderDistance),
+									Math.min(record.to  .getZ(), (int) Math.floor(curCamPos.z) + renderDistance));
 	}
 	
 	private void renderBlocks(ReplayWorldAccess world) {
 		GlStateManager.enableDepth();
+		GlStateManager.enableCull();
         this.mc.entityRenderer.enableLightmap();
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
@@ -171,35 +196,35 @@ public class GuiReplay extends GuiScreen {
         	
         mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 		
-        BufferBuilder buffer = Tessellator.getInstance().getBuffer();
-		buffer.begin(7, DefaultVertexFormats.BLOCK);
-		buffer.setTranslation(0, 0, 0);
-		
-		for(BlockPos p : BlockPos.getAllInBoxMutable(record.from, record.to)) {
-			IBlockState state = world.getBlockState(p);
-			mc.getBlockRendererDispatcher().renderBlock(state, p, world, buffer);
-		}
-		
-		Tessellator.getInstance().draw();
+        for(int chunkZ = renderFrom.getZ() >> 4; chunkZ <= renderTo.getZ() >> 4; chunkZ++)
+			for(int chunkY = renderFrom.getY() >> 4; chunkY <= renderTo.getY() >> 4; chunkY++)
+				for(int chunkX = renderFrom.getX() >> 4; chunkX <= renderTo.getX() >> 4; chunkX++) {
+					world.chunkBufferManager.renderSubChunk(world, chunkX, chunkY, chunkZ);
+				}
 	}
 	
-	private void renderEntities(ReplayWorldAccess world) {
+	private void renderEntities(ReplayWorldAccess world) { //TODO add vision check
 		RenderHelper.enableStandardItemLighting();
 		RenderManager renderManager = mc.getRenderManager();
 		renderManager.setPlayerViewY(180);
 		renderManager.setRenderShadow(false);
 		renderManager.renderViewEntity = world.fakePlayer;
 		renderManager.setRenderPosition(0, 0, 0);
+		AxisAlignedBB renderBounds = new AxisAlignedBB(renderFrom, renderTo);
 		for(Entity e : world.getEntities()) {
-			this.mc.entityRenderer.disableLightmap();
-			renderManager.renderEntityStatic(e, 1, false);
+			if(renderBounds.contains(e.getPositionVector())) {
+				this.mc.entityRenderer.disableLightmap();
+				renderManager.renderEntityStatic(e, 1, false);
+			}
 		}
 		TileEntityRendererDispatcher.instance.prepare(world.fakeWorld, mc.getTextureManager(), mc.fontRenderer, world.fakePlayer, null, 1);
 		TileEntityRendererDispatcher.instance.preDrawBatch();
 		GlStateManager.translate(TileEntityRendererDispatcher.staticPlayerX, TileEntityRendererDispatcher.staticPlayerY, TileEntityRendererDispatcher.staticPlayerZ);
 		for(TileEntity tileEntity : world.getTileEntities()) {
-			this.mc.entityRenderer.disableLightmap();
-			TileEntityRendererDispatcher.instance.render(tileEntity, 0, -1);
+			if(renderBounds.contains(new Vec3d(tileEntity.getPos()))) {
+				this.mc.entityRenderer.disableLightmap();
+				TileEntityRendererDispatcher.instance.render(tileEntity, 0, -1);
+			}
 		}
 		TileEntityRendererDispatcher.instance.drawBatch(0);
 		renderManager.setRenderShadow(true);
@@ -219,6 +244,7 @@ public class GuiReplay extends GuiScreen {
 		mc.world = world.fakeWorld;
 		mc.player = world.fakePlayer;
 		mc.playerController = world.fakePlayerController;
+		mc.setRenderViewEntity(mc.player);
 		
 		try {
 			setupCamera(partialTicks);

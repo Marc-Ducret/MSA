@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
+import edu.usc.thevillagers.serversideagent.gui.ChunkBufferManager;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -34,7 +35,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(value=Side.CLIENT)
-public class ReplayWorldAccess implements IBlockAccess {
+public class ReplayWorldAccess implements IBlockAccess { //TODO refactor to be server-side friendly
 	
 	public final BlockPos from, to, diff;
 	
@@ -45,6 +46,7 @@ public class ReplayWorldAccess implements IBlockAccess {
 	public WorldClient fakeWorld;
 	public EntityPlayerSP fakePlayer;
 	public PlayerControllerMP fakePlayerController;
+	public ChunkBufferManager chunkBufferManager;
 	
 	public ReplayWorldAccess(BlockPos from, BlockPos to) {
 		this.from = from.toImmutable();
@@ -68,6 +70,7 @@ public class ReplayWorldAccess implements IBlockAccess {
 		};
 		fakePlayer = new EntityPlayerSP(mc, fakeWorld, nethandler, new StatisticsManager(), new RecipeBook());
 		fakePlayerController = new PlayerControllerMP(mc, nethandler);
+		chunkBufferManager = new ChunkBufferManager();
 	}
 
 	@Override
@@ -98,8 +101,10 @@ public class ReplayWorldAccess implements IBlockAccess {
 	
 	public void setBlockState(BlockPos pos, IBlockState state) {
 		int index = index(pos);
-		if(index >= 0)
+		if(index >= 0 && !blockBuffer[index].equals(state)) {
 			blockBuffer[index] = state;
+			chunkBufferManager.requestUpdate(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
+		}
 	}
 
 	@Override

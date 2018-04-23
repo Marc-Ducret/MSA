@@ -21,6 +21,7 @@ public class RecordEventTileEntitySpawn extends RecordEvent {
 	@Override
 	public void replay(WorldRecord wr) {
 		TileEntity tileEntity = TileEntity.create(wr.getReplayWorld().fakeWorld, data);
+		tileEntity.setWorld(wr.getReplayWorld().fakeWorld);
 		tileEntity.setPos(pos);
 		wr.getReplayWorld().spawnTileEntity(tileEntity);
 		wr.tileEntitiesData.put(pos, data);
