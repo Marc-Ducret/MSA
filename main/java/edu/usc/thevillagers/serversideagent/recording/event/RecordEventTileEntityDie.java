@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 
@@ -16,8 +16,8 @@ public class RecordEventTileEntityDie extends RecordEvent {
 	}
 
 	@Override
-	public void replay(WorldRecord wr) {
-		wr.getReplayWorld().killTileEntity(pos);
+	public void replay(WorldRecordReplayer wr) {
+		wr.world.killTileEntity(pos);
 		wr.tileEntitiesData.remove(pos);
 	}
 

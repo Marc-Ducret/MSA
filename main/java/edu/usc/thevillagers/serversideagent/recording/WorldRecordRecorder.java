@@ -8,10 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntityDie;
@@ -23,95 +19,28 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntit
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
-public class WorldRecord {
+public class WorldRecordRecorder extends WorldRecordWorker {
 	
-	private int snapshotLenght = 1 * 60 * 20; // one minute
-	
-	public IBlockAccess world;
-	public BlockPos from, to;
-	
-	public final File saveFolder;
-	
-	public int duration;
-	public int currentTick;
-	
+	public World world;
 	private List<RecordEvent> currentTickEvents;
-	private ChangeSet currentChangeSet;
 	
-	public Map<Integer, NBTTagCompound> entitiesData;
-	public Map<BlockPos, NBTTagCompound> tileEntitiesData;
-	
-	private Future<ChangeSet> nextChangeSet;
-	
-	private ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
-	
-	public WorldRecord(IBlockAccess world, BlockPos from, BlockPos to) {
+	public WorldRecordRecorder(World world, BlockPos from, BlockPos to) {
 		this.world = world;
 		this.from = from;
 		this.to = to;
 		String name = String.format("%1$ty_%1$tm_%1$td-%1$tH_%1$tM_%1$tS", Calendar.getInstance());
 		this.saveFolder = new File("tmp/records/"+name);
-		this.currentTick = 0;
-		entitiesData = new HashMap<>();
-		tileEntitiesData = new HashMap<>();
-	}
-	
-	public WorldRecord(File saveFolder) {
-		this.world = null;
-		this.saveFolder = saveFolder;
-		this.currentTick = 0;
-		entitiesData = new HashMap<>();
-		tileEntitiesData = new HashMap<>();
-	}
-	
-	public World getRecordWorld() {
-		return (World) world;
-	}
-	
-	public ReplayWorldAccess getReplayWorld() {
-		return (ReplayWorldAccess) world;
-	}
-	
-	public void writeInfo() throws IOException {
-		File infoFile = new File(saveFolder, "record.info");
-		infoFile.getParentFile().mkdirs();
-		NBTTagCompound comp = new NBTTagCompound();
-		comp.setTag("From", NBTUtil.createPosTag(from));
-		comp.setTag("To"  , NBTUtil.createPosTag(to  ));
-		comp.setInteger("SnapshotLenght", snapshotLenght);
-		comp.setInteger("Duration", duration);
-		NBTFileInterface.writeToFile(comp, infoFile);
-	}
-	
-	public void readInfo() throws IOException {
-		File infoFile = new File(saveFolder, "record.info");
-		NBTTagCompound comp = NBTFileInterface.readFromFile(infoFile);
-		from = NBTUtil.getPosFromTag(comp.getCompoundTag("From"));
-		to   = NBTUtil.getPosFromTag(comp.getCompoundTag("To"  ));
-		snapshotLenght = comp.getInteger("SnapshotLenght");
-		duration = comp.getInteger("Duration");
-		world = new ReplayWorldAccess(from, to);
-	}
-	
-	private ChangeSet changeSet(int tick) {
-		return new ChangeSet(new File(saveFolder, tick / snapshotLenght + ".changeset"));
-	}
-	
-	private Snapshot snapshot(int tick) {
-		return new Snapshot(new File(saveFolder, tick / snapshotLenght + ".snapshot"));
 	}
 	
 	public void startRecord() {
-		entitiesData = computeEntitiesData(getRecordWorld());
-		tileEntitiesData = computeTileEntitiesData(getRecordWorld());
+		entitiesData = computeEntitiesData(world);
+		tileEntitiesData = computeTileEntitiesData(world);
 	}
 	
 	private void newSnapshot() throws IOException {
@@ -160,7 +89,7 @@ public class WorldRecord {
 	}
 	
 	public Map<BlockPos, NBTTagCompound> computeTileEntitiesData(World world) {
-		//TODO optimise by only looking up TileEntities within concerned chunks
+		//TODO optimise by only looking up TileEntities within relevent chunks
 		Map<BlockPos, NBTTagCompound> data = new HashMap<>();
 		AxisAlignedBB bounds = new AxisAlignedBB(from, to);
 		for(TileEntity tileEntity : world.loadedTileEntityList)
@@ -170,7 +99,6 @@ public class WorldRecord {
 	}
 	
 	private void recordEntities() {
-		World world = getRecordWorld();
 		Map<Integer, NBTTagCompound> newData = computeEntitiesData(world);
 		for(Entry<Integer, NBTTagCompound> entry : newData.entrySet()) {
 			if(!entitiesData.containsKey(entry.getKey())) {
@@ -190,7 +118,6 @@ public class WorldRecord {
 	}
 	
 	private void recordTileEntities() {
-		World world = getRecordWorld();
 		Map<BlockPos, NBTTagCompound> newData = computeTileEntitiesData(world);
 		for(Entry<BlockPos, NBTTagCompound> entry : newData.entrySet()) {
 			if(		!tileEntitiesData.containsKey(entry.getKey()) || 
@@ -223,57 +150,5 @@ public class WorldRecord {
 		if(currentChangeSet != null)
 			currentChangeSet.write();
 		System.out.println("Recording completed ("+(duration / 20)+" seconds)");
-	}
-	
-	public void endReplayTick() throws InterruptedException, ExecutionException {
-		if(currentTick >= duration) return;
-		int phase = currentTick % snapshotLenght;
-		if(phase == 0) {
-			currentChangeSet = nextChangeSet.get();
-			if(currentTick + snapshotLenght < duration) {
-				ChangeSet changeSet = changeSet(currentTick + snapshotLenght);
-				nextChangeSet = ioExecutor.submit(() -> {
-					changeSet.read();
-					return changeSet;
-				});
-			}
-		}
-		for(RecordEvent event : currentChangeSet.data.get(phase))
-			event.replay(this);
-		ReplayWorldAccess world = getReplayWorld();
-		for(Entry<Integer, NBTTagCompound> entry : entitiesData.entrySet())
-			world.updateEntity(entry.getKey(), entry.getValue());
-		for(Entry<BlockPos, NBTTagCompound> entry : tileEntitiesData.entrySet())
-			world.updateTileEntity(entry.getKey(), entry.getValue());
-		currentTick++;
-	}
-	
-	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {
-		if(tick >= duration) tick = duration - 1;
-		currentTick = tick - (tick % snapshotLenght);
-		Snapshot snapshot = snapshot(tick);
-		snapshot.read();
-		snapshot.applyDataToWorld(this);
-		currentChangeSet = null;
-		ChangeSet changeSet = changeSet(currentTick);
-		nextChangeSet = ioExecutor.submit(() -> {
-			changeSet.read();
-			return changeSet;
-		});
-		while(currentTick < tick)
-			endReplayTick();
-	}
-	
-	public static NBTTagCompound computeDifferentialCompound(NBTTagCompound oldComp, NBTTagCompound newComp) {
-		NBTTagCompound diffComp = newComp.copy();
-		for(String key : newComp.getKeySet())
-			if(newComp.getTag(key).equals(oldComp.getTag(key)))
-				diffComp.removeTag(key);
-		return diffComp;
-	}
-	
-	public static void updateCompound(NBTTagCompound oldComp, NBTTagCompound updateComp) {
-		for(String key : updateComp.getKeySet())
-			oldComp.setTag(key, updateComp.getTag(key));
 	}
 }

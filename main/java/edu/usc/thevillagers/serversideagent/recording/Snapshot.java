@@ -30,7 +30,7 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 		return Block.getStateById(id);
 	}
 	
-	public void setDataFromWorld(WorldRecord wr) {
+	public void setDataFromWorld(WorldRecordRecorder wr) {
 		BlockPos diff = wr.to.subtract(wr.from).add(1, 1, 1);
 		data = new SnapshotData(diff.getX() * diff.getY() * diff.getZ());
 		int index = 0;
@@ -38,17 +38,17 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 			data.blockStates[index++] = wr.world.getBlockState(p);
 		}
 		
-		for(Entry<Integer, NBTTagCompound> entry : wr.computeEntitiesData(wr.getRecordWorld()).entrySet()) {
-			int type = EntityList.getID(wr.getRecordWorld().getEntityByID(entry.getKey()).getClass());
+		for(Entry<Integer, NBTTagCompound> entry : wr.computeEntitiesData(wr.world).entrySet()) {
+			int type = EntityList.getID(wr.world.getEntityByID(entry.getKey()).getClass());
 			data.spawnEvents.add(new RecordEventEntitySpawn(entry.getKey(), type, entry.getValue()));
 		}
-		for(Entry<BlockPos, NBTTagCompound> entry : wr.computeTileEntitiesData(wr.getRecordWorld()).entrySet()) {
+		for(Entry<BlockPos, NBTTagCompound> entry : wr.computeTileEntitiesData(wr.world).entrySet()) {
 			data.spawnEvents.add(new RecordEventTileEntitySpawn(entry.getKey(), entry.getValue()));
 		}
 	}
 	
-	public void applyDataToWorld(WorldRecord wr) {
-		ReplayWorldAccess world = wr.getReplayWorld();
+	public void applyDataToWorld(WorldRecordReplayer wr) {
+		ReplayWorldAccess world = wr.world;
 		wr.entitiesData.clear();
 		wr.tileEntitiesData.clear();
 		world.reset();

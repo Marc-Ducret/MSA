@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class RecordEventEntityUpdate extends RecordEvent {
@@ -17,8 +18,8 @@ public class RecordEventEntityUpdate extends RecordEvent {
 	}
 
 	@Override
-	public void replay(WorldRecord wr) {
-		if(wr.entitiesData.containsKey(id)) WorldRecord.updateCompound(wr.entitiesData.get(id), data);
+	public void replay(WorldRecordReplayer wr) {
+		if(wr.entitiesData.containsKey(id)) WorldRecordRecorder.updateCompound(wr.entitiesData.get(id), data);
 		else System.out.println("Missing entity with id: "+id);
 	}
 

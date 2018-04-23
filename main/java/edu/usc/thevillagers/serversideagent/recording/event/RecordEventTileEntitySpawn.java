@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -19,11 +19,11 @@ public class RecordEventTileEntitySpawn extends RecordEvent {
 	}
 
 	@Override
-	public void replay(WorldRecord wr) {
-		TileEntity tileEntity = TileEntity.create(wr.getReplayWorld().fakeWorld, data);
-		tileEntity.setWorld(wr.getReplayWorld().fakeWorld);
+	public void replay(WorldRecordReplayer wr) {
+		TileEntity tileEntity = TileEntity.create(wr.world.fakeWorld, data);
+		tileEntity.setWorld(wr.world.fakeWorld);
 		tileEntity.setPos(pos);
-		wr.getReplayWorld().spawnTileEntity(tileEntity);
+		wr.world.spawnTileEntity(tileEntity);
 		wr.tileEntitiesData.put(pos, data);
 	}
 

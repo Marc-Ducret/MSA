@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class RecordEventEntityDie extends RecordEvent {
@@ -15,8 +15,8 @@ public class RecordEventEntityDie extends RecordEvent {
 	}
 
 	@Override
-	public void replay(WorldRecord wr) {
-		wr.getReplayWorld().killEntity(id);
+	public void replay(WorldRecordReplayer wr) {
+		wr.world.killEntity(id);
 		wr.entitiesData.remove(id);
 	}
 

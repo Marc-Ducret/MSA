@@ -10,7 +10,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
 import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -31,7 +31,7 @@ public class GuiReplay extends GuiScreen {
 	
 	private int renderDistance = 256;
 	
-	private WorldRecord record;
+	private WorldRecordReplayer record;
 	private int speed;
 	
 	private Vec3d camPos = Vec3d.ZERO.addVector(0, 10, 0), prevCamPos = camPos;
@@ -43,7 +43,7 @@ public class GuiReplay extends GuiScreen {
 	private GuiSlider seekSlider;
 	
 	public GuiReplay(File recordFolder) {
-		record = new WorldRecord(recordFolder);
+		record = new WorldRecordReplayer(recordFolder);
 		speed = 1;
 	}
 
@@ -58,7 +58,7 @@ public class GuiReplay extends GuiScreen {
 				for(int chunkZ = record.from.getZ() >> 4; chunkZ < record.to.getZ() >> 4; chunkZ++)
 					for(int chunkY = record.from.getY() >> 4; chunkY < record.to.getY() >> 4; chunkY++)
 						for(int chunkX = record.from.getX() >> 4; chunkX < record.to.getX() >> 4; chunkX++)
-							record.getReplayWorld().chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
+							record.world.chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
 				
 				camPos = new Vec3d(record.from.add(record.to)).scale(.5);
 			}
@@ -138,7 +138,7 @@ public class GuiReplay extends GuiScreen {
 			camYaw += Mouse.getDX() * .2;
 			camPitch += Mouse.getDY() * .2;
 		}
-		EntityPlayerSP fakePlayer = record.getReplayWorld().fakePlayer;
+		EntityPlayerSP fakePlayer = record.world.fakePlayer;
 		fakePlayer.prevRotationPitch 	= fakePlayer.rotationPitch;
 		fakePlayer.prevRotationYaw 		= fakePlayer.rotationYaw;
 		fakePlayer.lastTickPosX			= fakePlayer.posX;
@@ -224,7 +224,7 @@ public class GuiReplay extends GuiScreen {
 		for(TileEntity tileEntity : world.getTileEntities()) {
 			if(renderBounds.contains(new Vec3d(tileEntity.getPos()))) {
 				this.mc.entityRenderer.disableLightmap();
-				TileEntityRendererDispatcher.instance.render(tileEntity, 0, -1);
+				TileEntityRendererDispatcher.instance.render(tileEntity, 1, -1);
 			}
 		}
 		TileEntityRendererDispatcher.instance.drawBatch(0);
@@ -241,7 +241,7 @@ public class GuiReplay extends GuiScreen {
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		drawDefaultBackground();
 		
-		ReplayWorldAccess world = record.getReplayWorld();
+		ReplayWorldAccess world = record.world;
 		mc.world = world.fakeWorld;
 		mc.player = world.fakePlayer;
 		mc.playerController = world.fakePlayerController;

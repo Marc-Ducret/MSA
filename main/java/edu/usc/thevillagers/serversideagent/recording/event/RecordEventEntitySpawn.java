@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -25,12 +25,12 @@ public class RecordEventEntitySpawn extends RecordEvent {
 	}
 
 	@Override
-	public void replay(WorldRecord wr) {
+	public void replay(WorldRecordReplayer wr) {
 		Entity e;
-		if(type < 0) e = new EntityOtherPlayerMP(wr.getReplayWorld().fakeWorld, new GameProfile(UUID.randomUUID(), "PlayerName"));
-		else e = EntityList.createEntityByID(type, wr.getReplayWorld().fakeWorld);
+		if(type < 0) e = new EntityOtherPlayerMP(wr.world.fakeWorld, new GameProfile(UUID.randomUUID(), "PlayerName"));
+		else e = EntityList.createEntityByID(type, wr.world.fakeWorld);
 		e.setEntityId(id);
-		wr.getReplayWorld().spawnEntity(e);
+		wr.world.spawnEntity(e);
 		wr.entitiesData.put(id, data);
 	}
 

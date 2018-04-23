@@ -1,11 +1,11 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 
 public abstract class RecordEvent {
 
-	public abstract void replay(WorldRecord wr);
+	public abstract void replay(WorldRecordReplayer wr);
 	public abstract void write(NBTTagCompound compound);
 	public abstract void read(NBTTagCompound compound);
 	

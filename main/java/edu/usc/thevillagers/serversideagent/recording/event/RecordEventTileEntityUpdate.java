@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 
@@ -18,8 +19,8 @@ public class RecordEventTileEntityUpdate extends RecordEvent {
 	}
 
 	@Override
-	public void replay(WorldRecord wr) {
-		if(wr.tileEntitiesData.containsKey(pos)) WorldRecord.updateCompound(wr.tileEntitiesData.get(pos), data);
+	public void replay(WorldRecordReplayer wr) {
+		if(wr.tileEntitiesData.containsKey(pos)) WorldRecordRecorder.updateCompound(wr.tileEntitiesData.get(pos), data);
 		else System.out.println("Missing tile entity at: "+pos);
 	}
 

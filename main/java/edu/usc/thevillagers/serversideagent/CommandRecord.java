@@ -2,7 +2,7 @@ package edu.usc.thevillagers.serversideagent;
 
 import java.util.List;
 
-import edu.usc.thevillagers.serversideagent.recording.WorldRecord;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventBlockChange;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -19,7 +19,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
 public class CommandRecord extends CommandBase {
 	
-	private WorldRecord record;
+	private WorldRecordRecorder record;
 	
 	private static enum State{IDLE, RECORDING}
 	private State state = State.IDLE;
@@ -53,7 +53,7 @@ public class CommandRecord extends CommandBase {
 			BlockPos to   = new BlockPos(	Math.max(pA.getX(), pB.getX()), 
 											Math.max(pA.getY(), pB.getY()), 
 											Math.max(pA.getZ(), pB.getZ()));
-			record = new WorldRecord((WorldServer) sender.getEntityWorld(), from, to);
+			record = new WorldRecordRecorder((WorldServer) sender.getEntityWorld(), from, to);
 			record.startRecord();
 			state = State.RECORDING;
 			sender.sendMessage(new TextComponentString("Recording started"));
