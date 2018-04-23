@@ -48,7 +48,7 @@ public class ChunkBufferManager {
 		long index = subChunkIndex(chunkX, chunkY, chunkZ);
 		BufferBuilder buffer = buffers.get(index);
 		if(buffer == null)
-			buffer = new BufferBuilder(0x10000);
+			buffer = new BufferBuilder(0x8000);
 		buffer.reset();
 		buffer.begin(7, DefaultVertexFormats.BLOCK);
 		buffer.setTranslation(0, 0, 0);

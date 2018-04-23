@@ -51,16 +51,17 @@ public class GuiReplay extends GuiScreen {
 	public void initGui() {
 		super.initGui();
 		try {
-			record.readInfo();
-			
-			record.seek(0);
-			mc.renderGlobal.setWorldAndLoadRenderers(record.getReplayWorld().fakeWorld);
-			for(int chunkZ = record.from.getZ() >> 4; chunkZ < record.to.getZ() >> 4; chunkZ++)
-				for(int chunkY = record.from.getY() >> 4; chunkY < record.to.getY() >> 4; chunkY++)
-					for(int chunkX = record.from.getX() >> 4; chunkX < record.to.getX() >> 4; chunkX++)
-						record.getReplayWorld().chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
-			
-			camPos = new Vec3d(record.from.add(record.to)).scale(.5);
+			if(record.world == null) {
+				record.readInfo();
+				
+				record.seek(0);
+				for(int chunkZ = record.from.getZ() >> 4; chunkZ < record.to.getZ() >> 4; chunkZ++)
+					for(int chunkY = record.from.getY() >> 4; chunkY < record.to.getY() >> 4; chunkY++)
+						for(int chunkX = record.from.getX() >> 4; chunkX < record.to.getX() >> 4; chunkX++)
+							record.getReplayWorld().chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
+				
+				camPos = new Vec3d(record.from.add(record.to)).scale(.5);
+			}
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
