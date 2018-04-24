@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map.Entry;
 
+import akka.util.Collections;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntitySpawn;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntitySpawn;
@@ -54,10 +55,8 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 		wr.tileEntitiesData.clear();
 		wr.worldTimeOffset = data.worldTime - wr.currentTick;
 		world.reset();
-		int index = 0;
-		for(BlockPos p : BlockPos.getAllInBoxMutable(wr.from, wr.to)) {
-			world.setBlockState(p, data.blockStates[index++]);
-		}
+		
+		world.setBlockStates(data.blockStates);
 		for(RecordEvent event : data.spawnEvents) event.replay(wr);
 	}
 

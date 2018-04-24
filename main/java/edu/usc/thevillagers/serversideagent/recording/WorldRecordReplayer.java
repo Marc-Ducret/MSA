@@ -52,18 +52,35 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	}
 	
 	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {
+		long start = System.currentTimeMillis();
+		
 		if(tick >= duration) tick = duration - 1;
 		currentTick = tick - (tick % snapshotLenght);
+		
+		Snapshot snapshot = snapshot(tick);
+		snapshot.read(); 
+		
 		ChangeSet changeSet = changeSet(currentTick);
 		nextChangeSet = ioExecutor.submit(() -> {
 			changeSet.read();
 			return changeSet;
 		});
-		Snapshot snapshot = snapshot(tick);
-		snapshot.read();
+		
+		long ioEnd = System.currentTimeMillis();
+		
 		snapshot.applyDataToWorld(this);
+		for(int chunkZ = from.getZ() >> 4; chunkZ < to.getZ() >> 4; chunkZ++)
+			for(int chunkY = from.getY() >> 4; chunkY < to.getY() >> 4; chunkY++)
+				for(int chunkX = from.getX() >> 4; chunkX < to.getX() >> 4; chunkX++)
+					world.chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
+		
+		long appSnapEnd = System.currentTimeMillis();
+		
 		currentChangeSet = null;
 		while(currentTick < tick)
 			endReplayTick();
+		
+		long end = System.currentTimeMillis();
+		System.out.println(String.format("SEEK(%d) in %d ms [io = %d ms | snap = %d ms | changes = %d ms]", tick, end - start, ioEnd - start, appSnapEnd - ioEnd, end - appSnapEnd));
 	}
 }

@@ -58,10 +58,6 @@ public class GuiReplay extends GuiScreen {
 				record.readInfo();
 				
 				record.seek(0);
-				for(int chunkZ = record.from.getZ() >> 4; chunkZ < record.to.getZ() >> 4; chunkZ++)
-					for(int chunkY = record.from.getY() >> 4; chunkY < record.to.getY() >> 4; chunkY++)
-						for(int chunkX = record.from.getX() >> 4; chunkX < record.to.getX() >> 4; chunkX++)
-							record.world.chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
 				
 				camPos = new Vec3d(record.from.add(record.to)).scale(.5);
 			}

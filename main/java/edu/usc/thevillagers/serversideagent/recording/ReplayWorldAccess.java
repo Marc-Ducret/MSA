@@ -39,7 +39,7 @@ public class ReplayWorldAccess implements IBlockAccess { //TODO refactor to be s
 	
 	public final BlockPos from, to, diff;
 	
-	private final IBlockState[] blockBuffer;
+	private IBlockState[] blockBuffer;
 	private final Map<Integer, Entity> entities;
 	private final Map<BlockPos, TileEntity> tileEntities;
 	
@@ -105,6 +105,10 @@ public class ReplayWorldAccess implements IBlockAccess { //TODO refactor to be s
 			blockBuffer[index] = state;
 			chunkBufferManager.requestUpdate(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
 		}
+	}
+	
+	public void setBlockStates(IBlockState[] buffer) {
+		System.arraycopy(buffer, 0, blockBuffer, 0, blockBuffer.length);
 	}
 
 	@Override

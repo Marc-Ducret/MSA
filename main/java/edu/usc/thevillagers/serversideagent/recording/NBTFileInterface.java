@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -47,7 +49,7 @@ public abstract class NBTFileInterface<T> extends FileInterface {
 	}
 	
 	public static void writeToFile(NBTTagCompound compound, File file) throws IOException {
-		DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+		DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(file))));
 		try {
 			CompressedStreamTools.write(compound, stream);
 		} finally {
@@ -56,7 +58,8 @@ public abstract class NBTFileInterface<T> extends FileInterface {
 	}
 	
 	public static NBTTagCompound readFromFile(File file) throws IOException {
-		DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+		
+		DataInputStream stream = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file))));
 		try {
 			return CompressedStreamTools.read(stream);
 		} finally {
