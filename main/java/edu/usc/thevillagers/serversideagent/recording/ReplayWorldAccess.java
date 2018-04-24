@@ -175,5 +175,6 @@ public class ReplayWorldAccess implements IBlockAccess { //TODO refactor to be s
 	public void reset() {
 		Arrays.fill(blockBuffer, Blocks.AIR.getDefaultState());
 		entities.clear();
+		tileEntities.clear();
 	}
 }
