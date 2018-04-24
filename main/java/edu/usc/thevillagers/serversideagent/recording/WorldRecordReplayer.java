@@ -13,6 +13,8 @@ import net.minecraft.util.math.BlockPos;
 public class WorldRecordReplayer extends WorldRecordWorker {
 	
 	public ReplayWorldAccess world;
+
+	public long worldTimeOffset;
 	
 	private Future<ChangeSet> nextChangeSet;
 	
@@ -52,15 +54,15 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {
 		if(tick >= duration) tick = duration - 1;
 		currentTick = tick - (tick % snapshotLenght);
-		Snapshot snapshot = snapshot(tick);
-		snapshot.read();
-		snapshot.applyDataToWorld(this);
-		currentChangeSet = null;
 		ChangeSet changeSet = changeSet(currentTick);
 		nextChangeSet = ioExecutor.submit(() -> {
 			changeSet.read();
 			return changeSet;
 		});
+		Snapshot snapshot = snapshot(tick);
+		snapshot.read();
+		snapshot.applyDataToWorld(this);
+		currentChangeSet = null;
 		while(currentTick < tick)
 			endReplayTick();
 	}

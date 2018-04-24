@@ -45,12 +45,14 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 		for(Entry<BlockPos, NBTTagCompound> entry : wr.computeTileEntitiesData(wr.world).entrySet()) {
 			data.spawnEvents.add(new RecordEventTileEntitySpawn(entry.getKey(), entry.getValue()));
 		}
+		data.worldTime = wr.world.getTotalWorldTime();
 	}
 	
 	public void applyDataToWorld(WorldRecordReplayer wr) {
 		ReplayWorldAccess world = wr.world;
 		wr.entitiesData.clear();
 		wr.tileEntitiesData.clear();
+		wr.worldTimeOffset = data.worldTime - wr.currentTick;
 		world.reset();
 		int index = 0;
 		for(BlockPos p : BlockPos.getAllInBoxMutable(wr.from, wr.to)) {
@@ -71,6 +73,7 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 			list.appendTag(RecordEvent.toNBT(event));
 		}
 		compound.setTag("SpawnEvents", list);
+		compound.setLong("WorldTime", data.worldTime);
 	}
 
 	@Override
@@ -85,5 +88,6 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 		for(NBTBase nbt : list) {
 			data.spawnEvents.add(RecordEvent.fromNBT((NBTTagCompound) nbt));
 		}
+		data.worldTime = compound.getLong("WorldTime");
 	}
 }
