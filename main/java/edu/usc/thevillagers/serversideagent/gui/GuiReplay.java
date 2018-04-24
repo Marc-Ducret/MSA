@@ -2,6 +2,7 @@ package edu.usc.thevillagers.serversideagent.gui;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.concurrent.ExecutionException;
 
 import org.lwjgl.input.Keyboard;
@@ -21,6 +22,8 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -151,8 +154,21 @@ public class GuiReplay extends GuiScreen {
 		fakePlayer.posZ					= camPos.z;
 		
 		try {
-			for(int i = 0; i < speed; i ++)
+			for(int i = 0; i < speed; i ++) {
 				record.endReplayTick();
+				for(Entity e : record.world.getEntities()) {
+					if(e instanceof EntityPlayer) {
+						EntityPlayer player = (EntityPlayer) e;
+						try {
+							Method method = EntityLivingBase.class.getDeclaredMethod("updateArmSwingProgress");
+							method.setAccessible(true);
+							method.invoke(player);
+						} catch(Exception ex) {
+							ex.printStackTrace();
+						}
+					}
+				}
+			}
 			seekSlider.setValue(record.currentTick / 20F);
 			seekSlider.updateSlider();
 		} catch (InterruptedException | ExecutionException e) {

@@ -9,6 +9,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -16,6 +17,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -143,7 +145,7 @@ public class CommandRecord extends CommandBase {
 	}
 	
 	@SubscribeEvent
-	public void playerInteract(PlayerInteractEvent.LeftClickBlock event) { //TODO how to record when canceled?
+	public void playerInteract(PlayerInteractEvent.LeftClickBlock event) { //TODO how to record when cancelled?
 		if(state == State.RECORDING && event.getSide() == Side.SERVER)
 			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.HIT, HighLevelAction.Phase.START, 
 					event.getEntityPlayer().getEntityId(), event.getHand(), event.getItemStack(), 
@@ -163,6 +165,14 @@ public class CommandRecord extends CommandBase {
 		if(state == State.RECORDING && !event.getEntity().getEntityWorld().isRemote)
 			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.STOP, 
 					event.getEntity().getEntityId(), EnumHand.MAIN_HAND, event.getItem(),  //TODO which hand?
+					-1, null, null, null)));
+	}
+	
+	@SubscribeEvent
+	public void playerContainerInteract(PlayerContainerEvent.Close event) { //TODO no event for moving items in containers?
+		if(state == State.RECORDING && !event.getEntity().getEntityWorld().isRemote)
+			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.STOP, 
+					event.getEntityPlayer().getEntityId(), EnumHand.MAIN_HAND, ItemStack.EMPTY,
 					-1, null, null, null)));
 	}
 }

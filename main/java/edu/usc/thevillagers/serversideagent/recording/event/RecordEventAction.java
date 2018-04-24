@@ -2,6 +2,7 @@ package edu.usc.thevillagers.serversideagent.recording.event;
 
 import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class RecordEventAction extends RecordEvent {
@@ -17,7 +18,9 @@ public class RecordEventAction extends RecordEvent {
 
 	@Override
 	public void replay(WorldRecordReplayer wr) {
-		//TODO do
+		EntityPlayer actor = (EntityPlayer) wr.world.getEntity(action.actorId);
+		if(action.actionPhase != HighLevelAction.Phase.STOP)
+			actor.swingArm(action.hand);
 	}
 
 	@Override

@@ -151,6 +151,10 @@ public class ReplayWorldAccess implements IBlockAccess { //TODO refactor to be s
 		return entities.values();
 	}
 	
+	public Entity getEntity(int entityId) {
+		return entities.get(entityId);
+	}
+	
 	public void spawnTileEntity(TileEntity tileEntity) {
 		tileEntities.put(tileEntity.getPos(), tileEntity);
 	}
