@@ -17,6 +17,7 @@ public abstract class RecordEvent {
 		RecordEventTileEntitySpawn.class,
 		RecordEventTileEntityUpdate.class,
 		RecordEventTileEntityDie.class,
+		RecordEventAction.class,
 	};
 	
 	private static Class<?> getClassFromId(int id) {
