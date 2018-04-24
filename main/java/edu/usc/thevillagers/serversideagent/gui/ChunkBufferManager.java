@@ -22,9 +22,9 @@ public class ChunkBufferManager {
 	private Map<Long, BufferBuilder> buffers = new HashMap<>();
 	private Set<Long> updatesRequired = new HashSet<>();
 	
-	public void renderSubChunk(IBlockAccess blockAccess, int chunkX, int chunkY, int chunkZ) {
+	public void renderSubChunk(IBlockAccess blockAccess, int chunkX, int chunkY, int chunkZ, boolean update) {
 		long index = subChunkIndex(chunkX, chunkY, chunkZ);
-		if(updatesRequired.contains(index)) {
+		if(update && updatesRequired.contains(index)) {
 			updateSubChunk(blockAccess, chunkX, chunkY, chunkZ);
 			updatesRequired.remove(index);
 		}

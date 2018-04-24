@@ -32,7 +32,7 @@ import net.minecraftforge.fml.client.config.GuiSlider;
 
 public class GuiReplay extends GuiScreen {
 	
-	private int renderDistance = 256;
+	private int renderDistance = 128;
 	
 	private WorldRecordReplayer record;
 	private int speed;
@@ -208,11 +208,19 @@ public class GuiReplay extends GuiScreen {
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
         	
         mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-		
+		long startTime = System.currentTimeMillis();
+        
         for(int chunkZ = renderFrom.getZ() >> 4; chunkZ <= renderTo.getZ() >> 4; chunkZ++)
 			for(int chunkY = renderFrom.getY() >> 4; chunkY <= renderTo.getY() >> 4; chunkY++)
 				for(int chunkX = renderFrom.getX() >> 4; chunkX <= renderTo.getX() >> 4; chunkX++) {
-					world.chunkBufferManager.renderSubChunk(world, chunkX, chunkY, chunkZ);
+					boolean update = System.currentTimeMillis() - startTime < 100;
+					if(!update) {
+						int dx = chunkX - (((int)camPos.x) >> 4);
+						int dy = chunkY - (((int)camPos.y) >> 4);
+						int dz = chunkZ - (((int)camPos.z) >> 4);
+						if(dx*dx + dy*dy + dz*dz <= 5*5) update = true;
+					}
+					world.chunkBufferManager.renderSubChunk(world, chunkX, chunkY, chunkZ, update);
 				}
 	}
 	
