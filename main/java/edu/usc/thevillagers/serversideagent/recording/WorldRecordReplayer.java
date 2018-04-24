@@ -69,9 +69,9 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		long ioEnd = System.currentTimeMillis();
 		
 		snapshot.applyDataToWorld(this);
-		for(int chunkZ = from.getZ() >> 4; chunkZ < to.getZ() >> 4; chunkZ++)
-			for(int chunkY = from.getY() >> 4; chunkY < to.getY() >> 4; chunkY++)
-				for(int chunkX = from.getX() >> 4; chunkX < to.getX() >> 4; chunkX++)
+		for(int chunkZ = from.getZ() >> 4; chunkZ <= to.getZ() >> 4; chunkZ++)
+			for(int chunkY = from.getY() >> 4; chunkY <= to.getY() >> 4; chunkY++)
+				for(int chunkX = from.getX() >> 4; chunkX <= to.getX() >> 4; chunkX++)
 					world.chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
 		
 		long appSnapEnd = System.currentTimeMillis();
