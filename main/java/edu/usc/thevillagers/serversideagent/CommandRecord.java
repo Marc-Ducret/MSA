@@ -9,13 +9,17 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EntityDamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -174,5 +178,17 @@ public class CommandRecord extends CommandBase {
 			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.STOP, 
 					event.getEntityPlayer().getEntityId(), EnumHand.MAIN_HAND, ItemStack.EMPTY,
 					-1, null, null, null)));
+	}
+	
+	@SubscribeEvent
+	public void playerContainerInteract(LivingAttackEvent event) {
+		if(state == State.RECORDING && !event.getEntity().getEntityWorld().isRemote)
+			if(event.getSource() instanceof EntityDamageSource) {
+				Entity attacker = ((EntityDamageSource) event.getSource()).getImmediateSource();
+				if(attacker instanceof EntityPlayer)
+					record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.HIT, HighLevelAction.Phase.INSTANT, 
+							attacker.getEntityId(), EnumHand.MAIN_HAND, ((EntityPlayer) attacker).getHeldItem(EnumHand.MAIN_HAND),
+							event.getEntity().getEntityId(), null, null, null)));
+			}
 	}
 }

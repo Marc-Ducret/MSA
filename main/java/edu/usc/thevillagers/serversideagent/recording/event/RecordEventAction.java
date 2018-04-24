@@ -30,6 +30,6 @@ public class RecordEventAction extends RecordEvent {
 
 	@Override
 	public void read(NBTTagCompound compound) {
-		action = HighLevelAction.fromNBT(compound);
+		action = HighLevelAction.fromNBT(compound.getCompoundTag("Action"));
 	}
 }
