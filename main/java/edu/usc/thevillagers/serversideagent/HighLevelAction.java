@@ -7,7 +7,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
-public class HighLevelAction {
+public class HighLevelAction { //TODO inventory actions...
 	
 	public static enum Type {HIT, USE}
 	public static enum Phase {INSTANT, START, STOP}

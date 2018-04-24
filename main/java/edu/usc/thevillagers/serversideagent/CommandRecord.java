@@ -3,19 +3,24 @@ package edu.usc.thevillagers.serversideagent;
 import java.util.List;
 
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
+import edu.usc.thevillagers.serversideagent.recording.event.RecordEventAction;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventBlockChange;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
+import net.minecraftforge.fml.relauncher.Side;
 
 public class CommandRecord extends CommandBase {
 	
@@ -111,5 +116,53 @@ public class CommandRecord extends CommandBase {
 	public void blockChange(BlockEvent.NeighborNotifyEvent event) {
 		if(state == State.RECORDING && !event.getWorld().isRemote) 
 			record.recordEvent(new RecordEventBlockChange(event.getPos(), event.getState()));
+	}
+	
+	@SubscribeEvent
+	public void playerInteract(PlayerInteractEvent.EntityInteractSpecific event) {
+		if(state == State.RECORDING && event.getSide() == Side.SERVER)
+			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.INSTANT, 
+					event.getEntityPlayer().getEntityId(), event.getHand(), event.getItemStack(), 
+					event.getTarget().getEntityId(), null, null, event.getLocalPos())));
+	}
+	
+	@SubscribeEvent
+	public void playerInteract(PlayerInteractEvent.RightClickItem event) {
+		if(state == State.RECORDING && event.getSide() == Side.SERVER)
+			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.INSTANT, 
+					event.getEntityPlayer().getEntityId(), event.getHand(), event.getItemStack(), 
+					-1, null, null, null)));
+	}
+	
+	@SubscribeEvent
+	public void playerInteract(PlayerInteractEvent.RightClickBlock event) {
+		if(state == State.RECORDING && event.getSide() == Side.SERVER)
+			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.INSTANT, 
+					event.getEntityPlayer().getEntityId(), event.getHand(), event.getItemStack(), 
+					-1, event.getPos(), event.getFace(), event.getHitVec())));
+	}
+	
+	@SubscribeEvent
+	public void playerInteract(PlayerInteractEvent.LeftClickBlock event) { //TODO how to record when canceled?
+		if(state == State.RECORDING && event.getSide() == Side.SERVER)
+			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.HIT, HighLevelAction.Phase.START, 
+					event.getEntityPlayer().getEntityId(), event.getHand(), event.getItemStack(), 
+					-1, event.getPos(), event.getFace(), event.getHitVec())));
+	}
+	
+	@SubscribeEvent
+	public void playerInteract(LivingEntityUseItemEvent.Start event) {
+		if(state == State.RECORDING && !event.getEntity().getEntityWorld().isRemote)
+			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.START, 
+					event.getEntity().getEntityId(), EnumHand.MAIN_HAND, event.getItem(), //TODO which hand?
+					-1, null, null, null)));
+	}
+	
+	@SubscribeEvent
+	public void playerInteract(LivingEntityUseItemEvent.Stop event) {
+		if(state == State.RECORDING && !event.getEntity().getEntityWorld().isRemote)
+			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.STOP, 
+					event.getEntity().getEntityId(), EnumHand.MAIN_HAND, event.getItem(),  //TODO which hand?
+					-1, null, null, null)));
 	}
 }
