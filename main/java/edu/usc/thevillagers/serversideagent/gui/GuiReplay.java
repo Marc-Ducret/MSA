@@ -10,11 +10,12 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
-import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
-import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
+import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccessClient;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayerClient;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
@@ -34,7 +35,7 @@ public class GuiReplay extends GuiScreen {
 	
 	private int renderDistance = 128;
 	
-	private WorldRecordReplayer record;
+	private WorldRecordReplayerClient record;
 	private int speed;
 	
 	private Vec3d camPos = Vec3d.ZERO.addVector(0, 10, 0), prevCamPos = camPos;
@@ -46,7 +47,7 @@ public class GuiReplay extends GuiScreen {
 	private GuiSlider seekSlider;
 	
 	public GuiReplay(File recordFolder) {
-		record = new WorldRecordReplayer(recordFolder);
+		record = new WorldRecordReplayerClient(recordFolder);
 		speed = 1;
 	}
 
@@ -199,7 +200,7 @@ public class GuiReplay extends GuiScreen {
 									Math.min(record.to  .getZ(), (int) Math.floor(curCamPos.z) + renderDistance));
 	}
 	
-	private void renderBlocks(ReplayWorldAccess world) {
+	private void renderBlocks(ReplayWorldAccessClient world) {
 		GlStateManager.enableDepth();
 		GlStateManager.enableCull();
         this.mc.entityRenderer.enableLightmap();
@@ -224,7 +225,7 @@ public class GuiReplay extends GuiScreen {
 				}
 	}
 	
-	private void renderEntities(ReplayWorldAccess world) { //TODO add vision check
+	private void renderEntities(ReplayWorldAccessClient world) { //TODO add vision check
 		RenderHelper.enableStandardItemLighting();
 		RenderManager renderManager = mc.getRenderManager();
 		renderManager.setPlayerViewY(180);
@@ -261,8 +262,8 @@ public class GuiReplay extends GuiScreen {
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		drawDefaultBackground();
 		
-		ReplayWorldAccess world = record.world;
-		mc.world = world.fakeWorld;
+		ReplayWorldAccessClient world = record.world;
+		mc.world = (WorldClient) world.fakeWorld;
 		mc.player = world.fakePlayer;
 		mc.playerController = world.fakePlayerController;
 		mc.setRenderViewEntity(mc.player);

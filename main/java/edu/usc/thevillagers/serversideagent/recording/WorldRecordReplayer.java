@@ -26,7 +26,11 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	@Override
 	public void readInfo() throws IOException {
 		super.readInfo();
-		world = new ReplayWorldAccess(from, to);
+		world = createWorldAccess();
+	}
+	
+	protected ReplayWorldAccess createWorldAccess() {
+		return new ReplayWorldAccess(from, to);
 	}
 	
 	public void endReplayTick() throws InterruptedException, ExecutionException {
@@ -69,11 +73,6 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		long ioEnd = System.currentTimeMillis();
 		
 		snapshot.applyDataToWorld(this);
-		for(int chunkZ = from.getZ() >> 4; chunkZ <= to.getZ() >> 4; chunkZ++)
-			for(int chunkY = from.getY() >> 4; chunkY <= to.getY() >> 4; chunkY++)
-				for(int chunkX = from.getX() >> 4; chunkX <= to.getX() >> 4; chunkX++)
-					world.chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
-		
 		long appSnapEnd = System.currentTimeMillis();
 		
 		currentChangeSet = null;
