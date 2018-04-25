@@ -1,7 +1,5 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
-import java.util.UUID;
-
 import com.mojang.authlib.GameProfile;
 
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
@@ -29,7 +27,7 @@ public class RecordEventEntitySpawn extends RecordEvent {
 		Entity e;
 		if(type < 0) 
 			e = ServerSideAgentMod.proxy.createReplayEntityPlayer(wr.world.fakeWorld, 
-					new GameProfile(UUID.randomUUID(), "Player")); //TODO get real profile?
+					new GameProfile(data.getUniqueId("ProfileUUID"), data.getString("ProfileName"))); //TODO get real profile?
 		else
 			e = EntityList.createEntityByID(type, wr.world.fakeWorld);
 		e.setEntityId(id);

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.mojang.authlib.GameProfile;
+
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntityDie;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntitySpawn;
@@ -85,6 +87,9 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 		NBTTagCompound data = e.writeToNBT(new NBTTagCompound());
 		if(e instanceof EntityPlayer) {
 			data.setBoolean("Sneaking", e.isSneaking());
+			GameProfile profile = ((EntityPlayer) e).getGameProfile();
+			data.setString("ProfileName", profile.getName());
+			data.setUniqueId("ProfileUUID", profile.getId());
 		}
 		return data;
 	}

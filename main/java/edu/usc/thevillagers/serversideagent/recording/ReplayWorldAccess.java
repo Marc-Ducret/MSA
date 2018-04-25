@@ -130,8 +130,9 @@ public class ReplayWorldAccess implements IBlockAccess {
 		if(entities.containsKey(id)) {
 			Entity e = entities.get(id);
 			e.readFromNBT(data);
-			if(e instanceof EntityPlayer)
+			if(e instanceof EntityPlayer) {
 				e.setSneaking(data.getBoolean("Sneaking"));
+			}
 		}
 		else System.out.println("Missing entity with id: "+id);
 	}
