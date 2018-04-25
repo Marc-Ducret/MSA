@@ -53,6 +53,8 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		for(Entry<BlockPos, NBTTagCompound> entry : tileEntitiesData.entrySet())
 			world.updateTileEntity(entry.getKey(), entry.getValue());
 		currentTick++;
+		world.fakeWorld.setTotalWorldTime(worldTimeOffset + currentTick);
+		world.fakeWorld.setWorldTime((worldTimeOffset + currentTick) % 24000);
 	}
 	
 	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {

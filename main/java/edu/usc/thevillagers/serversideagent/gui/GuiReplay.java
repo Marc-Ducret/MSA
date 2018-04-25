@@ -25,6 +25,8 @@ import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -280,12 +282,12 @@ public class GuiReplay extends GuiScreen {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		
+		super.drawScreen(mouseX, mouseY, partialTicks);
+		drawCenteredString(mc.fontRenderer, speed+"*", 35, height-14, 0xFFFFFF);
+        itemRender.renderItemAndEffectIntoGUI(new ItemStack(Items.CLOCK), width-18, height-18);
 		mc.world = null;
 		mc.player = null;
 		mc.playerController = null;
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		drawCenteredString(mc.fontRenderer, speed+"*", 35, height-14, 0xFFFFFF);
 	}
 	
 	@Override
