@@ -1,7 +1,10 @@
-package edu.usc.thevillagers.serversideagent;
+package edu.usc.thevillagers.serversideagent.command;
 
 import java.util.List;
 
+import edu.usc.thevillagers.serversideagent.HighLevelAction;
+import edu.usc.thevillagers.serversideagent.HighLevelAction.Phase;
+import edu.usc.thevillagers.serversideagent.HighLevelAction.Type;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventAction;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventBlockChange;

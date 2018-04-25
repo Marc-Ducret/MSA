@@ -1,4 +1,4 @@
-package edu.usc.thevillagers.serversideagent;
+package edu.usc.thevillagers.serversideagent.command;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.Environment;

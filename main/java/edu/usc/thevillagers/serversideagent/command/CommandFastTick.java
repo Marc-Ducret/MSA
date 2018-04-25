@@ -1,4 +1,4 @@
-package edu.usc.thevillagers.serversideagent;
+package edu.usc.thevillagers.serversideagent.command;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;

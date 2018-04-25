@@ -2,7 +2,12 @@ package edu.usc.thevillagers.serversideagent;
 
 import java.io.IOException;
 
+import edu.usc.thevillagers.serversideagent.command.CommandEnvironment;
+import edu.usc.thevillagers.serversideagent.command.CommandFastTick;
+import edu.usc.thevillagers.serversideagent.command.CommandRecord;
+import edu.usc.thevillagers.serversideagent.command.CommandTPS;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
+import edu.usc.thevillagers.serversideagent.proxy.Proxy;
 import edu.usc.thevillagers.serversideagent.request.RequestManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -22,8 +27,8 @@ public class ServerSideAgentMod {
     private EnvironmentManager envManager;
     private RequestManager reqManager;
     
-    @SidedProxy(clientSide = "edu.usc.thevillagers.serversideagent.ClientProxy", serverSide = "edu.usc.thevillagers.serversideagent.ServerProxy")
-    private static Object proxy;
+    @SidedProxy(clientSide = "edu.usc.thevillagers.serversideagent.proxy.ClientProxy", serverSide = "edu.usc.thevillagers.serversideagent.proxy.ServerProxy")
+    public static Proxy proxy;
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {

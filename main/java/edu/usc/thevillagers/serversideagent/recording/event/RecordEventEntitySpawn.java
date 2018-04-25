@@ -4,8 +4,8 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
+import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
-import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
@@ -27,8 +27,11 @@ public class RecordEventEntitySpawn extends RecordEvent {
 	@Override
 	public void replay(WorldRecordReplayer wr) {
 		Entity e;
-		if(type < 0) e = new EntityOtherPlayerMP(wr.world.fakeWorld, new GameProfile(UUID.randomUUID(), "PlayerName"));
-		else e = EntityList.createEntityByID(type, wr.world.fakeWorld);
+		if(type < 0) 
+			e = ServerSideAgentMod.proxy.createReplayEntityPlayer(wr.world.fakeWorld, 
+					new GameProfile(UUID.randomUUID(), "Player")); //TODO get real profile?
+		else 
+			e = EntityList.createEntityByID(type, wr.world.fakeWorld);
 		e.setEntityId(id);
 		wr.world.spawnEntity(e);
 		wr.entitiesData.put(id, data);
