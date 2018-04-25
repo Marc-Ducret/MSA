@@ -160,7 +160,7 @@ public class CommandRecord extends CommandBase {
 	public void playerInteract(LivingEntityUseItemEvent.Start event) {
 		if(state == State.RECORDING && !event.getEntity().getEntityWorld().isRemote)
 			record.recordEvent(new RecordEventAction(new HighLevelAction(HighLevelAction.Type.USE, HighLevelAction.Phase.START, 
-					event.getEntity().getEntityId(), EnumHand.MAIN_HAND, event.getItem(), //TODO which hand?
+					event.getEntity().getEntityId(), EnumHand.MAIN_HAND, event.getItem(), //TODO which hand? (compare with itemstack...?)
 					-1, null, null, null)));
 	}
 	

@@ -1,15 +1,18 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
+import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import net.minecraft.util.math.MathHelper;
 
 public class AgentActionState {
 
 	public float forward, strafe, momentumYaw, momentumPitch;
 	public boolean jump, crouch, attack, use;
+	public HighLevelAction action;
 	
 	public AgentActionState() {
 		forward = strafe = momentumYaw = momentumPitch = 0;
 		jump = crouch = attack = use = false;
+		action = null;
 	}
 	
 	public void clamp() {

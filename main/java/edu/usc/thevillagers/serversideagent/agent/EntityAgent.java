@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import com.mojang.authlib.GameProfile;
 
+import edu.usc.thevillagers.serversideagent.HighLevelAction;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.server.management.PlayerInteractionManager;
@@ -43,12 +45,53 @@ public class EntityAgent extends EntityPlayerMP {
 		super.onLivingUpdate();
 		AgentActionState state = actionState;
 		state.clamp();
+		if(state.action != null) executeAction(state.action);
 		this.setPositionAndRotation(posX, posY, posZ, 
 				rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
 				rotationPitch + state.momentumPitch * ROTATION_SPEED);
 		this.travel(state.strafe, 0, state.forward);
 		this.setJumping(state.jump);
 		this.setSneaking(state.crouch);
+	}
+	
+	private void executeAction(HighLevelAction action) { //TODO testing needed
+		switch(action.actionType) {
+		case HIT:
+			if(action.targetBlockPos != null) {
+				interactionManager.onBlockClicked(action.targetBlockPos, action.targetBlockFace);
+			} else if(action.targetEntityId >= 0) {
+				Entity e = world.getEntityByID(action.targetEntityId);
+				if(e != null) attackTargetEntityWithCurrentItem(e);
+			}
+			break;
+		case USE:
+			switch(action.actionPhase) {
+			case INSTANT:
+				if(action.targetBlockPos != null) {
+					interactionManager.processRightClickBlock(this, world, action.heldItem, action.hand, 
+							action.targetBlockPos, action.targetBlockFace, 
+							(float) action.targetHit.x, (float) action.targetHit.y, (float) action.targetHit.z);
+				} else if(action.targetEntityId >= 0) {
+					Entity e = world.getEntityByID(action.targetEntityId);
+					if(e != null) {
+						if(action.targetHit != null) e.applyPlayerInteraction(this, action.targetHit, action.hand);
+						else interactOn(e, action.hand);
+					}
+				} else {
+					interactionManager.processRightClick(this, world, action.heldItem, action.hand);
+				}
+				break;
+				
+			case START:
+				setActiveHand(action.hand);
+				break;
+				
+			case STOP:
+				stopActiveHand();
+				break;
+			}
+			break;
+		}
 	}
 	
 	@Override
