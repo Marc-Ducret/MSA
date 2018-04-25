@@ -18,6 +18,7 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntit
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntityUpdate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -80,16 +81,24 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 			currentTickEvents.add(event);
 	}
 	
+	private NBTTagCompound entityNBT(Entity e) {
+		NBTTagCompound data = e.writeToNBT(new NBTTagCompound());
+		if(e instanceof EntityPlayer) {
+			data.setBoolean("Sneaking", e.isSneaking());
+		}
+		return data;
+	}
+	
 	public Map<Integer, NBTTagCompound> computeEntitiesData(World world) {
 		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(from, to));
 		Map<Integer, NBTTagCompound> data = new HashMap<>();
 		for(Entity e : entities)
-			data.put(e.getEntityId(), e.writeToNBT(new NBTTagCompound()));
+			data.put(e.getEntityId(), entityNBT(e));
 		return data;
 	}
 	
 	public Map<BlockPos, NBTTagCompound> computeTileEntitiesData(World world) {
-		//TODO optimise by only looking up TileEntities within relevent chunks
+		//TODO optimise by only looking up TileEntities within relevant chunks
 		Map<BlockPos, NBTTagCompound> data = new HashMap<>();
 		AxisAlignedBB bounds = new AxisAlignedBB(from, to);
 		for(TileEntity tileEntity : world.loadedTileEntityList)

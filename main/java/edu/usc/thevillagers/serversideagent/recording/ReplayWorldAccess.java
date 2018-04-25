@@ -7,6 +7,7 @@ import java.util.Map;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -126,7 +127,12 @@ public class ReplayWorldAccess implements IBlockAccess {
 	}
 
 	public void updateEntity(int id, NBTTagCompound data) {
-		if(entities.containsKey(id)) entities.get(id).readFromNBT(data);
+		if(entities.containsKey(id)) {
+			Entity e = entities.get(id);
+			e.readFromNBT(data);
+			if(e instanceof EntityPlayer)
+				e.setSneaking(data.getBoolean("Sneaking"));
+		}
 		else System.out.println("Missing entity with id: "+id);
 	}
 
