@@ -29,6 +29,7 @@ public abstract class NBTFileInterface<T> extends FileInterface {
 	public final void write() throws IOException {
 		NBTTagCompound compound = new NBTTagCompound();
 		writeNBT(compound);
+		file.createNewFile();
 		writeToFile(compound, file);
 	}
 

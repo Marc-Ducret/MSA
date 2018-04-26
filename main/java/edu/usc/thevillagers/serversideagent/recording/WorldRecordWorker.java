@@ -36,6 +36,7 @@ public class WorldRecordWorker {
 	public void writeInfo() throws IOException {
 		File infoFile = new File(saveFolder, "record.info");
 		infoFile.getParentFile().mkdirs();
+		infoFile.createNewFile();
 		NBTTagCompound comp = new NBTTagCompound();
 		comp.setTag("From", NBTUtil.createPosTag(from));
 		comp.setTag("To"  , NBTUtil.createPosTag(to  ));
