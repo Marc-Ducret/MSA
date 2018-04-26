@@ -1,6 +1,7 @@
 from minecraft_environment import *
 import argparse
 import time
+import random
 import baselines.logger as logger
 
 def _run(args, run):
@@ -11,7 +12,7 @@ def _run(args, run):
 
 def run_agent(run, params={}):
     logger.Logger.CURRENT = logger.Logger('tmp/logs/', [
-        logger.TensorBoardOutputFormat('tmp/logs/run_%i' % int(time.time() * 1e2)),
+        logger.TensorBoardOutputFormat('tmp/logs/run_%i_%i' % (int(time.time() * 1e3), int(random.random() * 1e6))),
         logger.HumanOutputFormat(sys.stdout)])
     parser = argparse.ArgumentParser()
     parser.add_argument('env_type', action='store')
