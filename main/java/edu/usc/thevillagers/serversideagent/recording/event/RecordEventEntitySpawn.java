@@ -27,7 +27,7 @@ public class RecordEventEntitySpawn extends RecordEvent {
 		Entity e;
 		if(type < 0) 
 			e = ServerSideAgentMod.proxy.createReplayEntityPlayer(wr.world.fakeWorld, 
-					new GameProfile(data.getUniqueId("ProfileUUID"), data.getString("ProfileName"))); //TODO get real profile?
+					new GameProfile(data.getUniqueId("ProfileUUID"), data.getString("ProfileName")));
 		else
 			e = EntityList.createEntityByID(type, wr.world.fakeWorld);
 		e.setEntityId(id);

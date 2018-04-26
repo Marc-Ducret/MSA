@@ -16,18 +16,20 @@ public class EnvironmentLandmarks extends Environment {
 	private final int nLandmarks;
 	private final int nAgents;
 	private final int size;
+	private final int comSize;
 	
 	private final List<Agent> agents;
 	private final BlockPos[] landmarks;
 	
 	public EnvironmentLandmarks() {
-		this(5, 5);
+		this(4, 4, 1);
 	}
 	
-	public EnvironmentLandmarks(int nLandmarks, int nAgents) {
-		super((nLandmarks + nAgents) * 2, 2);
+	public EnvironmentLandmarks(int nLandmarks, int nAgents, int comSize) {
+		super((nLandmarks + nAgents) * 2 + nAgents * comSize, 2 + comSize);
 		this.nLandmarks = nLandmarks;
 		this.nAgents = nAgents;
+		this.comSize = comSize;
 		size = 8;
 		agents = new ArrayList<>(nAgents);
 		landmarks = new BlockPos[nLandmarks];
@@ -81,6 +83,9 @@ public class EnvironmentLandmarks extends Environment {
 			stateVector[2 * nAgents + i * 2 + 0] = lP.getX() - p.getX();
 			stateVector[2 * nAgents + i * 2 + 1] = lP.getZ() - p.getZ();
 		}
+		for(int i = 0; i < nAgents; i ++)
+			for(int c = 0; c < comSize; c++)
+				stateVector[2 * (nAgents + nLandmarks) + i * comSize + c] = agents.get((i + offset) % nAgents).actionVector[2 + c];
 	}
 
 	@Override
@@ -104,7 +109,7 @@ public class EnvironmentLandmarks extends Environment {
 			reward -= distSq * .1F;
 		}
 		for(Agent a : agents)
-			a.reward = reward;
+			a.reward = reward / nAgents;
 		if(time >= 199)
 			done = true;
 	}
