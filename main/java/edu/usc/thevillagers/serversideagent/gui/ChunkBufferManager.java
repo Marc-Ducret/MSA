@@ -1,11 +1,7 @@
 package edu.usc.thevillagers.serversideagent.gui;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -19,34 +15,54 @@ import net.minecraft.world.IBlockAccess;
 
 public class ChunkBufferManager {
 
-	private Map<Long, BufferBuilder> buffers = new HashMap<>();
-	private Set<Long> updatesRequired = new HashSet<>();
+	private BufferBuilder[] buffers; //TODO replace hash with arrays?
+	private boolean[] updateRequired;
+	
+	private int fromX, fromY, fromZ, toX, toY, toZ; // chunk coordinates
+	private int sizeX, sizeY, sizeZ;
+	
+	public ChunkBufferManager(BlockPos from, BlockPos to) {
+		fromX = from.getX() >> 4;
+		fromY = from.getY() >> 4;
+		fromZ = from.getZ() >> 4;
+		toX = to.getX() >> 4;
+		toY = to.getY() >> 4;
+		toZ = to.getZ() >> 4;
+		sizeX = toX - fromX + 1;
+		sizeY = toY - fromY + 1;
+		sizeZ = toZ - fromZ + 1;
+		buffers = new BufferBuilder[sizeX * sizeY * sizeZ];
+		updateRequired = new boolean[sizeX * sizeY * sizeZ];
+	}
 	
 	public void renderSubChunk(IBlockAccess blockAccess, int chunkX, int chunkY, int chunkZ, boolean update) {
-		long index = subChunkIndex(chunkX, chunkY, chunkZ);
-		if(update && updatesRequired.contains(index)) {
+		int index = subChunkIndex(chunkX, chunkY, chunkZ);
+		if(index < 0) return;
+		if(update && updateRequired[index]) {
 			updateSubChunk(blockAccess, chunkX, chunkY, chunkZ);
-			updatesRequired.remove(index);
+			updateRequired[index] = false;
 		}
-		if(buffers.containsKey(index)) {
-			drawBuffer(buffers.get(index));
+		if(buffers[index] != null) {
+			drawBuffer(buffers[index]);
 		}
 	}
 	
 	public void requestUpdate(int chunkX, int chunkY, int chunkZ) {
-		updatesRequired.add(subChunkIndex(chunkX, chunkY, chunkZ));
+		int index = subChunkIndex(chunkX, chunkY, chunkZ);
+		if(index < 0) return;
+		updateRequired[index] = true;
 	}
 	
-	private long subChunkIndex(int chunkX, int chunkY, int chunkZ) {
-		chunkX &= 0xFFFF;
-		chunkY &= 0xFF;
-		chunkZ &= 0xFFFF;
-		return ((long)chunkZ << 32) + ((long)chunkY << 16) + ((long)chunkX); 
+	private int subChunkIndex(int chunkX, int chunkY, int chunkZ) {
+		if(chunkX < fromX || chunkX > toX || chunkY < fromY || chunkY > toY || chunkZ < fromZ || chunkZ > toZ)
+			return -1;
+		return ((chunkZ - fromZ) * sizeY + (chunkY - fromY)) * sizeX + (chunkX - fromX);
 	}
 	
 	private void updateSubChunk(IBlockAccess blockAccess, int chunkX, int chunkY, int chunkZ) {
-		long index = subChunkIndex(chunkX, chunkY, chunkZ);
-		BufferBuilder buffer = buffers.get(index);
+		int index = subChunkIndex(chunkX, chunkY, chunkZ);
+		if(index < 0) return;
+		BufferBuilder buffer = buffers[index];
 		if(buffer == null)
 			buffer = new BufferBuilder(0x8000);
 		buffer.reset();
@@ -58,12 +74,11 @@ public class ChunkBufferManager {
 			Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlock(state, p, blockAccess, buffer);
 		}
 		buffer.finishDrawing();
-		buffers.put(index, buffer);
+		buffers[index] = buffer;
 	}
 	
 	private void drawBuffer(BufferBuilder buffer) {
-		if (buffer.getVertexCount() > 0)
-        {
+		if (buffer.getVertexCount() > 0) {
             VertexFormat vertexformat = buffer.getVertexFormat();
             int i = vertexformat.getNextOffset();
             ByteBuffer bytebuffer = buffer.getByteBuffer();

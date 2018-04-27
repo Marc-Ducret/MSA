@@ -15,6 +15,7 @@ import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.stats.RecipeBook;
 import net.minecraft.stats.StatisticsManager;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.GameType;
@@ -33,7 +34,7 @@ public class ReplayWorldAccessClient extends ReplayWorldAccess {
 
 	public ReplayWorldAccessClient(BlockPos from, BlockPos to) {
 		super(from, to);
-		chunkBufferManager = new ChunkBufferManager();
+		chunkBufferManager = new ChunkBufferManager(from, to);
 	}
 	
 	@Override
@@ -61,7 +62,13 @@ public class ReplayWorldAccessClient extends ReplayWorldAccess {
 		int index = index(pos);
 		if(index >= 0 && !blockBuffer[index].equals(state)) {
 			blockBuffer[index] = state;
-			chunkBufferManager.requestUpdate(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
+			BlockPos.PooledMutableBlockPos p = BlockPos.PooledMutableBlockPos.retain(pos);
+			for(EnumFacing dir : EnumFacing.values()) {
+				p.move(dir);
+				chunkBufferManager.requestUpdate(p.getX() >> 4, p.getY() >> 4, p.getZ() >> 4);
+				p.move(dir.getOpposite());
+			}
+			p.release();
 		}
 	}
 }
