@@ -83,6 +83,7 @@ public class EnvironmentLandmarks extends Environment {
 			stateVector[2 * nAgents + i * 2 + 0] = lP.getX() - p.getX();
 			stateVector[2 * nAgents + i * 2 + 1] = lP.getZ() - p.getZ();
 		}
+		for(int i = 0; i < 2 * (nAgents + nLandmarks); i++) stateVector[i] /= size;
 		for(int i = 0; i < nAgents; i ++)
 			for(int c = 0; c < comSize; c++)
 				stateVector[2 * (nAgents + nLandmarks) + i * comSize + c] = agents.get((i + offset) % nAgents).actionVector[2 + c];
@@ -110,7 +111,7 @@ public class EnvironmentLandmarks extends Environment {
 		}
 		for(Agent a : agents)
 			a.reward = reward / nAgents;
-		if(time >= 199)
+		if(time >= 49)
 			done = true;
 	}
 
