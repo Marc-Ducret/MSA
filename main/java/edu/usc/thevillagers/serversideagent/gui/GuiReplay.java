@@ -44,6 +44,8 @@ public class GuiReplay extends GuiScreen {
 	private float camYaw = 0, prevCamYaw = camYaw;
 	private float camPitch = -90, prevCamPitch = camPitch;
 	
+	private Entity followedEntity;
+	
 	private BlockPos renderFrom, renderTo;
 	
 	private GuiSlider seekSlider;
@@ -69,12 +71,14 @@ public class GuiReplay extends GuiScreen {
 		}
 		addButton(new GuiButton(0, 0, height-20, 20, 20, "<"));
 		addButton(new GuiButton(1, 50, height-20, 20, 20, ">"));
-		seekSlider = new GuiSlider(2, width/2 - 100, height-20, 200, 20, "", " s", 0, record.duration / 20F, 10, false, true) {
+		addButton(new GuiButton(2, 75, height-20, 20, 20, "+1"));
+		seekSlider = new GuiSlider(3, width/2 - 100, height-20, 200, 20, "", " s", 0, record.duration / 20F, 10, true, true) {
 			@Override
 			public void mouseReleased(int x, int y) {
 				super.mouseReleased(x, y);
 				mc.addScheduledTask(() -> {
 					try {
+						followedEntity = null;
 						record.seek((int) Math.round(getValue() * 20));
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -101,6 +105,13 @@ public class GuiReplay extends GuiScreen {
 			if(speed == 0)
 				speed = 1;
 			break;
+		case 2:
+			try {
+				record.endReplayTick();
+			} catch (Exception e) {
+				throw new RuntimeException("Replay tick failure", e);
+			}
+			break;
 		}
 	}
 	
@@ -114,6 +125,23 @@ public class GuiReplay extends GuiScreen {
 	}
 	
 	@Override
+	protected void keyTyped(char typedChar, int keyCode) throws IOException {
+		super.keyTyped(typedChar, keyCode);
+		if(keyCode == mc.gameSettings.keyBindInventory.getKeyCode()) {
+			if(followedEntity == null) {
+				Vec3d rayStart = record.world.fakePlayer.getPositionVector();
+				Vec3d rayEnd = rayStart.add(record.world.fakePlayer.getLookVec().scale(5));
+				for(Entity e : record.world.getEntities()) {
+					if(e.getEntityBoundingBox() != null && e.getEntityBoundingBox().calculateIntercept(rayStart, rayEnd) != null)
+						followedEntity = e;
+				}
+			} else {
+				followedEntity = null;
+			}
+		}
+	}
+	
+	@Override
 	public void onGuiClosed() {
 		super.onGuiClosed();
 		Mouse.setGrabbed(false);
@@ -122,24 +150,31 @@ public class GuiReplay extends GuiScreen {
 	@Override
 	public void updateScreen() {
 		super.updateScreen();
-		Vec3d move = Vec3d.ZERO;
-		if(Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode())) move = move.addVector(+0, +0, -1);
-		if(Keyboard.isKeyDown(mc.gameSettings.keyBindBack	.getKeyCode())) move = move.addVector(+0, +0, +1);
-		if(Keyboard.isKeyDown(mc.gameSettings.keyBindRight	.getKeyCode())) move = move.addVector(+1, +0, +0);
-		if(Keyboard.isKeyDown(mc.gameSettings.keyBindLeft	.getKeyCode())) move = move.addVector(-1, +0, +0);
-		if(Keyboard.isKeyDown(mc.gameSettings.keyBindJump	.getKeyCode())) move = move.addVector(+0, +1, +0);
-		if(Keyboard.isKeyDown(mc.gameSettings.keyBindSneak	.getKeyCode())) move = move.addVector(+0, -1, +0);
-		move = move.normalize();
 		prevCamPos = camPos;
 		prevCamYaw = camYaw;
 		prevCamPitch = camPitch;
-		
-		if(Mouse.isGrabbed()) {
-			camPos = camPos.add(move.rotateYaw((float)Math.toRadians(-camYaw)).scale(.5));
+		if(followedEntity != null) {
+			camPos = followedEntity.getPositionVector().addVector(0, followedEntity.getEyeHeight(), 0);
+			camPitch = -followedEntity.rotationPitch;
+			camYaw = followedEntity.rotationYaw + 180;
+		} else {
+			Vec3d move = Vec3d.ZERO;
+			if(Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode())) move = move.addVector(+0, +0, -1);
+			if(Keyboard.isKeyDown(mc.gameSettings.keyBindBack	.getKeyCode())) move = move.addVector(+0, +0, +1);
+			if(Keyboard.isKeyDown(mc.gameSettings.keyBindRight	.getKeyCode())) move = move.addVector(+1, +0, +0);
+			if(Keyboard.isKeyDown(mc.gameSettings.keyBindLeft	.getKeyCode())) move = move.addVector(-1, +0, +0);
+			if(Keyboard.isKeyDown(mc.gameSettings.keyBindJump	.getKeyCode())) move = move.addVector(+0, +1, +0);
+			if(Keyboard.isKeyDown(mc.gameSettings.keyBindSneak	.getKeyCode())) move = move.addVector(+0, -1, +0);
+			move = move.normalize();
 			
-			camYaw += Mouse.getDX() * .2;
-			camPitch += Mouse.getDY() * .2;
+			if(Mouse.isGrabbed()) {
+				camPos = camPos.add(move.rotateYaw((float)Math.toRadians(-camYaw)).scale(.5));
+				
+				camYaw += Mouse.getDX() * .2;
+				camPitch += Mouse.getDY() * .2;
+			}
 		}
+		
 		EntityPlayerSP fakePlayer = record.world.fakePlayer;
 		fakePlayer.prevRotationPitch 	= fakePlayer.rotationPitch;
 		fakePlayer.prevRotationYaw 		= fakePlayer.rotationYaw;
@@ -236,6 +271,7 @@ public class GuiReplay extends GuiScreen {
 		renderManager.setRenderPosition(0, 0, 0);
 		AxisAlignedBB renderBounds = new AxisAlignedBB(renderFrom, renderTo);
 		for(Entity e : world.getEntities()) {
+			if(e == followedEntity) continue;
 			if(renderBounds.contains(e.getPositionVector())) {
 				this.mc.entityRenderer.disableLightmap();
 				renderManager.renderEntityStatic(e, 1, false);
@@ -284,6 +320,9 @@ public class GuiReplay extends GuiScreen {
 		}
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		drawCenteredString(mc.fontRenderer, speed+"*", 35, height-14, 0xFFFFFF);
+		if(followedEntity != null) {
+			drawCenteredString(mc.fontRenderer, followedEntity.getName(), width / 2, 2, 0xFFFFFF);
+		}
         itemRender.renderItemAndEffectIntoGUI(new ItemStack(Items.CLOCK), width-18, height-18);
 		mc.world = null;
 		mc.player = null;
