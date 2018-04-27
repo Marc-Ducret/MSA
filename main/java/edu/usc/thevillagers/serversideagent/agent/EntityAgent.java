@@ -8,8 +8,10 @@ import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.play.server.SPacketParticles;
 import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -96,7 +98,9 @@ public class EntityAgent extends EntityPlayerMP {
 	
 	@Override
 	public void onDeath(DamageSource cause) {
-		super.onDeath(cause);
-		remove();
+		setHealth(getMaxHealth());
+		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList()
+			.sendPacketToAllPlayers(new SPacketParticles(EnumParticleTypes.EXPLOSION_NORMAL, true, 
+					(float)posX, (float)posY, (float)posZ, .5F, 1, .5F, 0, 16));
 	}
 }
