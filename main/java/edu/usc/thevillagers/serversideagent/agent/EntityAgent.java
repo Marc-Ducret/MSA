@@ -97,7 +97,7 @@ public class EntityAgent extends EntityPlayerMP {
 	}
 	
 	@Override
-	public void onDeath(DamageSource cause) {
+	public void onDeath(DamageSource cause) { //TODO handle death? (how about players in envs...??)
 		setHealth(getMaxHealth());
 		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList()
 			.sendPacketToAllPlayers(new SPacketParticles(EnumParticleTypes.EXPLOSION_NORMAL, true, 
