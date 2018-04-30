@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import net.minecraft.block.BlockColored;
@@ -32,8 +33,8 @@ public class EnvironmentBreak extends Environment {
 	}
 	
 	@Override
-	public void newAgent(Agent a) {
-		super.newAgent(a);
+	public void newActor(Actor a) {
+		super.newActor(a);
 		a.envData = new int[] {0}; //Break CD
 	}
 	
@@ -79,20 +80,20 @@ public class EnvironmentBreak extends Environment {
 	}
 
 	@Override
-	protected void stepAgent(Agent agent) throws Exception {
-		agent.reward = 0;
-		int[] breakCd = (int[]) agent.envData;
+	protected void stepActor(Actor actor) throws Exception {
+		actor.reward = 0;
+		int[] breakCd = (int[]) actor.envData;
 		if(breakCd[0] > 0)
 			breakCd[0]--;
-		else if(agent.actionVector[4] > .5) {
+		else if(actor.actionVector[4] > .5) {
 			breakCd[0] = 2;
-			BlockPos p = agent.entity.getPosition().offset(agent.entity.getHorizontalFacing());
+			BlockPos p = actor.entity.getPosition().offset(actor.entity.getHorizontalFacing());
 			if(world.getBlockState(p).getBlock() != Blocks.AIR) {
-				agent.reward = 1;
+				actor.reward = 1;
 				world.setBlockState(p, Blocks.AIR.getDefaultState());
 				world.setBlockState(p.up(), Blocks.AIR.getDefaultState());
 			} else {
-				agent.reward = -.1F;
+				actor.reward = -.1F;
 			}
 		}
 		if(time > 200)

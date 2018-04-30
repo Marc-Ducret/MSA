@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
@@ -21,8 +22,8 @@ public class EnvironmentFollow extends Environment {
 	}
 	
 	@Override
-	public void newAgent(Agent a) {
-		super.newAgent(a);
+	public void newActor(Actor a) {
+		super.newActor(a);
 		done = true;
 	}
 	
@@ -39,9 +40,9 @@ public class EnvironmentFollow extends Environment {
 	}
 
 	@Override
-	protected void stepAgent(Agent agent) throws Exception {
-		float dx = (float) (target.posX - agent.entity.posX) / 5F;
-		float dz = (float) (target.posZ - agent.entity.posZ) / 5F;
-		agent.reward = - (dx*dx + dz*dz);
+	protected void stepActor(Actor actor) throws Exception {
+		float dx = (float) (target.posX - actor.entity.posX) / 5F;
+		float dz = (float) (target.posZ - actor.entity.posZ) / 5F;
+		actor.reward = - (dx*dx + dz*dz);
 	}
 }

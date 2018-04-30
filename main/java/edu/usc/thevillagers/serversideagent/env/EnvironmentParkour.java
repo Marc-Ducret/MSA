@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
@@ -65,17 +66,17 @@ public class EnvironmentParkour extends Environment {
 	}
 
 	@Override
-	protected void stepAgent(Agent agent) throws Exception {
-		float dz = (float) (agent.entity.posZ - ref.getZ()) / length;
-		IBlockState b = world.getBlockState(agent.entity.getPosition().down());
-		if(agent.entity.posY < ref.getY() - .01F || time >= 100) {
-			agent.reward = 10 * dz;
+	protected void stepActor(Actor actor) throws Exception {
+		float dz = (float) (actor.entity.posZ - ref.getZ()) / length;
+		IBlockState b = world.getBlockState(actor.entity.getPosition().down());
+		if(actor.entity.posY < ref.getY() - .01F || time >= 100) {
+			actor.reward = 10 * dz;
 			done = true;
 		} else if(b.getBlock() == Blocks.STAINED_GLASS && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
-			agent.reward = 100;
+			actor.reward = 100;
 			done = true;
 		} else {
-			agent.reward = - .001F;
+			actor.reward = - .001F;
 		}
 	}
 }

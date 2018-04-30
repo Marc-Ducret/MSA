@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
@@ -8,8 +9,8 @@ public class EnvironmentPush extends Environment {
 
 	protected BlockPos ref;
 	
-	private Agent agentA;
-	private Agent agentB;
+	private Actor actorA;
+	private Actor actorB;
 	
 	public EnvironmentPush() {
 		super(4, 2);
@@ -22,13 +23,13 @@ public class EnvironmentPush extends Environment {
 	}
 	
 	@Override
-	public void newAgent(Agent a) {
-		super.newAgent(a);
-		if(agentA == null) agentA = a;
-		else if(agentB == null) {
-			agentB = a;
-			agentB.envData = agentA;
-			agentA.envData = agentB;
+	public void newActor(Actor a) {
+		super.newActor(a);
+		if(actorA == null) actorA = a;
+		else if(actorB == null) {
+			actorB = a;
+			actorB.envData = actorA;
+			actorA.envData = actorB;
 		}
 	}
 
@@ -36,7 +37,7 @@ public class EnvironmentPush extends Environment {
 	public void encodeObservation(Agent agent, float[] stateVector) {
 		stateVector[0] = (float) (agent.entity.posX - ref.getX());
 		stateVector[1] = (float) (agent.entity.posZ - ref.getZ());
-		Agent opponent = opponent(agent);
+		Actor opponent = opponent(agent);
 		stateVector[2] = (float) (opponent.entity.posX - ref.getX());
 		stateVector[3] = (float) (opponent.entity.posZ - ref.getZ());
 	}
@@ -48,15 +49,15 @@ public class EnvironmentPush extends Environment {
 	}
 
 	@Override
-	protected void stepAgent(Agent agent) throws Exception {
-		if(agent.entity.posY < ref.getY() - .01F) {
+	protected void stepActor(Actor actor) throws Exception {
+		if(actor.entity.posY < ref.getY() - .01F) {
 			done = true;
-			agent.reward = -10;
-			opponent(agent).reward = 10;
+			actor.reward = -10;
+			opponent(actor).reward = 10;
 		}
 	}
 	
-	private Agent opponent(Agent a) {
-		return (Agent) a.envData;
+	private Actor opponent(Actor a) {
+		return (Actor) a.envData;
 	}
 }

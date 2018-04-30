@@ -3,6 +3,7 @@ package edu.usc.thevillagers.serversideagent.env;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import net.minecraft.block.BlockColored;
@@ -18,7 +19,7 @@ public class EnvironmentLandmarks extends Environment {
 	private final int size;
 	private final int comSize;
 	
-	private final List<Agent> agents;
+	private final List<Actor> actors;
 	private final BlockPos[] landmarks;
 	
 	public EnvironmentLandmarks() {
@@ -31,7 +32,7 @@ public class EnvironmentLandmarks extends Environment {
 		this.nAgents = nAgents;
 		this.comSize = comSize;
 		size = 8;
-		agents = new ArrayList<>(nAgents);
+		actors = new ArrayList<>(nAgents);
 		landmarks = new BlockPos[nLandmarks];
 		allocator = new AllocatorEmptySpace(new BlockPos(-size, -1, -size), new BlockPos(size, 2, size));
 	}
@@ -39,9 +40,9 @@ public class EnvironmentLandmarks extends Environment {
 	@Override
 	public void reset() {
 		super.reset();
-		agents.clear();
-		applyToActiveAgents((a) -> {
-			if(agents.size() < nAgents) agents.add(a);
+		actors.clear();
+		applyToActiveActors((a) -> {
+			if(actors.size() < nAgents) actors.add(a);
 		});
 		for(int i = 0; i < nLandmarks; i++) {
 			landmarks[i] = getOrigin().add(world.rand.nextInt(2*size - 1) - size + 1, -1, world.rand.nextInt(2*size - 1) - size + 1);
@@ -69,11 +70,11 @@ public class EnvironmentLandmarks extends Environment {
 	@Override
 	public void encodeObservation(Agent agent, float[] stateVector) {
 		BlockPos p = agent.entity.getPosition();
-		int offset = agents.indexOf(agent);
+		int offset = actors.indexOf(agent);
 		for(int i = 0; i < nAgents; i ++) {
 			int iAgent = (i + offset) % nAgents;
-			if(agents.size() > iAgent) {
-				BlockPos aP = agents.get(iAgent).entity.getPosition();
+			if(actors.size() > iAgent) {
+				BlockPos aP = actors.get(iAgent).entity.getPosition();
 				stateVector[i * 2 + 0] = aP.getX() - p.getX();
 				stateVector[i * 2 + 1] = aP.getZ() - p.getZ();
 			}
@@ -86,7 +87,7 @@ public class EnvironmentLandmarks extends Environment {
 		for(int i = 0; i < 2 * (nAgents + nLandmarks); i++) stateVector[i] /= size;
 		for(int i = 0; i < nAgents; i ++)
 			for(int c = 0; c < comSize; c++)
-				stateVector[2 * (nAgents + nLandmarks) + i * comSize + c] = agents.get((i + offset) % nAgents).actionVector[2 + c];
+				stateVector[2 * (nAgents + nLandmarks) + i * comSize + c] = actors.get((i + offset) % nAgents).actionVector[2 + c];
 	}
 
 	@Override
@@ -96,7 +97,7 @@ public class EnvironmentLandmarks extends Environment {
 	}
 
 	@Override
-	protected void stepAgent(Agent a) throws Exception {
+	protected void stepActor(Actor a) throws Exception {
 		
 	}
 	
@@ -106,10 +107,10 @@ public class EnvironmentLandmarks extends Environment {
 		float reward = 0;
 		for(BlockPos landmark : landmarks) {
 			float distSq = size*size;
-			for(Agent a : agents) distSq = Math.min(distSq, (float) landmark.distanceSq(a.entity.getPosition()));
+			for(Actor a : actors) distSq = Math.min(distSq, (float) landmark.distanceSq(a.entity.getPosition()));
 			reward -= distSq * .1F;
 		}
-		for(Agent a : agents)
+		for(Actor a : actors)
 			a.reward = reward / nAgents;
 		if(time >= 49)
 			done = true;

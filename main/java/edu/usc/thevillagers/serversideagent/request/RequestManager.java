@@ -92,7 +92,7 @@ public class RequestManager {
 			if(name.length() > 16) name = name.substring(0, 16);
 			Agent a = new Agent(env, new EntityAgent(env.world, name), req.sok);
 			((EntityAgent) a.entity).spawn(env.getOrigin());
-			env.newAgent(a);
+			env.newActor(a);
 		} catch (Exception e) {
 			System.out.println("Cannot start agent ("+e+")");
 		}

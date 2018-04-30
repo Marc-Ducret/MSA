@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.command;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Human;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
 import net.minecraft.command.CommandBase;
@@ -65,7 +65,7 @@ public class CommandEnvironment extends CommandBase {
 			for(int i = 2; i < args.length; i ++) {
 				EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(args[i]);
 				if(player == null) throw new CommandException("No such player '"+args[i]+"'");
-				env.newAgent(new Agent(env, player));
+				env.newActor(new Human(env, player));
 			}
 			break;
 			

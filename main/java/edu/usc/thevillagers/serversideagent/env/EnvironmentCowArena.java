@@ -3,11 +3,11 @@ package edu.usc.thevillagers.serversideagent.env;
 import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import edu.usc.thevillagers.serversideagent.HighLevelAction.Phase;
 import edu.usc.thevillagers.serversideagent.HighLevelAction.Type;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import net.minecraft.block.BlockColored;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.init.Blocks;
@@ -39,8 +39,8 @@ public class EnvironmentCowArena extends Environment {
 	}
 	
 	@Override
-	public void newAgent(Agent a) {
-		super.newAgent(a);
+	public void newActor(Actor a) {
+		super.newActor(a);
 	}
 	
 	@Override
@@ -69,16 +69,16 @@ public class EnvironmentCowArena extends Environment {
 	}
 
 	@Override
-	protected void stepAgent(Agent agent) throws Exception {
-		agent.reward = 0;
-		agent.actionState.action = null;
+	protected void stepActor(Actor actor) throws Exception {
+		actor.reward = 0;
+		actor.actionState.action = null;
 		for(int i = 0; i < cows.length; i++) {
-			agent.reward -= cows[i].getHealth();
+			actor.reward -= cows[i].getHealth();
 			if(cows[i].getHealth() > 0) {
-				if(cows[i].getDistanceSq(agent.entity) < 1) {
-					agent.actionState.action = new HighLevelAction(Type.HIT, Phase.INSTANT, agent.entity.getEntityId(), 
+				if(cows[i].getDistanceSq(actor.entity) < 1) {
+					actor.actionState.action = new HighLevelAction(Type.HIT, Phase.INSTANT, actor.entity.getEntityId(), 
 							EnumHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD), cows[i].getEntityId(), null, null, null);
-					agent.reward += 5;
+					actor.reward += 5;
 				}
 			}
 		}

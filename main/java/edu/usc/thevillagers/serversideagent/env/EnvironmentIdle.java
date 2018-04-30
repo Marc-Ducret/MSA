@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import net.minecraft.block.BlockColored;
@@ -37,7 +38,7 @@ public class EnvironmentIdle extends Environment {
 	}
 
 	@Override
-	protected void stepAgent(Agent a) throws Exception {
+	protected void stepActor(Actor a) throws Exception {
 		a.reward = 0;
 		for(float f : a.actionVector) {
 			a.reward -= f*f;

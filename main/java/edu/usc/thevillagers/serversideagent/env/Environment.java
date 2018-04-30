@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.allocation.Allocator;
 import net.minecraft.util.math.BlockPos;
@@ -26,7 +27,7 @@ public abstract class Environment {
 	
 	private BlockPos origin;
 	
-	private List<Agent> agents = new ArrayList<>();
+	private List<Actor> actors = new ArrayList<>();
 	
 	public boolean done;
 	public int time;
@@ -41,8 +42,8 @@ public abstract class Environment {
 		this.world = world;
 	}
 	
-	public void newAgent(Agent a) {
-		agents.add(a);
+	public void newActor(Actor a) {
+		actors.add(a);
 	}
 	
 	public BlockPos getOrigin() {
@@ -54,78 +55,78 @@ public abstract class Environment {
 	}
 	
 	public void terminate() {
-		applyToAllAgents((a) -> a.terminate());
+		applyToAllActors((a) -> a.terminate());
 		if(allocator != null) allocator.free(world, origin);
 	}
 	
 	public final void preTick() throws Exception {
-		applyToActiveAgents((a) -> a.act());
+		applyToActiveActors((a) -> a.act());
 	}
 	
 	public final void postTick() throws Exception {
 		step();
 		time++;
-		applyToActiveAgents((a) -> a.observe());
+		applyToActiveActors((a) -> a.observe());
 		if(done) {
-			applyToInactivAgents((a) -> {
+			applyToInactivActors((a) -> {
 				a.active = true;
 			});
 			reset();
-			applyToActiveAgents((a) -> {
+			applyToActiveActors((a) -> {
 				a.observeNoReward();
 			});
 		}
 	}
 	
-	public BlockPos getSpawnPoint(Agent a) {
+	public BlockPos getSpawnPoint(Actor a) {
 		return getOrigin();
 	}
 	
 	public abstract void encodeObservation(Agent agent, float[] stateVector);
 	public abstract void decodeAction(Agent agent, float[] actionVector);
-	protected abstract void stepAgent(Agent a) throws Exception;
+	protected abstract void stepActor(Actor a) throws Exception;
 	
 	protected void step() {
-		applyToActiveAgents((a) -> stepAgent(a));
+		applyToActiveActors((a) -> stepActor(a));
 		boolean atLeastOneActive = false;
-		for(Agent a : agents) if(a.active) atLeastOneActive = true;
+		for(Actor a : actors) if(a.active) atLeastOneActive = true;
 		if(!atLeastOneActive) done = true;
 	}
 	
 	public void reset() {
 		done = false;
 		time = 0;
-		applyToActiveAgents((a) -> resetAgent(a));
+		applyToActiveActors((a) -> resetActor(a));
 	}
 	
-	public void resetAgent(Agent a) {
+	public void resetActor(Actor a) {
 		a.entity.moveToBlockPosAndAngles(getSpawnPoint(a), 0, 0);
 		a.entity.connection.setPlayerLocation(a.entity.posX, a.entity.posY, a.entity.posZ, a.entity.rotationYaw, a.entity.rotationPitch);
 		a.reward = 0;
 	}
 	
-	public void applyToActiveAgents(AgentApplication app) {
-		applyToAgents(app, (a) -> a.active);
+	public void applyToActiveActors(ActorApplication app) {
+		applyToActors(app, (a) -> a.active);
 	}
 	
-	public void applyToInactivAgents(AgentApplication app) {
-		applyToAgents(app, (a) -> !a.active);
+	public void applyToInactivActors(ActorApplication app) {
+		applyToActors(app, (a) -> !a.active);
 	}
 	
-	public void applyToAllAgents(AgentApplication app) {
-		applyToAgents(app, (a) -> true);
+	public void applyToAllActors(ActorApplication app) {
+		applyToActors(app, (a) -> true);
 	}
 	
-	private void applyToAgents(AgentApplication app, Predicate<Agent> filter) {
-		Iterator<Agent> iter = agents.iterator();
+	private void applyToActors(ActorApplication app, Predicate<Actor> filter) {
+		Iterator<Actor> iter = actors.iterator();
 		while(iter.hasNext()) {
-			Agent a = iter.next();
+			Actor a = iter.next();
 			try {
 				if(filter.test(a)) app.apply(a);
 			} catch(Exception e) {
 				a.terminate();
 				iter.remove();
-				System.out.println("Agent terminated ("+e+")");
+				System.out.println("Actor terminated ("+e+")");
 			}
 		}
 	}
@@ -139,8 +140,8 @@ public abstract class Environment {
 		return true;
 	}
 	
-	protected static interface AgentApplication { 
-		void apply(Agent a) throws Exception; 
+	protected static interface ActorApplication { 
+		void apply(Actor a) throws Exception; 
 	}
 	
 	public boolean isAllocated() {
@@ -148,6 +149,6 @@ public abstract class Environment {
 	}
 	
 	public boolean isEmpty() {
-		return agents.isEmpty();
+		return actors.isEmpty();
 	}
 }

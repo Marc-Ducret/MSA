@@ -3,6 +3,7 @@ package edu.usc.thevillagers.serversideagent.env;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import net.minecraft.block.BlockColored;
@@ -34,8 +35,8 @@ public class EnvironmentTerritory extends Environment {
 	}
 	
 	@Override
-	public void newAgent(Agent a) {
-		super.newAgent(a);
+	public void newActor(Actor a) {
+		super.newActor(a);
 		a.envData = new int[] {0}; //Break CD
 	}
 	
@@ -136,30 +137,30 @@ public class EnvironmentTerritory extends Environment {
 			if(world.getBlockState(pos.apply(i)).getBlock() == Blocks.AIR)
 				blockCount[find.apply(i)]++;
 		}
-		applyToActiveAgents((a) -> {
+		applyToActiveActors((a) -> {
 			agentCount[find.apply(index.apply(a.entity.getPosition()))]++;
 		});
-		applyToActiveAgents((a) -> {
+		applyToActiveActors((a) -> {
 			int comp = find.apply(index.apply(a.entity.getPosition()));
 			a.reward = blockCount[comp] / (float) agentCount[comp];
 		});
 	}
 
 	@Override
-	protected void stepAgent(Agent agent) throws Exception {
-		agent.reward = 0;
-		int[] buildCd = (int[]) agent.envData;
+	protected void stepActor(Actor actor) throws Exception {
+		actor.reward = 0;
+		int[] buildCd = (int[]) actor.envData;
 		if(buildCd[0] > 0)
 			buildCd[0]--;
-		else if(agent.actionVector[4] > .9F) {
+		else if(actor.actionVector[4] > .9F) {
 			buildCd[0] = 0;
-			BlockPos p = agent.entity.getPosition().offset(agent.entity.getHorizontalFacing());
+			BlockPos p = actor.entity.getPosition().offset(actor.entity.getHorizontalFacing());
 			if(world.getBlockState(p).getBlock() == Blocks.AIR) {
 				world.setBlockState(p, Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.RED));
 				world.setBlockState(p.up(), Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.RED));
-				agent.reward = -.1F;
+				actor.reward = -.1F;
 			} else {
-				agent.reward = -.1F;
+				actor.reward = -.1F;
 			}
 		}
 	}
