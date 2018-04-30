@@ -13,6 +13,10 @@ public class EnvironmentPush extends Environment {
 	
 	private Actor actorA;
 	private Actor actorB;
+	
+	@Override
+	public void readPars(float[] pars) {
+	}
 
 	@Override
 	protected void buildSensors() {

@@ -9,8 +9,9 @@ import net.minecraft.util.math.BlockPos;
 
 public class EnvironmentParkourRandom extends EnvironmentParkour {
 	
-	public EnvironmentParkourRandom() {
-		super(5, 5, 15);
+	@Override
+	public void readPars(float[] pars) {
+		super.readPars(pars);
 		allocator = new AllocatorEmptySpace(new BlockPos(-width-1, -1, -2), new BlockPos(width+1, 2, length+1));
 	}
 	

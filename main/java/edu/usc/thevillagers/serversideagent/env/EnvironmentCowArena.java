@@ -24,19 +24,16 @@ import net.minecraft.world.WorldServer;
 
 public class EnvironmentCowArena extends Environment {
 
-	public final int size;
+	public int size;
 
 	protected BlockPos ref;
 
 	private EntityCow[] cows;
 	
-	public EnvironmentCowArena() {
-		this(5, 5);
-	}
-
-	public EnvironmentCowArena(int size, int nCows) {
-		this.size = size;
-		cows = new EntityCow[nCows];
+	@Override
+	public void readPars(float[] pars) {
+		size = getRoundPar(pars, 0, 5);
+		cows = new EntityCow[getRoundPar(pars, 1, 5)];
 		allocator = new AllocatorEmptySpace(new BlockPos(-size, -1, -size), new BlockPos(size, 2, size));
 	}
 	

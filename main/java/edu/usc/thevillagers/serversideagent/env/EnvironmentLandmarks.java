@@ -15,25 +15,23 @@ import net.minecraft.util.math.BlockPos;
 
 public class EnvironmentLandmarks extends Environment {
 	
-	private final int nLandmarks;
-	private final int nAgents;
-	private final int size;
-	private final int comSize;
+	private int nLandmarks;
+	private int nAgents;
+	private int size;
+	private int comSize;
 	
-	private final float[][] comChanels;
+	private float[][] comChanels;
 	
-	private final List<Actor> actors;
-	private final BlockPos[] landmarks;
+	private List<Actor> actors;
+	private BlockPos[] landmarks;
 	
-	public EnvironmentLandmarks() {
-		this(4, 4, 1);
-	}
 	
-	public EnvironmentLandmarks(int nLandmarks, int nAgents, int comSize) {
-		this.nLandmarks = nLandmarks;
-		this.nAgents = nAgents;
-		this.comSize = comSize;
-		size = 8;
+	@Override
+	public void readPars(float[] pars) {
+		nLandmarks = getRoundPar(pars, 0, 4);
+		nAgents = getRoundPar(pars, 1, 4);
+		comSize = getRoundPar(pars, 2, 1);
+		size = getRoundPar(pars, 3, 8);
 		comChanels = new float[nAgents][];
 		for(int i = 0; i < comSize; i ++) 
 			comChanels[i] = new float[comSize];

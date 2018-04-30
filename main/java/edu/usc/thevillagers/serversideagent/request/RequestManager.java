@@ -96,9 +96,10 @@ public class RequestManager {
 					throw new Exception("Missmatch event types: "+env.getClass()+" | "+req.envClass);
 			} else {
 				env = envManager.createEnv(req.envClass);
+				env.readPars(req.pars);
 				WorldServer world = FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0];
 				if(!env.tryAllocate(world)) throw new Exception("Cannot allocate "+req.envClass);
-				env.init(world); //TODO use pars
+				env.init(world);
 				envManager.registerEnv(env);
 			}
 			String name = env.id;

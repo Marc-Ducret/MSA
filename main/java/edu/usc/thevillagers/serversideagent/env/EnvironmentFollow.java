@@ -10,6 +10,10 @@ import net.minecraft.world.WorldServer;
 public class EnvironmentFollow extends Environment {
 	
 	private Entity target;
+	
+	@Override
+	public void readPars(float[] pars) {
+	}
 
 	@Override
 	protected void buildSensors() {

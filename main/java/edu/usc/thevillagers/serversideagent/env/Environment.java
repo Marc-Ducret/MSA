@@ -43,8 +43,18 @@ public abstract class Environment {
 		this.actuators = new ArrayList<>();
 	}
 	
+	public abstract void readPars(float[] pars);
 	protected abstract void buildSensors();
 	protected abstract void buildActuators();
+	
+	protected int getRoundPar(float[] pars, int i, int def) {
+		return Math.round(getPar(pars, i, def));
+	}
+	
+	protected float getPar(float[] pars, int i, float def) {
+		if(pars == null || i < 0 || i >= pars.length) return def;
+		return pars[i];
+	}
 	
 	public void init(WorldServer world) {
 		this.world = world;

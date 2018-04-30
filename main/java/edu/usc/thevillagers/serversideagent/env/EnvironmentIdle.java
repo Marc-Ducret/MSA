@@ -11,7 +11,8 @@ import net.minecraft.util.math.BlockPos;
 
 public class EnvironmentIdle extends Environment {
 	
-	public EnvironmentIdle() {
+	@Override
+	public void readPars(float[] pars) {
 		allocator = new AllocatorEmptySpace(new BlockPos(-1, -1, -1), new BlockPos(1, 2, 1));
 	}
 	

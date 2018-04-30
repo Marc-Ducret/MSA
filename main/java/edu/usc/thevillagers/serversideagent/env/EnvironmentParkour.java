@@ -14,20 +14,16 @@ import net.minecraft.world.WorldServer;
 
 public class EnvironmentParkour extends Environment {
 
-	public final int sightDist;
-
-	public final int width, length;
+	public int sightDist;
+	public int width, length;
 
 	protected BlockPos ref;
 	
-	public EnvironmentParkour() {
-		this(3, 4, 15);
-	}
-
-	public EnvironmentParkour(int sightDist, int width, int length) {
-		this.sightDist = sightDist;
-		this.width = width;
-		this.length = length;
+	@Override
+	public void readPars(float[] pars) {
+		sightDist = getRoundPar(pars, 0, 3);
+		width = getRoundPar(pars, 1, 4);
+		length = getRoundPar(pars, 2, 15);
 	}
 	
 	@Override
