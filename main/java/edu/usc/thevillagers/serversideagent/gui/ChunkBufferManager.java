@@ -15,7 +15,7 @@ import net.minecraft.world.IBlockAccess;
 
 public class ChunkBufferManager {
 
-	private BufferBuilder[] buffers; //TODO replace hash with arrays?
+	private BufferBuilder[] buffers;
 	private boolean[] updateRequired;
 	
 	private int fromX, fromY, fromZ, toX, toY, toZ; // chunk coordinates

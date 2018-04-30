@@ -1,88 +1,24 @@
 package edu.usc.thevillagers.serversideagent.env;
 
-import edu.usc.thevillagers.serversideagent.agent.Actor;
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorJump;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import net.minecraft.block.BlockColored;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
 
-public class EnvironmentParkourJump extends Environment {
-
-	public final int sightDist; //TODO: factorize?
-	public final int sightWidth;
-
-	public final int width, length;
-
-	protected BlockPos ref;
+public class EnvironmentParkourJump extends EnvironmentParkour {
 	
 	public EnvironmentParkourJump() {
-		this(5, 4, 15);
-	}
-
-	public EnvironmentParkourJump(int sightDist, int width, int length) {
-		super(3 + (2*sightDist+1)*(2*sightDist+1), 3);
-		this.sightDist = sightDist;
-		this.sightWidth = sightDist * 2 + 1;
-		this.width = width;
-		this.length = length;
+		super(5, 5, 15);
 		allocator = new AllocatorEmptySpace(new BlockPos(-width-1, -1, -2), new BlockPos(width+1, 2, length+1));
 	}
-	
-	@Override
-	public void init(WorldServer world) {
-		super.init(world);
-		ref = getOrigin();
-	}
-
-	private int encode(IBlockState b) {
-		if(b.getBlock() != Blocks.STAINED_GLASS) return -1;
-		EnumDyeColor color = b.getValue(BlockColored.COLOR);
-		switch(color) {
-		case LIME:
-			return 10;
-		default:
-			return 1;
-		}
-	}
 
 	@Override
-	public void encodeObservation(Agent agent, float[] stateVector) {
-		stateVector[0] = (float) (agent.entity.posX - ref.getX()) / width;
-		stateVector[1] = (float) (agent.entity.posZ - ref.getZ()) / length;
-		stateVector[2] = (float) (agent.entity.posY - ref.getY());
-		BlockPos pos = agent.entity.getPosition().add(-sightDist, -1, -sightDist);
-		for(int z = 0; z < sightWidth; z++) {
-			for(int x = 0; x < sightWidth; x++) {
-				stateVector[3 + x + z * sightWidth] = encode(agent.entity.world.getBlockState(pos.add(x, 0, z)));
-			}
-		}
-	}
-
-	@Override
-	public void decodeAction(Agent agent, float[] actionVector) {
-		agent.actionState.forward = actionVector[0];
-		agent.actionState.strafe = actionVector[1];
-		agent.actionState.jump = actionVector[2] > .5;
-	}
-
-	@Override
-	protected void stepActor(Actor actor) throws Exception {
-		float dz = (float) (actor.entity.posZ - ref.getZ()) / length;
-		IBlockState b = world.getBlockState(actor.entity.getPosition().down());
-		if(actor.entity.posY < ref.getY() - .01F || time >= 100) {
-			actor.reward = 10 * dz;
-			done = true;
-		} else if(b.getBlock() == Blocks.STAINED_GLASS && b.getValue(BlockColored.COLOR) == EnumDyeColor.LIME) {
-			actor.reward = 100;
-			done = true;
-		} else {
-			actor.reward = - .001F;
-		}
+	protected void buildActuators() {
+		super.buildActuators();
+		actuators.add(new ActuatorJump());
 	}
 	
 	@Override

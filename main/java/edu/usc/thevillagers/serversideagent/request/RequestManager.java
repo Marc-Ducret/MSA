@@ -45,11 +45,24 @@ public class RequestManager {
 	
 	private void newSocket(DataSocket sok) throws Exception {
 		sok.socket.setSoTimeout(3000);
-		String envClassName = sok.in.readUTF();
+		String envString = sok.in.readUTF();
+		int parStart = envString.indexOf('[');
+		String envClassName;
+		float[] pars;
+		if(parStart >= 0) {
+			envClassName = envString.substring(0, parStart);
+			String[] parsStrs = envString.substring(parStart+1, envString.indexOf(']')).split(",");
+			pars = new float[parsStrs.length];
+			for(int i = 0; i < parsStrs.length; i++)
+				pars[i] = Float.parseFloat(parsStrs[i]);
+		} else {
+			envClassName = envString;
+			pars = new float[] {};
+		}
 		Class<?> envClass = envManager.findEnvClass(envClassName);
 		String envId = sok.in.readBoolean() ? null : sok.in.readUTF();
 		synchronized(requests) {
-			requests.add(new Request(envClass, envId, sok));
+			requests.add(new Request(envClass, pars, envId, sok));
 			System.out.println("Received request ["+envClass.getSimpleName()+" "+envId+"]");
 			lastRequestTime = System.currentTimeMillis();
 		}
@@ -85,7 +98,7 @@ public class RequestManager {
 				env = envManager.createEnv(req.envClass);
 				WorldServer world = FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0];
 				if(!env.tryAllocate(world)) throw new Exception("Cannot allocate "+req.envClass);
-				env.init(world);
+				env.init(world); //TODO use pars
 				envManager.registerEnv(env);
 			}
 			String name = env.id;
@@ -101,11 +114,13 @@ public class RequestManager {
 	public static class Request {
 		
 		public final Class<?> envClass;
+		public final float[] pars;
 		public final String envId;
 		public final DataSocket sok;
 		
-		public Request(Class<?> envClass, String envId, DataSocket sok) {
+		public Request(Class<?> envClass, float[] pars, String envId, DataSocket sok) {
 			this.envClass = envClass;
+			this.pars = pars;
 			this.envId = envId;
 			this.sok = sok;
 		}

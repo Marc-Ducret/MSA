@@ -4,8 +4,10 @@ import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import edu.usc.thevillagers.serversideagent.HighLevelAction.Phase;
 import edu.usc.thevillagers.serversideagent.HighLevelAction.Type;
 import edu.usc.thevillagers.serversideagent.agent.Actor;
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorBoolean;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorPosition;
 import net.minecraft.block.BlockColored;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -17,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 
 public class EnvironmentCowArena extends Environment {
@@ -32,10 +35,26 @@ public class EnvironmentCowArena extends Environment {
 	}
 
 	public EnvironmentCowArena(int size, int nCows) {
-		super(3 + nCows * 3, 2);
 		this.size = size;
 		cows = new EntityCow[nCows];
 		allocator = new AllocatorEmptySpace(new BlockPos(-size, -1, -size), new BlockPos(size, 2, size));
+	}
+	
+	@Override
+	protected void buildSensors() {
+		sensors.add(new SensorPosition(size, 0, size, 
+				(a) -> a.entity.getPositionVector().subtract(new Vec3d(ref))));
+		for(int i = 0; i < cows.length; i++) {
+			final int index = i;
+			sensors.add(new SensorPosition(size, 0, size, 
+					(a) -> cows[index].getPositionVector().subtract(a.entity.getPositionVector())));
+			sensors.add(new SensorBoolean(() -> cows[index].getHealth() > 0));
+		}
+	}
+	
+	@Override
+	protected void buildActuators() {
+		actuators.add(new ActuatorForwardStrafe());
 	}
 	
 	@Override
@@ -47,25 +66,6 @@ public class EnvironmentCowArena extends Environment {
 	public void init(WorldServer world) {
 		super.init(world);
 		ref = getOrigin();
-	}
-
-	@Override
-	public void encodeObservation(Agent agent, float[] stateVector) {
-		stateVector[0] = (float) (agent.entity.rotationYaw) / 360;
-		stateVector[1] = (float) (agent.entity.posX - ref.getX()) / size;
-		stateVector[2] = (float) (agent.entity.posZ - ref.getZ()) / size;
-		for(int i = 0; i < cows.length; i++) {
-			stateVector[3 + i * 3 + 0] = (float)(cows[i].posX - agent.entity.posX) / size;
-			stateVector[3 + i * 3 + 1] = (float)(cows[i].posZ - agent.entity.posZ) / size;
-			stateVector[3 + i * 3 + 2] = cows[i].getHealth() / .1F;
-		}
-	}
-
-	@Override
-	public void decodeAction(Agent agent, float[] actionVector) {
-		agent.actionState.forward = actionVector[0];
-		agent.actionState.strafe = actionVector[1];
-//		agent.actionState.momentumYaw = actionVector[2];
 	}
 
 	@Override

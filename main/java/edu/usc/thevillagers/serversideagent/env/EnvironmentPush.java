@@ -1,8 +1,10 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorPosition;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 
 public class EnvironmentPush extends Environment {
@@ -11,9 +13,18 @@ public class EnvironmentPush extends Environment {
 	
 	private Actor actorA;
 	private Actor actorB;
+
+	@Override
+	protected void buildSensors() {
+		sensors.add(new SensorPosition(1, 0, 1, (a) -> 
+					a.entity.getPositionVector().subtract(new Vec3d(ref))));
+		sensors.add(new SensorPosition(1, 0, 1, (a) -> 
+					opponent(a).entity.getPositionVector().subtract(new Vec3d(ref))));
+	}
 	
-	public EnvironmentPush() {
-		super(4, 2);
+	@Override
+	protected void buildActuators() {
+		actuators.add(new ActuatorForwardStrafe());
 	}
 	
 	@Override
@@ -31,21 +42,6 @@ public class EnvironmentPush extends Environment {
 			actorB.envData = actorA;
 			actorA.envData = actorB;
 		}
-	}
-
-	@Override
-	public void encodeObservation(Agent agent, float[] stateVector) {
-		stateVector[0] = (float) (agent.entity.posX - ref.getX());
-		stateVector[1] = (float) (agent.entity.posZ - ref.getZ());
-		Actor opponent = opponent(agent);
-		stateVector[2] = (float) (opponent.entity.posX - ref.getX());
-		stateVector[3] = (float) (opponent.entity.posZ - ref.getZ());
-	}
-
-	@Override
-	public void decodeAction(Agent agent, float[] actionVector) {
-		agent.actionState.forward = actionVector[0];
-		agent.actionState.strafe = actionVector[1];
 	}
 
 	@Override

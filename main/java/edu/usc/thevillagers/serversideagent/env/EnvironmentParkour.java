@@ -1,18 +1,20 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorBlocks;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorPosition;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 
 public class EnvironmentParkour extends Environment {
 
-	public final int sightDist; //TODO: factorize?
-	public final int sightWidth;
+	public final int sightDist;
 
 	public final int width, length;
 
@@ -23,9 +25,7 @@ public class EnvironmentParkour extends Environment {
 	}
 
 	public EnvironmentParkour(int sightDist, int width, int length) {
-		super(2 + (2*sightDist+1)*(2*sightDist+1), 2);
 		this.sightDist = sightDist;
-		this.sightWidth = sightDist * 2 + 1;
 		this.width = width;
 		this.length = length;
 	}
@@ -35,8 +35,24 @@ public class EnvironmentParkour extends Environment {
 		super.init(world);
 		ref = getOrigin();
 	}
+	
+	@Override
+	protected void buildSensors() {
+		sensors.add(new SensorPosition(width, 0, length, 
+				(a) -> a.entity.getPositionVector().subtract(new Vec3d(ref))));
+		sensors.add(new SensorBlocks(
+				new BlockPos(-sightDist, -1, -sightDist), 
+				new BlockPos(+sightDist, -1, +sightDist),
+				(b) -> encode(b)));
+		
+	}
+	
+	@Override
+	protected void buildActuators() {
+		actuators.add(new ActuatorForwardStrafe());
+	}
 
-	private int encode(IBlockState b) {
+	private float encode(IBlockState b) {
 		if(b.getBlock() != Blocks.STAINED_GLASS) return -1;
 		EnumDyeColor color = b.getValue(BlockColored.COLOR);
 		switch(color) {
@@ -46,25 +62,7 @@ public class EnvironmentParkour extends Environment {
 			return 1;
 		}
 	}
-
-	@Override
-	public void encodeObservation(Agent agent, float[] stateVector) {
-		stateVector[0] = (float) (agent.entity.posX - ref.getX()) / width;
-		stateVector[1] = (float) (agent.entity.posZ - ref.getZ()) / length;
-		BlockPos pos = agent.entity.getPosition().add(-sightDist, -1, -sightDist);
-		for(int z = 0; z < sightWidth; z++) {
-			for(int x = 0; x < sightWidth; x++) {
-				stateVector[2 + x + z * sightWidth] = encode(agent.entity.world.getBlockState(pos.add(x, 0, z)));
-			}
-		}
-	}
-
-	@Override
-	public void decodeAction(Agent agent, float[] actionVector) {
-		agent.actionState.forward = actionVector[0];
-		agent.actionState.strafe = actionVector[1];
-	}
-
+	
 	@Override
 	protected void stepActor(Actor actor) throws Exception {
 		float dz = (float) (actor.entity.posZ - ref.getZ()) / length;

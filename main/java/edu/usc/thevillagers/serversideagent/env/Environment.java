@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -7,7 +8,9 @@ import java.util.function.Predicate;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.actuator.Actuator;
 import edu.usc.thevillagers.serversideagent.env.allocation.Allocator;
+import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -18,7 +21,9 @@ public abstract class Environment {
 	
 	public final String name;
 	public String id;
-	public final int observationDim, actionDim;
+	public final List<Sensor> sensors;
+	public final List<Actuator> actuators;
+	public int observationDim, actionDim;
 	
 	protected Allocator allocator;
 	private boolean allocated = false;
@@ -32,14 +37,25 @@ public abstract class Environment {
 	public boolean done;
 	public int time;
 	
-	public Environment(int stateDim, int actionDim) {
+	public Environment() {
 		this.name = getClass().getSimpleName().replaceFirst("Environment", "");
-		this.observationDim = stateDim;
-		this.actionDim = actionDim;
+		this.sensors = new ArrayList<>();
+		this.actuators = new ArrayList<>();
 	}
+	
+	protected abstract void buildSensors();
+	protected abstract void buildActuators();
 	
 	public void init(WorldServer world) {
 		this.world = world;
+		buildSensors();
+		buildActuators();
+		int observationDim = 0;
+		for(Sensor sensor : sensors) observationDim += sensor.dim;
+		this.observationDim = observationDim;
+		int actionDim = 0;
+		for(Actuator actuator : actuators) actionDim += actuator.dim;
+		this.actionDim = actionDim;
 	}
 	
 	public void newActor(Actor a) {
@@ -82,8 +98,24 @@ public abstract class Environment {
 		return getOrigin();
 	}
 	
-	public abstract void encodeObservation(Agent agent, float[] stateVector);
-	public abstract void decodeAction(Agent agent, float[] actionVector);
+	public final void encodeObservation(Agent agent, float[] observationVector) {
+		int offset = 0;
+		for(Sensor sensor : sensors) {
+			sensor.sense(agent);
+			for(int i = 0; i < sensor.dim; i ++) 
+				observationVector[offset++] = sensor.values[i];
+		}
+	}
+	
+	public final void decodeAction(Agent agent, float[] actionVector) {
+		int offset = 0;
+		for(Actuator actuator : actuators) {
+			for(int i = 0; i < actuator.dim; i ++)
+				actuator.values[i] = actionVector[offset++];
+			actuator.act(agent);
+		}
+	}
+	
 	protected abstract void stepActor(Actor a) throws Exception;
 	
 	protected void step() {
@@ -127,6 +159,9 @@ public abstract class Environment {
 				a.terminate();
 				iter.remove();
 				System.out.println("Actor terminated ("+e+")");
+				if(!(e instanceof IOException)) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}

@@ -1,7 +1,8 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorPosition;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
@@ -10,8 +11,15 @@ public class EnvironmentFollow extends Environment {
 	
 	private Entity target;
 
-	public EnvironmentFollow() {
-		super(2, 2);
+	@Override
+	protected void buildSensors() {
+		sensors.add(new SensorPosition(5, 0, 5, 
+				(a) -> target.getPositionVector().subtract(a.entity.getPositionVector())));
+	}
+	
+	@Override
+	protected void buildActuators() {
+		actuators.add(new ActuatorForwardStrafe());
 	}
 	
 	@Override
@@ -25,18 +33,6 @@ public class EnvironmentFollow extends Environment {
 	public void newActor(Actor a) {
 		super.newActor(a);
 		done = true;
-	}
-	
-	@Override
-	public void encodeObservation(Agent agent, float[] stateVector) {
-		stateVector[0] = (float) (target.posX - agent.entity.posX) / 5F;
-		stateVector[1] = (float) (target.posZ - agent.entity.posZ) / 5F;
-	}
-
-	@Override
-	public void decodeAction(Agent agent, float[] actionVector) {
-		agent.actionState.forward = actionVector[0];
-		agent.actionState.strafe = actionVector[1];
 	}
 
 	@Override
