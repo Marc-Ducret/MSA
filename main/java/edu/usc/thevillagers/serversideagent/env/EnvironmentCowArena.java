@@ -69,15 +69,21 @@ public class EnvironmentCowArena extends Environment {
 	protected void stepActor(Actor actor) throws Exception {
 		actor.reward = 0;
 		actor.actionState.action = null;
+		boolean oneAlive = false;
 		for(int i = 0; i < cows.length; i++) {
 			actor.reward -= cows[i].getHealth();
 			if(cows[i].getHealth() > 0) {
+				oneAlive = true;
 				if(cows[i].getDistanceSq(actor.entity) < 1) {
 					actor.actionState.action = new HighLevelAction(Type.HIT, Phase.INSTANT, actor.entity.getEntityId(), 
 							EnumHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD), cows[i].getEntityId(), null, null, null);
 					actor.reward += 5;
 				}
 			}
+		}
+		if(!oneAlive) {
+			done = true;
+			actor.reward = 10;
 		}
 		if(time >= 49) done = true;
 	}
