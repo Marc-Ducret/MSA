@@ -19,7 +19,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 
 public class EnvironmentCowArena extends Environment {
@@ -39,8 +38,6 @@ public class EnvironmentCowArena extends Environment {
 	
 	@Override
 	protected void buildSensors() {
-		sensors.add(new SensorPosition(size, 0, size, 
-				(a) -> a.entity.getPositionVector().subtract(new Vec3d(ref))));
 		for(int i = 0; i < cows.length; i++) {
 			final int index = i;
 			sensors.add(new SensorPosition(size, 0, size, 
@@ -71,7 +68,7 @@ public class EnvironmentCowArena extends Environment {
 		actor.actionState.action = null;
 		boolean oneAlive = false;
 		for(int i = 0; i < cows.length; i++) {
-			actor.reward -= cows[i].getHealth();
+			actor.reward -= .3F / cows.length;
 			if(cows[i].getHealth() > 0) {
 				oneAlive = true;
 				if(cows[i].getDistanceSq(actor.entity) < 1) {
