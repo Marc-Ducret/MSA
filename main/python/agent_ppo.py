@@ -19,20 +19,27 @@ class Policy:
 
         ob = U.get_placeholder(name='ob', dtype=tf.float32, shape=(None, env.observation_dim))
         ob_entities = U.get_placeholder(name='ob_entities', dtype=tf.float32,
-            shape=(None, None, env.entity_dim))
-        ob_ent_shape = tf.shape(ob_entities)
+            shape=(None, env.entity_max, env.entity_dim))
+        entity_mask = U.get_placeholder(name='entity_mask', dtype=tf.bool,
+            shape=(None, env.entity_max))
 
+        #TODO if env.entity_max == 0
         with tf.variable_scope('attention'):
-            layer = ob_entities
+            ob_entities_masked = tf.boolean_mask(ob_entities, tf.reduce_any(entity_mask, 0), axis=1)
+            layer = ob_entities_masked
+            ob_ent_shape = tf.shape(layer)
             for i in range(args.hid_layers):
                 layer = tf.layers.dense(layer, args.hid_size, name='dense_%i' % i, activation=tf.nn.tanh,
                                 kernel_initializer=U.normc_initializer(1))
             attention = tf.layers.dense(layer, 1, name='final',
                             kernel_initializer=U.normc_initializer(1))
-            attention = tf.nn.softmax(tf.tanh(attention) * 3, axis=1)
+            attention = tf.multiply(
+                tf.reshape(tf.cast(tf.boolean_mask(entity_mask, tf.reduce_any(entity_mask, 0), axis=1), tf.float32), (ob_ent_shape[0], ob_ent_shape[1], 1)),
+                attention)
+            attention = tf.nn.softmax(tf.tanh(attention) * 6, axis=1)
             self.attention_entropy = tf.reduce_mean(tf.reduce_sum(- tf.log(attention) * attention, 1))
-            self._attention = U.function([ob_entities], [attention, self.attention_entropy])
-            ob_attention = tf.reshape(attention, (ob_ent_shape[0], ob_ent_shape[1], 1)) * ob_entities
+            self._attention = U.function([ob_entities, entity_mask], [attention, self.attention_entropy])
+            ob_attention = attention * ob_entities_masked
             ob_attention = tf.reduce_sum(ob_attention, axis=1)
 
         #with tf.variable_scope('obfilter'):
@@ -59,7 +66,7 @@ class Policy:
 
         stochastic = tf.placeholder(dtype=tf.bool, shape=())
         ac = U.switch(stochastic, self.pd.sample(), self.pd.mode())
-        self._act = U.function([stochastic, ob, ob_entities], [ac, self.vpred])
+        self._act = U.function([stochastic, ob, ob_entities, entity_mask], [ac, self.vpred])
 
         total_parameters = 0
         for variable in tf.trainable_variables():
@@ -73,11 +80,11 @@ class Policy:
         print('name: ', tf.get_variable_scope().name, 'params:', total_parameters)
 
     def act(self, stochastic, ob):
-        (ob_const, ob_entities) = ob
+        (ob_const, ob_entities, entity_mask) = ob
         ob_entities = ob_entities.reshape((ob_entities.shape[0] // self.env.entity_dim,
             self.env.entity_dim))
         #print(self._attention(ob_entities[None]))
-        ac1, vpred1 =  self._act(stochastic, ob_const[None], ob_entities[None])
+        ac1, vpred1 =  self._act(stochastic, ob_const[None], ob_entities[None], entity_mask[None])
         return ac1[0], vpred1[0]
     def get_variables(self):
         return tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.scope)

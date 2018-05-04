@@ -25,6 +25,7 @@ public abstract class Environment {
 	public final List<Actuator> actuators;
 	public int observationDim, actionDim;
 	public int entityDim = 0;
+	public int entityMax = 0;
 	
 	protected Allocator allocator;
 	private boolean allocated = false;

@@ -50,6 +50,7 @@ public class EnvironmentCowArena extends Environment {
 //			sensors.add(new SensorBoolean(() -> cows[index].getHealth() > 0));
 //		}
 		entityDim = 3;
+		entityMax = 100;
 	}
 	
 	@Override
@@ -112,7 +113,7 @@ public class EnvironmentCowArena extends Environment {
 		generate();
 		for(EntityCow cow : cows) cow.setDead();
 		cows.clear();
-		nCows = 10;
+//		nCows = 2 + world.rand.nextInt(4);
 		for(int i = 0; i < nCows; i++) {
 			EntityCow cow = new EntityCow(world);
 			cow.setPosition(ref.getX() - size + world.rand.nextInt(2 * size - 3) + 2, ref.getY(), 

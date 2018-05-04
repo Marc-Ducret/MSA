@@ -17,6 +17,7 @@ public class Agent extends Actor {
 		sok.out.writeInt(env.observationDim);
 		sok.out.writeInt(env.actionDim);
 		sok.out.writeInt(env.entityDim);
+		sok.out.writeInt(env.entityMax);
 		sok.out.flush();
 	}
 	
