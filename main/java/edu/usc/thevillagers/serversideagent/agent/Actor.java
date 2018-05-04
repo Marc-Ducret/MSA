@@ -1,6 +1,8 @@
 package edu.usc.thevillagers.serversideagent.agent;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -12,6 +14,7 @@ public abstract class Actor {
 	public final AgentActionState actionState;
 	
 	public final float[] observationVector, actionVector;
+	public final List<Float> observationEntities;
 	
 	public float reward;
 	
@@ -23,6 +26,7 @@ public abstract class Actor {
 		this.env = env;
 		this.observationVector = new float[env.observationDim];
 		this.actionVector = new float[env.actionDim];
+		this.observationEntities = new ArrayList<>();
 		this.active = false;
 		this.actionState = actionState;
 	}

@@ -16,6 +16,7 @@ public class Agent extends Actor {
 		sok.out.writeUTF(env.id);
 		sok.out.writeInt(env.observationDim);
 		sok.out.writeInt(env.actionDim);
+		sok.out.writeInt(env.entityDim);
 		sok.out.flush();
 	}
 	
@@ -32,6 +33,13 @@ public class Agent extends Actor {
 		env.encodeObservation(this, observationVector);
 		for(float f : observationVector)
 			sok.out.writeFloat(f);
+		if(env.entityDim > 0) {
+			observationEntities.clear();
+			env.encodeEntityObservation(this, observationEntities);
+			sok.out.writeInt(observationEntities.size());
+			for(float f : observationEntities)
+				sok.out.writeFloat(f);
+		}
 	}
 	
 	public void observe() throws IOException {

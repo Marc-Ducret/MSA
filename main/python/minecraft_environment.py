@@ -35,6 +35,7 @@ class MinecraftEnv(gym.Env):
         self.observation_space = spaces.Box(low=-1, high=1, shape=(self.observation_dim,), dtype=np.float32)
         self.action_dim = self.in_stream.read_int()
         self.action_space = spaces.Box(low=-1, high=1, shape=(self.action_dim,), dtype=np.float32)
+        self.entity_dim = self.in_stream.read_int()
 
         self.reward_range = (-100, 100) ## TODO: get from java
 
@@ -42,7 +43,13 @@ class MinecraftEnv(gym.Env):
         return {}
 
     def _receive_observation(self):
-        return np.array(self.in_stream.read_float_array(self.observation_dim))
+        obs = np.array(self.in_stream.read_float_array(self.observation_dim))
+        if self.entity_dim > 0:
+            size = self.in_stream.read_int()
+            obs_entities = np.array(self.in_stream.read_float_array(size))
+            return (obs, obs_entities)
+        else:
+            return (obs, np.zeros((0,)))
 
     def _receive_reward(self):
         return self.in_stream.read_float()

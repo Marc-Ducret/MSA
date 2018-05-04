@@ -3,11 +3,13 @@ from baselines.common import tf_util as U, distributions
 from baselines.ppo1 import pposgd_simple
 from baselines.common.mpi_running_mean_std import RunningMeanStd
 import tensorflow as tf
+import numpy as np
 
 class Policy:
 
     def __init__(self, name, env, args):
         with tf.variable_scope(name):
+            self.env = env
             self._init(env, args)
             self.scope = tf.get_variable_scope().name
 
@@ -16,30 +18,29 @@ class Policy:
         self.pdtype = distributions.DiagGaussianPdType(env.action_dim)
 
         ob = U.get_placeholder(name='ob', dtype=tf.float32, shape=(None, env.observation_dim))
+        ob_entities = U.get_placeholder(name='ob_entities', dtype=tf.float32,
+            shape=(None, None, env.entity_dim))
+        ob_ent_shape = tf.shape(ob_entities)
 
         with tf.variable_scope('attention'):
-            entitity_size = 3
-            n_ents = env.observation_dim // entitity_size
-            attentions = []
-            for e in range(n_ents):
-                layer = ob[:, e*entitity_size : e*entitity_size + entitity_size]
-                for i in range(args.hid_layers):
-                    layer = tf.layers.dense(layer, args.hid_size, name='dense_%i' % i, activation=tf.nn.tanh,
-                                    kernel_initializer=U.normc_initializer(1), reuse=e > 0)
-                attentions.append(tf.layers.dense(layer, 1, name='final',
-                                kernel_initializer=U.normc_initializer(1), reuse=e > 0))
-            attention = tf.nn.softmax(tf.concat(attentions, 1))
+            layer = ob_entities
+            for i in range(args.hid_layers):
+                layer = tf.layers.dense(layer, args.hid_size, name='dense_%i' % i, activation=tf.nn.tanh,
+                                kernel_initializer=U.normc_initializer(1))
+            attention = tf.layers.dense(layer, 1, name='final',
+                            kernel_initializer=U.normc_initializer(1))
+            attention = tf.nn.softmax(tf.tanh(attention) * 3, axis=1)
             self.attention_entropy = tf.reduce_mean(tf.reduce_sum(- tf.log(attention) * attention, 1))
-            self._attention = U.function([ob], [attention, self.attention_entropy])
-            ob_attention = tf.reshape(attention, (tf.shape(ob)[0], n_ents, 1)) * tf.reshape(ob, (tf.shape(ob)[0], n_ents, entitity_size))
+            self._attention = U.function([ob_entities], [attention, self.attention_entropy])
+            ob_attention = tf.reshape(attention, (ob_ent_shape[0], ob_ent_shape[1], 1)) * ob_entities
             ob_attention = tf.reduce_sum(ob_attention, axis=1)
 
-        with tf.variable_scope('obfilter'):
-            self.ob_rms = RunningMeanStd(shape=(env.observation_dim,))
+        #with tf.variable_scope('obfilter'):
+        #    self.ob_rms = RunningMeanStd(shape=(env.observation_dim,))
 
         with tf.variable_scope('vf'):
-            obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5, 5)
-            obz = ob_attention
+            #obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5, 5)
+            obz = tf.concat([ob, ob_attention], 1)
             layer = obz
             for i in range(args.hid_layers):
                 layer = tf.layers.dense(layer, args.hid_size, name='dense_%i' % i, activation=tf.nn.tanh,
@@ -58,7 +59,7 @@ class Policy:
 
         stochastic = tf.placeholder(dtype=tf.bool, shape=())
         ac = U.switch(stochastic, self.pd.sample(), self.pd.mode())
-        self._act = U.function([stochastic, ob], [ac, self.vpred])
+        self._act = U.function([stochastic, ob, ob_entities], [ac, self.vpred])
 
         total_parameters = 0
         for variable in tf.trainable_variables():
@@ -67,12 +68,16 @@ class Policy:
             for dim in shape:
                 variable_parameters *= dim.value
             total_parameters += variable_parameters
-        print('action_dim: %i, observation_dim: %i' % (env.action_dim, env.observation_dim))
+        print('action_dim: %i, observation_dim: %i, entity_dim: %i' %
+            (env.action_dim, env.observation_dim, env.entity_dim))
         print('name: ', tf.get_variable_scope().name, 'params:', total_parameters)
 
     def act(self, stochastic, ob):
-        #print('attention: ', self._attention(ob[None]))
-        ac1, vpred1 =  self._act(stochastic, ob[None])
+        (ob_const, ob_entities) = ob
+        ob_entities = ob_entities.reshape((ob_entities.shape[0] // self.env.entity_dim,
+            self.env.entity_dim))
+        #print(self._attention(ob_entities[None]))
+        ac1, vpred1 =  self._act(stochastic, ob_const[None], ob_entities[None])
         return ac1[0], vpred1[0]
     def get_variables(self):
         return tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.scope)

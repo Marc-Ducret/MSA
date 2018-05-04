@@ -24,6 +24,7 @@ public abstract class Environment {
 	public final List<Sensor> sensors;
 	public final List<Actuator> actuators;
 	public int observationDim, actionDim;
+	public int entityDim = 0;
 	
 	protected Allocator allocator;
 	private boolean allocated = false;
@@ -46,6 +47,9 @@ public abstract class Environment {
 	public abstract void readPars(float[] pars);
 	protected abstract void buildSensors();
 	protected abstract void buildActuators();
+	
+	public void encodeEntityObservation(Agent a, List<Float> obs) { //TODO doc
+	}
 	
 	protected int getRoundPar(float[] pars, int i, int def) {
 		return Math.round(getPar(pars, i, def));

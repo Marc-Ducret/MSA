@@ -15,6 +15,6 @@ public class SensorBoolean extends Sensor {
 
 	@Override
 	public void sense(Agent agent) {
-		values[0] = predicate.getAsBoolean() ? 1 : 0;
+		values[0] = predicate.getAsBoolean() ? +1 : -1;
 	}
 }
