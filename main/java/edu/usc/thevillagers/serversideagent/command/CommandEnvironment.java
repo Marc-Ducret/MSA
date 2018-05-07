@@ -52,6 +52,7 @@ public class CommandEnvironment extends CommandBase {
 				origin = sender.getPosition();
 			Environment env = createEnvironment(args[2]);
 			env.setOrigin(origin);
+			env.readPars(new float[] {}); //TODO parse pars
 			env.init(world);
 			envManager.registerEnv(env, envId);
 			break;
