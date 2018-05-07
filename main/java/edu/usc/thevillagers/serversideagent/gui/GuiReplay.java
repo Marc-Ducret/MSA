@@ -33,6 +33,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.client.config.GuiSlider;
 
+/**
+ * Display for {@link WorldRecordReplayerClient}
+ */
 public class GuiReplay extends GuiScreen {
 	
 	private int renderDistance = 128;

@@ -16,6 +16,9 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.Constants;
 
+/**
+ * File interface for a complete state of the world at some point in time.
+ */
 public class Snapshot extends NBTFileInterface<SnapshotData> {
 	
 	public Snapshot(File file) {

@@ -5,6 +5,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 
+/**
+ * Record of a new TileEntity.
+ */
 public class RecordEventTileEntitySpawn extends RecordEvent {
 	
 	private BlockPos pos;

@@ -97,7 +97,7 @@ public class EnvironmentCowArena extends Environment {
 				if(closestAlive == null || cow.getDistanceSq(actor.entity) < closestAlive.getDistanceSq(actor.entity)) closestAlive = cow;
 			}
 		}
-		if(closestAlive != null) actor.reward -= closestAlive.getDistanceSq(actor.entity) / (size * size) * .1F;
+//		if(closestAlive != null) actor.reward -= closestAlive.getDistanceSq(actor.entity) / (size * size) * .1F;
 		if(!oneAlive) {
 			done = true;
 			actor.reward = 20;
@@ -113,7 +113,7 @@ public class EnvironmentCowArena extends Environment {
 		generate();
 		for(EntityCow cow : cows) cow.setDead();
 		cows.clear();
-//		nCows = 2 + world.rand.nextInt(4);
+		nCows = 1 + world.rand.nextInt(4);
 		for(int i = 0; i < nCows; i++) {
 			EntityCow cow = new EntityCow(world);
 			cow.setPosition(ref.getX() - size + world.rand.nextInt(2 * size - 3) + 2, ref.getY(), 

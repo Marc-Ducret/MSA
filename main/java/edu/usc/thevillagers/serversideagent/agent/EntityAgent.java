@@ -16,6 +16,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+/**
+ * An EntityPlayer controlled by an Agent.
+ */
 public class EntityAgent extends EntityPlayerMP {
 	
 	public static final float ROTATION_SPEED = 20;

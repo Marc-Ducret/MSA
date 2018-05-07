@@ -5,6 +5,10 @@ import java.util.function.Function;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import net.minecraft.util.math.Vec3d;
 
+/**
+ * A sensor that senses a position and normalises it w.r.t.
+ * ({@link #normX}, {@link #normY}, {@link #normZ}). Axis where norm is 0 are ignored.
+ */
 public class SensorPosition extends Sensor {
 
 	private final float normX, normY, normZ;

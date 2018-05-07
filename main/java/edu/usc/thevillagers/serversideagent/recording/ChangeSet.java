@@ -11,6 +11,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
+/**
+ * File interface for a set of changes across multiple ticks.
+ */
 public class ChangeSet extends NBTFileInterface<List<List<RecordEvent>>> {
 	
 	public ChangeSet(File file) {

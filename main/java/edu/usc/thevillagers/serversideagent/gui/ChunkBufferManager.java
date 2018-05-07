@@ -13,6 +13,9 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
+/**
+ * Handles buffering of the CPU part of rendering blocks for rendering inside of {@link GuiReplay}
+ */
 public class ChunkBufferManager {
 
 	private BufferBuilder[] buffers;

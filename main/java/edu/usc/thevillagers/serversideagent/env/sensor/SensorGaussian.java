@@ -2,6 +2,9 @@ package edu.usc.thevillagers.serversideagent.env.sensor;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 
+/**
+ * A sensor that takes random gaussian values.
+ */
 public class SensorGaussian extends Sensor {
 
 	public SensorGaussian(int dim) {

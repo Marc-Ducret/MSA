@@ -8,6 +8,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 
+/**
+ * Record of a new entity.
+ */
 public class RecordEventEntitySpawn extends RecordEvent {
 	
 	private int id, type;

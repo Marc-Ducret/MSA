@@ -7,6 +7,9 @@ import java.util.List;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.entity.player.EntityPlayerMP;
 
+/**
+ * Abstract class to represent an actor in an environment. An actor can be a human or an agent.
+ */
 public abstract class Actor {
 	
 	public final Environment env;

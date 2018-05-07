@@ -9,6 +9,9 @@ import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiListExtended.IGuiListEntry;
 import net.minecraft.client.gui.GuiScreen;
 
+/**
+ * Displays a list of records found on disk.
+ */
 public class GuiChooseRecord extends GuiScreen {
 	
 	private GuiRecordList list;

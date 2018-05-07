@@ -5,6 +5,9 @@ import java.io.IOException;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import net.minecraft.entity.player.EntityPlayerMP;
 
+/**
+ * A human actor.
+ */
 public class Human extends Actor {
 	
 	public Human(Environment env, EntityPlayerMP human) {

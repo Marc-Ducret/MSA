@@ -9,6 +9,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+/**
+ * Allocation in a box that must not overlap any other allocated box and only contain
+ * air blocks. Some boxes are randomly sampled to try to allocate one.
+ */
 public class AllocatorEmptySpace implements Allocator {
 	
 	private static final int SAMPLES = 30;

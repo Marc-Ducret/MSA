@@ -6,6 +6,9 @@ import java.util.List;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import net.minecraft.block.state.IBlockState;
 
+/**
+ * Memory representation of a {@link Snapshot} file.
+ */
 public class SnapshotData {
 	public final IBlockState[] blockStates;
 	public final List<RecordEvent> spawnEvents;

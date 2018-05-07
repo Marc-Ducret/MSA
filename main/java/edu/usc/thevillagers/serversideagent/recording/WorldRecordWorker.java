@@ -11,6 +11,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
 
+/**
+ * A worker that can interact with a record. Can be extended to record or replay.
+ */
 public class WorldRecordWorker {
 
 	protected int snapshotLenght = 1 * 60 * 20;

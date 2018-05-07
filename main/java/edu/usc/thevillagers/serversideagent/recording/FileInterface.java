@@ -3,6 +3,9 @@ package edu.usc.thevillagers.serversideagent.recording;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * An interface between a file on the disk and an appropriate object representation in memory.
+ */
 public abstract class FileInterface {
 
 	protected final File file;

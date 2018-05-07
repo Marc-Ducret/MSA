@@ -2,6 +2,9 @@ package edu.usc.thevillagers.serversideagent.env.sensor;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 
+/**
+ * Represents a part of an Environment's constant observation space.
+ */
 public abstract class Sensor {
 
 	public final int dim;

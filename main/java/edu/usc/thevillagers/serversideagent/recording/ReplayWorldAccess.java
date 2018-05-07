@@ -23,6 +23,9 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.storage.WorldInfo;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+/**
+ * Structure to store world information during a replay.
+ */
 public class ReplayWorldAccess implements IBlockAccess {
 
 	public final BlockPos from, to, diff;

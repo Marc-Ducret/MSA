@@ -7,6 +7,9 @@ import java.util.concurrent.ExecutionException;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * {@link WorldRecordReplayer} with rendering capabilities.
+ */
 @SideOnly(value=Side.CLIENT)
 public class WorldRecordReplayerClient extends WorldRecordReplayer {
 	

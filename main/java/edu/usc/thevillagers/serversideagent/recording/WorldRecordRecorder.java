@@ -28,6 +28,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+/**
+ * {@link WorldRecordWorker} for recording the world during gameplay.
+ */
 public class WorldRecordRecorder extends WorldRecordWorker {
 	
 	public World world;

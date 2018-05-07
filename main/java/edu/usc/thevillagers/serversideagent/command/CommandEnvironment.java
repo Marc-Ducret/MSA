@@ -12,6 +12,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 
+/**
+ * This command enables manual environment creation, removal and adding humans to environments.
+ */
 public class CommandEnvironment extends CommandBase {
 	
 	private final EnvironmentManager envManager;

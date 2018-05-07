@@ -10,6 +10,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
+/**
+ * This command enables 'fast ticking' which lets Minecraft run as fast as possible.
+ */
 public class CommandFastTick extends CommandBase {
 	
 	private int requestFastTicks = 0;

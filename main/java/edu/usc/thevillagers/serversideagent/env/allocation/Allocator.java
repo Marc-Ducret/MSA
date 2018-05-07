@@ -3,6 +3,9 @@ package edu.usc.thevillagers.serversideagent.env.allocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+/**
+ * Defines a manner in which environments can be allocated and freed.
+ */
 public interface Allocator {
 
 	/**

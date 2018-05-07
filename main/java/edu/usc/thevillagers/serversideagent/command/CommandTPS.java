@@ -10,6 +10,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
+/**
+ * Command that displays the current number of 'ticks per second'.
+ */
 public class CommandTPS extends CommandBase {
 
 	public float avgTickPeriod = 50;

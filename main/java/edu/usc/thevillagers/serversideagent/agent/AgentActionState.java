@@ -3,6 +3,9 @@ package edu.usc.thevillagers.serversideagent.agent;
 import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import net.minecraft.util.math.MathHelper;
 
+/**
+ * The whole action state of a agent for a given step.
+ */
 public class AgentActionState {
 
 	public float forward, strafe, momentumYaw, momentumPitch;

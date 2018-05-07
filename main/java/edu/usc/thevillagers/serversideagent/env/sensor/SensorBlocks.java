@@ -5,7 +5,12 @@ import java.util.function.Function;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
+/**
+ * Sensor that encodes surrounding blocks in a box relative to the agent
+ * defined by {@link #from} and {@link #to}.
+ */
 public class SensorBlocks extends Sensor {
 
 	private final BlockPos from, to;
@@ -23,7 +28,8 @@ public class SensorBlocks extends Sensor {
 	@Override
 	public void sense(Agent agent) {
 		int offset = 0;
-		for(BlockPos p : BlockPos.getAllInBoxMutable(from, to)) {
+		BlockPos agentPos = agent.entity.getPosition();
+		for(MutableBlockPos p : BlockPos.getAllInBoxMutable(from.add(agentPos), to.add(agentPos))) {
 			values[offset++] = encoding.apply(agent.entity.world.getBlockState(p));
 		}
 	}

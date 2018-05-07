@@ -13,6 +13,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Random;
 
+/**
+ * A benchmark to compare Sockets with stdin / stdout.
+ */
 public class IOBench {
 	
 	static final int N = 10_000_000;

@@ -2,6 +2,9 @@ package edu.usc.thevillagers.serversideagent.env.actuator;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 
+/**
+ * Actuator of dimension 1 that enables jumping.
+ */
 public class ActuatorJump extends Actuator {
 
 	public ActuatorJump() {

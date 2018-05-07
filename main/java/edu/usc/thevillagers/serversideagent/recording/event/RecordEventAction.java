@@ -5,6 +5,9 @@ import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 
+/**
+ * Record of an {@link HighLevelAction}.
+ */
 public class RecordEventAction extends RecordEvent {
 	
 	private HighLevelAction action;

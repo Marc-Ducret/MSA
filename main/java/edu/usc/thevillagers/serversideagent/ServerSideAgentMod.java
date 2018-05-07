@@ -18,6 +18,9 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 
+/**
+ * Main class of the Mod that is loaded by Forge on startup.
+ */
 @Mod(modid = ServerSideAgentMod.MODID, name = ServerSideAgentMod.NAME, version = ServerSideAgentMod.VERSION, acceptableRemoteVersions = "*")
 public class ServerSideAgentMod {
     public static final String MODID = "serversideagent";

@@ -25,6 +25,9 @@ import net.minecraft.world.WorldType;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * Additions to {@link ReplayWorldAccess} required for rendering the world.
+ */
 @SideOnly(value=Side.CLIENT)
 public class ReplayWorldAccessClient extends ReplayWorldAccess {
 	

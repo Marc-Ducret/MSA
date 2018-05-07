@@ -6,6 +6,9 @@ import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 
+/**
+ * EntityPlayer requires a NetworkManager this one disable packets and is used by EntityAgent.
+ */
 public class DummyNetworkManager extends NetworkManager {
 
 	public DummyNetworkManager() {

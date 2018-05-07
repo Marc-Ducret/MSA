@@ -7,6 +7,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+/**
+ * Stores a {@link Socket} with appropriate {@link #in} and {@link #out} streams.
+ */
 public class DataSocket {
 
 	public final Socket socket;

@@ -7,6 +7,11 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
+/**
+ * Represents an interaction of an EntityPlayer with an Item, Block or Entity.
+ * Can be used to record human actions or to represent an action for an agent to execute. </br>
+ * Depending on the action represented, irrelevant fields should be null or -1.
+ */
 public class HighLevelAction { //TODO inventory actions...
 	
 	public static enum Type {HIT, USE}

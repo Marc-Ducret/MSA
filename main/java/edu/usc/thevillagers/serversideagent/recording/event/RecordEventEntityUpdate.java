@@ -4,6 +4,10 @@ import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 
+/**
+ * Record of change among an entity's data. 
+ * Uses the way entity are stored when saving the world to compute this data.
+ */
 public class RecordEventEntityUpdate extends RecordEvent {
 	
 	private int id;

@@ -1,8 +1,12 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 
+/**
+ * An event that can be recorded by {@link WorldRecordRecorder} and replayed by {@link WorldRecordReplayer}
+ */
 public abstract class RecordEvent {
 
 	public abstract void replay(WorldRecordReplayer wr);

@@ -6,6 +6,9 @@ import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.request.DataSocket;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+/**
+ * An autonomous actor. Communicates through a socket for another process to do the thinking.
+ */
 public class Agent extends Actor {
 	
 	private DataSocket sok;

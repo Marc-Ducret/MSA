@@ -14,6 +14,10 @@ import java.util.zip.GZIPOutputStream;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 
+/**
+ * A specific type of {@link FileInterface} where the file format is NBT.
+ * @param <T> The memory representation of the file's contents.
+ */
 public abstract class NBTFileInterface<T> extends FileInterface {
 	
 	public T data;

@@ -10,6 +10,9 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 
+/**
+ * Replays a world record from the disk.
+ */
 public class WorldRecordReplayer extends WorldRecordWorker {
 	
 	public ReplayWorldAccess world;

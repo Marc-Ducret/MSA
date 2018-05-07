@@ -5,6 +5,10 @@ import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 
+/**
+ * Record of a TileEntity's data changing.
+ * This data is computed as if the TileEntity was saved to the disk.
+ */
 public class RecordEventTileEntityUpdate extends RecordEvent {
 	
 	private BlockPos pos;

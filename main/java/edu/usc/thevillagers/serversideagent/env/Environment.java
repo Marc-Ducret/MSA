@@ -15,7 +15,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
-public abstract class Environment {
+/**
+ * Represents an environment for Agents inside of Minecraft.
+ */
+public abstract class Environment { //TODO document functions that should be overridden
 	
 	public long emptyTime = 0;
 	

@@ -4,6 +4,9 @@ import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 
+/**
+ * Record of a TileEntity's removal.
+ */
 public class RecordEventTileEntityDie extends RecordEvent {
 	
 	private BlockPos pos;

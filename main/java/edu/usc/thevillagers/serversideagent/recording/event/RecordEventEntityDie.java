@@ -3,6 +3,9 @@ package edu.usc.thevillagers.serversideagent.recording.event;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.nbt.NBTTagCompound;
 
+/**
+ * Record of an entity's death.
+ */
 public class RecordEventEntityDie extends RecordEvent {
 	
 	private int id;

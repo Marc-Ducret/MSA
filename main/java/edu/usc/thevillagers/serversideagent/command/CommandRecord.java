@@ -29,6 +29,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
+/**
+ * Command that controls the recording of a specified area.
+ */
 public class CommandRecord extends CommandBase {
 	
 	private WorldRecordRecorder record;

@@ -4,6 +4,9 @@ import java.util.function.BooleanSupplier;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 
+/**
+ * A one dimension sensor that encodes +1 or -1 depending on the provided predicate.
+ */
 public class SensorBoolean extends Sensor {
 	
 	private final BooleanSupplier predicate;
