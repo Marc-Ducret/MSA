@@ -23,31 +23,34 @@ class Policy:
         entity_mask = U.get_placeholder(name='entity_mask', dtype=tf.bool,
             shape=(None, env.entity_max))
 
-        #TODO if env.entity_max == 0
-        with tf.variable_scope('attention'):
-            ob_entities_masked = tf.boolean_mask(ob_entities, tf.reduce_any(entity_mask, 0), axis=1)
-            layer = ob_entities_masked
-            ob_ent_shape = tf.shape(layer)
-            for i in range(args.hid_layers):
-                layer = tf.layers.dense(layer, args.hid_size, name='dense_%i' % i, activation=tf.nn.tanh,
+        if env.entity_max > 0:
+            with tf.variable_scope('attention'):
+                ob_entities_masked = tf.boolean_mask(ob_entities, tf.reduce_any(entity_mask, 0), axis=1)
+                layer = ob_entities_masked
+                ob_ent_shape = tf.shape(layer)
+                for i in range(args.hid_layers):
+                    layer = tf.layers.dense(layer, args.hid_size, name='dense_%i' % i, activation=tf.nn.tanh,
+                                    kernel_initializer=U.normc_initializer(1))
+                attention = tf.layers.dense(layer, 1, name='final',
                                 kernel_initializer=U.normc_initializer(1))
-            attention = tf.layers.dense(layer, 1, name='final',
-                            kernel_initializer=U.normc_initializer(1))
-            attention = tf.multiply(
-                tf.reshape(tf.cast(tf.boolean_mask(entity_mask, tf.reduce_any(entity_mask, 0), axis=1), tf.float32), (ob_ent_shape[0], ob_ent_shape[1], 1)),
-                attention)
-            attention = tf.nn.softmax(tf.tanh(attention) * 6, axis=1)
-            self.attention_entropy = tf.reduce_mean(tf.reduce_sum(- tf.log(attention) * attention, 1))
-            self._attention = U.function([ob_entities, entity_mask], [attention, self.attention_entropy])
-            ob_attention = attention * ob_entities_masked
-            ob_attention = tf.reduce_sum(ob_attention, axis=1)
+                attention = tf.multiply(
+                    tf.reshape(tf.cast(tf.boolean_mask(entity_mask, tf.reduce_any(entity_mask, 0), axis=1), tf.float32), (ob_ent_shape[0], ob_ent_shape[1], 1)),
+                    attention)
+                attention = tf.nn.softmax(tf.tanh(attention) * 6, axis=1)
+                self.attention_entropy = tf.reduce_mean(tf.reduce_sum(- tf.log(attention) * attention, 1))
+                self._attention = U.function([ob_entities, entity_mask], [attention, self.attention_entropy])
+                ob_attention = attention * ob_entities_masked
+                ob_attention = tf.reduce_sum(ob_attention, axis=1)
+        else:
+            self.attention_entropy = tf.zeros((1,))
 
-        #with tf.variable_scope('obfilter'):
-        #    self.ob_rms = RunningMeanStd(shape=(env.observation_dim,))
+        with tf.variable_scope('obfilter'):
+            self.ob_rms = RunningMeanStd(shape=(env.observation_dim,))
 
         with tf.variable_scope('vf'):
-            #obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5, 5)
-            obz = tf.concat([ob, ob_attention], 1)
+            obz = tf.clip_by_value((ob - self.ob_rms.mean) / self.ob_rms.std, -5, 5)
+            if env.entity_max > 0:
+                obz = tf.concat([obz, ob_attention], 1)
             layer = obz
             for i in range(args.hid_layers):
                 layer = tf.layers.dense(layer, args.hid_size, name='dense_%i' % i, activation=tf.nn.tanh,
@@ -81,7 +84,7 @@ class Policy:
 
     def act(self, stochastic, ob):
         (ob_const, ob_entities, entity_mask) = ob
-        ob_entities = ob_entities.reshape((ob_entities.shape[0] // self.env.entity_dim,
+        ob_entities = ob_entities.reshape((self.env.entity_max,
             self.env.entity_dim))
         #print(self._attention(ob_entities[None]))
         ac1, vpred1 =  self._act(stochastic, ob_const[None], ob_entities[None], entity_mask[None])
