@@ -2,7 +2,7 @@ package edu.usc.thevillagers.serversideagent.env.sensor;
 
 import java.util.function.BooleanSupplier;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 
 /**
  * A one dimension sensor that encodes +1 or -1 depending on the provided predicate.
@@ -17,7 +17,7 @@ public class SensorBoolean extends Sensor {
 	}
 
 	@Override
-	public void sense(Agent agent) {
+	public void sense(Actor actor) {
 		values[0] = predicate.getAsBoolean() ? +1 : -1;
 	}
 }

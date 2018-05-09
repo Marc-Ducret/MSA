@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env.actuator;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 
 /**
  * Actuator with no effect.
@@ -12,6 +12,6 @@ public class ActuatorDummy extends Actuator {
 	}
 
 	@Override
-	public void act(Agent agent) {
+	public void act(Actor actor) {
 	}
 }

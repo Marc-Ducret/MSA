@@ -2,13 +2,17 @@ package edu.usc.thevillagers.serversideagent;
 
 import java.io.IOException;
 
+import edu.usc.thevillagers.serversideagent.command.CommandCompile;
 import edu.usc.thevillagers.serversideagent.command.CommandEnvironment;
 import edu.usc.thevillagers.serversideagent.command.CommandFastTick;
 import edu.usc.thevillagers.serversideagent.command.CommandRecord;
 import edu.usc.thevillagers.serversideagent.command.CommandTPS;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
 import edu.usc.thevillagers.serversideagent.proxy.Proxy;
+import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
 import edu.usc.thevillagers.serversideagent.request.RequestManager;
+import net.minecraft.world.DimensionType;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -32,9 +36,11 @@ public class ServerSideAgentMod {
     
     @SidedProxy(clientSide = "edu.usc.thevillagers.serversideagent.proxy.ClientProxy", serverSide = "edu.usc.thevillagers.serversideagent.proxy.ServerProxy")
     public static Proxy proxy;
+	public static ServerSideAgentMod instance;
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+    	instance = this;
     }
 
     @EventHandler
@@ -53,6 +59,9 @@ public class ServerSideAgentMod {
     	event.registerServerCommand(new CommandFastTick());
     	event.registerServerCommand(new CommandTPS());
     	event.registerServerCommand(new CommandRecord());
+    	event.registerServerCommand(new CommandCompile(envManager));
+    	
+    	DimensionManager.registerDimension(ReplayWorldAccess.DUMMY_DIMENSION, DimensionType.OVERWORLD);
     }
     
     @EventHandler

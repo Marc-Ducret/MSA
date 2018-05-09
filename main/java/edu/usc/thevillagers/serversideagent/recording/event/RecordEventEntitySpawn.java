@@ -5,8 +5,8 @@ import com.mojang.authlib.GameProfile;
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.registries.GameData;
 
 /**
  * Record of a new entity.
@@ -32,7 +32,7 @@ public class RecordEventEntitySpawn extends RecordEvent {
 			e = ServerSideAgentMod.proxy.createReplayEntityPlayer(wr.world.fakeWorld, 
 					new GameProfile(data.getUniqueId("ProfileUUID"), data.getString("ProfileName")));
 		else
-			e = EntityList.createEntityByID(type, wr.world.fakeWorld);
+			e = GameData.getEntityRegistry().getValue(type).newInstance(wr.world.fakeWorld);
 		e.setEntityId(id);
 		wr.world.spawnEntity(e);
 		wr.entitiesData.put(id, data);

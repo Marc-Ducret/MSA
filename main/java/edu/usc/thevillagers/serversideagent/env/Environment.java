@@ -116,21 +116,21 @@ public abstract class Environment { //TODO document functions that should be ove
 		return getOrigin();
 	}
 	
-	public final void encodeObservation(Agent agent, float[] observationVector) {
+	public final void encodeObservation(Actor actor, float[] observationVector) {
 		int offset = 0;
 		for(Sensor sensor : sensors) {
-			sensor.sense(agent);
+			sensor.sense(actor);
 			for(int i = 0; i < sensor.dim; i ++) 
 				observationVector[offset++] = sensor.values[i];
 		}
 	}
 	
-	public final void decodeAction(Agent agent, float[] actionVector) {
+	public final void decodeAction(Actor actor, float[] actionVector) {
 		int offset = 0;
 		for(Actuator actuator : actuators) {
 			for(int i = 0; i < actuator.dim; i ++)
 				actuator.values[i] = actionVector[offset++];
-			actuator.act(agent);
+			actuator.act(actor);
 		}
 	}
 	

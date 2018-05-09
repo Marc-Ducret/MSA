@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env.sensor;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 
 /**
  * Represents a part of an Environment's constant observation space.
@@ -15,5 +15,5 @@ public abstract class Sensor {
 		this.values = new float[dim];
 	}
 	
-	public abstract void sense(Agent agent);
+	public abstract void sense(Actor actor);
 }

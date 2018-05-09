@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env.actuator;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 
 /**
  * Actuator of dimension 2 that enables horizontal movement.
@@ -12,8 +12,8 @@ public class ActuatorForwardStrafe extends Actuator {
 	}
 
 	@Override
-	public void act(Agent agent) {
-		agent.actionState.forward = values[0];
-		agent.actionState.strafe = values[1];
+	public void act(Actor actor) {
+		actor.actionState.forward = values[0];
+		actor.actionState.strafe = values[1];
 	}
 }

@@ -2,7 +2,7 @@ package edu.usc.thevillagers.serversideagent.env.sensor;
 
 import java.util.function.Function;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
@@ -26,11 +26,11 @@ public class SensorBlocks extends Sensor {
 	}
 
 	@Override
-	public void sense(Agent agent) {
+	public void sense(Actor actor) {
 		int offset = 0;
-		BlockPos agentPos = agent.entity.getPosition();
+		BlockPos agentPos = actor.entity.getPosition();
 		for(MutableBlockPos p : BlockPos.getAllInBoxMutable(from.add(agentPos), to.add(agentPos))) {
-			values[offset++] = encoding.apply(agent.entity.world.getBlockState(p));
+			values[offset++] = encoding.apply(actor.entity.world.getBlockState(p));
 		}
 	}
 }

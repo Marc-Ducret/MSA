@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env.sensor;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorDummy;
 
 /**
@@ -16,7 +16,7 @@ public class SensorComunication extends Sensor {
 	}
 
 	@Override
-	public void sense(Agent agent) {
+	public void sense(Actor actor) {
 		for(int i = 0; i < dim; i++) values[i] = com.values[i];
 	}
 }

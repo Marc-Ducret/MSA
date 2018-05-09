@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
-import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
@@ -45,9 +44,9 @@ public class EnvironmentLandmarks extends Environment {
 		sensors.add(new Sensor((nLandmarks + nAgents) * 2 + nAgents * comSize) {
 			
 			@Override
-			public void sense(Agent agent) {
-				BlockPos p = agent.entity.getPosition();
-				int offset = actors.indexOf(agent);
+			public void sense(Actor actor) {
+				BlockPos p = actor.entity.getPosition();
+				int offset = actors.indexOf(actor);
 				for(int i = 0; i < nAgents; i ++) {
 					int iAgent = (i + offset) % nAgents;
 					if(actors.size() > iAgent) {

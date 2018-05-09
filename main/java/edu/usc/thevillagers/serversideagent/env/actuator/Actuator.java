@@ -1,6 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env.actuator;
 
-import edu.usc.thevillagers.serversideagent.agent.Agent;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 
 /**
  * Represents a part of an Environment's action space.
@@ -15,5 +15,5 @@ public abstract class Actuator {
 		this.values = new float[dim];
 	}
 	
-	public abstract void act(Agent agent);
+	public abstract void act(Actor actor);
 }

@@ -26,7 +26,7 @@ public class EnvironmentGotoGold extends Environment {
 			if(state.getBlock() == Blocks.STAINED_GLASS) {
 				return state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F;
 			} else {
-				return 1F;
+				return -1F;
 			}
 		}));
 	}
