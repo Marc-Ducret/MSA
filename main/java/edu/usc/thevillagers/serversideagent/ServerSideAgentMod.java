@@ -10,7 +10,7 @@ import edu.usc.thevillagers.serversideagent.command.CommandRecord;
 import edu.usc.thevillagers.serversideagent.command.CommandTPS;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
 import edu.usc.thevillagers.serversideagent.proxy.Proxy;
-import edu.usc.thevillagers.serversideagent.recording.ReplayWorldAccess;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import edu.usc.thevillagers.serversideagent.request.RequestManager;
 import net.minecraft.world.DimensionType;
 import net.minecraftforge.common.DimensionManager;
@@ -62,7 +62,7 @@ public class ServerSideAgentMod {
     	event.registerServerCommand(new CommandRecord());
     	event.registerServerCommand(new CommandCompile(envManager));
     	
-    	DimensionManager.registerDimension(ReplayWorldAccess.DUMMY_DIMENSION, DimensionType.OVERWORLD);
+    	DimensionManager.registerDimension(WorldRecordReplayer.DUMMY_DIMENSION, DimensionType.OVERWORLD);
     }
     
     @EventHandler
