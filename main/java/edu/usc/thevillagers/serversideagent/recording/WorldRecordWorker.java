@@ -10,13 +10,14 @@ import java.util.concurrent.Executors;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 /**
  * A worker that can interact with a record. Can be extended to record or replay.
  */
 public class WorldRecordWorker {
 
-	protected int snapshotLenght = 1 * 60 * 20;
+	protected int snapshotLength = 1 * 60 * 20;
 	public BlockPos from;
 	public BlockPos to;
 	public File saveFolder;
@@ -27,6 +28,8 @@ public class WorldRecordWorker {
 	
 	public Map<Integer, NBTTagCompound> entitiesData;
 	public Map<BlockPos, NBTTagCompound> tileEntitiesData;
+	
+	public World world;
 	
 	protected ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
 	
@@ -43,7 +46,7 @@ public class WorldRecordWorker {
 		NBTTagCompound comp = new NBTTagCompound();
 		comp.setTag("From", NBTUtil.createPosTag(from));
 		comp.setTag("To"  , NBTUtil.createPosTag(to  ));
-		comp.setInteger("SnapshotLenght", snapshotLenght);
+		comp.setInteger("SnapshotLenght", snapshotLength);
 		comp.setInteger("Duration", duration);
 		NBTFileInterface.writeToFile(comp, infoFile);
 	}
@@ -53,16 +56,16 @@ public class WorldRecordWorker {
 		NBTTagCompound comp = NBTFileInterface.readFromFile(infoFile);
 		from = NBTUtil.getPosFromTag(comp.getCompoundTag("From"));
 		to   = NBTUtil.getPosFromTag(comp.getCompoundTag("To"  ));
-		snapshotLenght = comp.getInteger("SnapshotLenght");
+		snapshotLength = comp.getInteger("SnapshotLenght");
 		duration = comp.getInteger("Duration");
 	}
 	
 	protected ChangeSet changeSet(int tick) {
-		return new ChangeSet(new File(saveFolder, tick / snapshotLenght + ".changeset"));
+		return new ChangeSet(new File(saveFolder, tick / snapshotLength + ".changeset"));
 	}
 
 	protected Snapshot snapshot(int tick) {
-		return new Snapshot(new File(saveFolder, tick / snapshotLenght + ".snapshot"));
+		return new Snapshot(new File(saveFolder, tick / snapshotLength + ".snapshot"));
 	}
 
 	public static NBTTagCompound computeDifferentialCompound(NBTTagCompound oldComp, NBTTagCompound newComp) {

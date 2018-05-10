@@ -19,7 +19,7 @@ public class RecordEventEntityDie extends RecordEvent {
 
 	@Override
 	public void replay(WorldRecordReplayer wr) {
-		wr.world.killEntity(id);
+		wr.killEntity(id);
 		wr.entitiesData.remove(id);
 	}
 

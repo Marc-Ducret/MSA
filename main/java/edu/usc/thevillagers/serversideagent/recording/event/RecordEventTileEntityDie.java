@@ -20,7 +20,7 @@ public class RecordEventTileEntityDie extends RecordEvent {
 
 	@Override
 	public void replay(WorldRecordReplayer wr) {
-		wr.world.killTileEntity(pos);
+		wr.killTileEntity(pos);
 		wr.tileEntitiesData.remove(pos);
 	}
 

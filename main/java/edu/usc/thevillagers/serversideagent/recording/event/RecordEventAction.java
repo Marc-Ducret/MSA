@@ -21,7 +21,7 @@ public class RecordEventAction extends RecordEvent {
 
 	@Override
 	public void replay(WorldRecordReplayer wr) {
-		EntityPlayer actor = (EntityPlayer) wr.world.getEntity(action.actorId);
+		EntityPlayer actor = (EntityPlayer) wr.getEntity(action.actorId);
 		if(action.actionPhase != HighLevelAction.Phase.STOP)
 			actor.swingArm(action.hand);
 	}

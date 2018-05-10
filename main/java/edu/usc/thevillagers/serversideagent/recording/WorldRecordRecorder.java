@@ -33,7 +33,6 @@ import net.minecraft.world.World;
  */
 public class WorldRecordRecorder extends WorldRecordWorker {
 	
-	public World world;
 	private List<RecordEvent> currentTickEvents;
 	
 	public WorldRecordRecorder(World world, BlockPos from, BlockPos to) {
@@ -77,7 +76,7 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 	}
 	
 	public void startRecordTick() throws IOException {
-		if(currentTick % snapshotLenght == 0) newSnapshot();
+		if(currentTick % snapshotLength == 0) newSnapshot();
 		currentTickEvents = new ArrayList<>();
 	}
 	

@@ -29,12 +29,12 @@ public class RecordEventEntitySpawn extends RecordEvent {
 	public void replay(WorldRecordReplayer wr) {
 		Entity e;
 		if(type < 0) 
-			e = ServerSideAgentMod.proxy.createReplayEntityPlayer(wr.world.fakeWorld, 
+			e = ServerSideAgentMod.proxy.createReplayEntityPlayer(wr.world, 
 					new GameProfile(data.getUniqueId("ProfileUUID"), data.getString("ProfileName")));
 		else
-			e = GameData.getEntityRegistry().getValue(type).newInstance(wr.world.fakeWorld);
+			e = GameData.getEntityRegistry().getValue(type).newInstance(wr.world);
 		e.setEntityId(id);
-		wr.world.spawnEntity(e);
+		wr.spawnEntity(e);
 		wr.entitiesData.put(id, data);
 	}
 

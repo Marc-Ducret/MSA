@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import edu.usc.thevillagers.serversideagent.command.CommandCompile;
 import edu.usc.thevillagers.serversideagent.command.CommandEnvironment;
@@ -68,5 +69,24 @@ public class ServerSideAgentMod {
     public void serverClosing(FMLServerStoppingEvent event) throws IOException {
     	envManager.clearEnvs();
     	reqManager.stopRequestServer();
+    }
+    
+    public static <T> T getPrivateField(Class<?> clazz, String fieldName, Object obj) {
+		try {
+			Field f = clazz.getDeclaredField(fieldName);
+			f.setAccessible(true);
+			return (T) f.get(obj);
+		} catch (Exception e) {
+			return null;
+		}
+    }
+    
+    public static <T> void setPrivateField(Class<?> clazz, String fieldName, Object obj, T value) {
+		try {
+			Field f = clazz.getDeclaredField(fieldName);
+			f.setAccessible(true);
+			f.set(obj, value);
+		} catch (Exception e) {
+		}
     }
 }
