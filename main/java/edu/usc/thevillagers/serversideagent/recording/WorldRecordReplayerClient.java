@@ -7,8 +7,11 @@ import java.util.concurrent.ExecutionException;
 
 import com.mojang.authlib.GameProfile;
 
+import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
@@ -23,6 +26,7 @@ import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -74,6 +78,11 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {
 		super.seek(tick);
 		Minecraft.getMinecraft().renderGlobal.setWorldAndLoadRenderers(world);
+	}
+	
+	@Override
+	public Long2ObjectMap<Chunk> getChunkMapping() {
+		return ServerSideAgentMod.getPrivateField(ChunkProviderClient.class, "chunkMapping", world.getChunkProvider());
 	}
 	
 	@Override

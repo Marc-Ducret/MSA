@@ -11,7 +11,6 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntit
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.entity.EntityList;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTBase;
@@ -72,12 +71,9 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 	public void applyDataToWorld(WorldRecordReplayer wr) {
 		BlockPos diff = wr.to.subtract(wr.from).add(1, 1, 1);
 		try {
-			ChunkProviderClient chunkProvider = (ChunkProviderClient) wr.world.getChunkProvider();
-			Field chunkMappingField = ChunkProviderClient.class.getDeclaredField("chunkMapping");
-			chunkMappingField.setAccessible(true);
 			Field storageField = Chunk.class.getDeclaredField("storageArrays");
 			storageField.setAccessible(true);
-			Long2ObjectMap<Chunk> chunkMapping = (Long2ObjectMap<Chunk>) chunkMappingField.get(chunkProvider);
+			Long2ObjectMap<Chunk> chunkMapping = wr.getChunkMapping();
 			int margin = 1;
 			for(int chunkZ = (wr.from.getZ() >> 4) - margin; chunkZ <= (wr.to.getZ() >> 4) + margin; chunkZ++)
 				for(int chunkX = (wr.from.getX() >> 4) - margin; chunkX <= (wr.to.getX() >> 4) + margin; chunkX++) {
@@ -104,7 +100,7 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 							}
 						}
 					}
-					c.markLoaded(true);
+					c.onLoad();
 					c.generateSkylightMap();
 				}
 			wr.world.markBlockRangeForRenderUpdate(wr.from, wr.to);

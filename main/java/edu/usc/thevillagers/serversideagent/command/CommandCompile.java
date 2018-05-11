@@ -74,7 +74,7 @@ public class CommandCompile extends CommandBase {
 		env.readPars(new float[]{});
 		env.init((WorldServer) replay.world);
 		List<Human> humans = new ArrayList<>();
-		for(Entity e : replay.world.getLoadedEntityList()) {
+		for(Entity e : replay.world.loadedEntityList) {
 			if(e instanceof EntityPlayerMP)
 				humans.add(new Human(env, (EntityPlayerMP) e));
 		}
