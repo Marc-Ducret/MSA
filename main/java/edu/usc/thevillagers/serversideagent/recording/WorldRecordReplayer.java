@@ -7,11 +7,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
+import net.minecraft.block.BlockDirectional;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityPiston;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
@@ -138,6 +141,11 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	}
 
 	public void spawnTileEntity(TileEntity tileEntity) {
+		if(tileEntity instanceof TileEntityPiston) {
+			TileEntityPiston piston = (TileEntityPiston) tileEntity;
+			world.setBlockState(piston.getPos(), 
+					Blocks.PISTON_EXTENSION.getDefaultState().withProperty(BlockDirectional.FACING, piston.getFacing()), 4);
+		}
 		world.setTileEntity(tileEntity.getPos(), tileEntity);
 	}
 
@@ -148,8 +156,10 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	public void updateTileEntity(BlockPos pos, NBTTagCompound data) {
 		TileEntity tileEntity = world.getTileEntity(pos);
 		if(tileEntity == null) {
-			System.out.println("Missing tile entity at "+pos);
-			return;
+			tileEntity = TileEntity.create(world, data);
+			tileEntity.setWorld(world);
+			tileEntity.setPos(pos);
+			spawnTileEntity(tileEntity);
 		}
 		tileEntity.readFromNBT(data);
 	}

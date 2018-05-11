@@ -25,7 +25,7 @@ public class RecordEventTileEntityUpdate extends RecordEvent {
 	@Override
 	public void replay(WorldRecordReplayer wr) {
 		if(wr.tileEntitiesData.containsKey(pos)) WorldRecordRecorder.updateCompound(wr.tileEntitiesData.get(pos), data);
-		else System.out.println("Missing tile entity at: "+pos);
+		else System.err.println("Missing tile entity at: "+pos);
 	}
 
 	@Override

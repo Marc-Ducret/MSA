@@ -24,7 +24,7 @@ public class RecordEventEntityUpdate extends RecordEvent {
 	@Override
 	public void replay(WorldRecordReplayer wr) {
 		if(wr.entitiesData.containsKey(id)) WorldRecordRecorder.updateCompound(wr.entitiesData.get(id), data);
-		else System.out.println("Missing entity with id: "+id);
+		else System.err.println("Missing entity with id: "+id);
 	}
 
 	@Override
