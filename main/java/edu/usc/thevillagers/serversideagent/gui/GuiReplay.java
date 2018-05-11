@@ -60,7 +60,6 @@ public class GuiReplay extends GuiScreen {
 				Vec3d pos = new Vec3d(record.from.add(record.to)).scale(.5);
 				record.player.setPosition(pos.x, pos.y, pos.z);
 				
-				mc.renderGlobal.setWorldAndLoadRenderers((WorldClient) record.world);
 				ChunkRenderDispatcher dispatcher =
 						ServerSideAgentMod.<ChunkRenderDispatcher>getPrivateField(RenderGlobal.class, "renderDispatcher", mc.renderGlobal);
 				Method processTask = ChunkRenderWorker.class.getDeclaredMethod("processTask", ChunkCompileTaskGenerator.class);
@@ -96,7 +95,6 @@ public class GuiReplay extends GuiScreen {
 					try {
 						followedEntity = null;
 						record.seek((int) Math.round(getValue() * 20));
-						mc.renderGlobal.setWorldAndLoadRenderers((WorldClient) record.world);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -236,7 +234,7 @@ public class GuiReplay extends GuiScreen {
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		drawDefaultBackground();
 		
-		mc.world = (WorldClient) record.world;
+		mc.world = record.world;
 		mc.player = record.player;
 		mc.playerController = record.playerController;
 		mc.setRenderViewEntity(followedEntity != null ? followedEntity : record.player);

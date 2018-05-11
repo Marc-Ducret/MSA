@@ -70,18 +70,10 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 		return world;
 	}
 	
-//	@Override
-//	protected ReplayWorldAccess createWorld() {
-//		return world = new ReplayWorldAccessClient(from, to);
-//	}
-
 	@Override
 	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {
 		super.seek(tick);
-//		for(int chunkZ = from.getZ() >> 4; chunkZ <= to.getZ() >> 4; chunkZ++)
-//			for(int chunkY = from.getY() >> 4; chunkY <= to.getY() >> 4; chunkY++)
-//				for(int chunkX = from.getX() >> 4; chunkX <= to.getX() >> 4; chunkX++)
-//					world.chunkBufferManager.requestUpdate(chunkX, chunkY, chunkZ);
+		Minecraft.getMinecraft().renderGlobal.setWorldAndLoadRenderers(world);
 	}
 	
 	@Override
