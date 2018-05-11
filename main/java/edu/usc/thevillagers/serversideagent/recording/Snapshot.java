@@ -78,8 +78,9 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 			Field storageField = Chunk.class.getDeclaredField("storageArrays");
 			storageField.setAccessible(true);
 			Long2ObjectMap<Chunk> chunkMapping = (Long2ObjectMap<Chunk>) chunkMappingField.get(chunkProvider);
-			for(int chunkZ = wr.from.getZ() >> 4; chunkZ <= wr.to.getZ() >> 4; chunkZ++)
-				for(int chunkX = wr.from.getX() >> 4; chunkX <= wr.to.getX() >> 4; chunkX++) {
+			int margin = 1;
+			for(int chunkZ = (wr.from.getZ() >> 4) - margin; chunkZ <= (wr.to.getZ() >> 4) + margin; chunkZ++)
+				for(int chunkX = (wr.from.getX() >> 4) - margin; chunkX <= (wr.to.getX() >> 4) + margin; chunkX++) {
 					long chunkPos = ChunkPos.asLong(chunkX, chunkZ);
 					Chunk c;
 					if(!chunkMapping.containsKey(chunkPos)) {

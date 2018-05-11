@@ -4,7 +4,10 @@ import java.util.Map;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import net.minecraft.launchwrapper.IClassTransformer;
@@ -33,7 +36,9 @@ public class DisableChunkThreading implements IClassTransformer, IFMLLoadingPlug
 					}
 				}
 				if(needUpdate == null || needImediateUpdate == null) throw new Exception("Cannot find method");
-				needImediateUpdate.instructions = needUpdate.instructions;
+				needImediateUpdate.instructions = new InsnList();
+				needImediateUpdate.instructions.add(new InsnNode(Opcodes.ICONST_1));
+				needImediateUpdate.instructions.add(new InsnNode(Opcodes.IRETURN));
 				ClassWriter cWriter = new ClassWriter(0);
 				cNode.accept(cWriter);
 				return cWriter.toByteArray();

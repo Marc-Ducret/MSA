@@ -17,6 +17,7 @@ import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.stats.RecipeBook;
 import net.minecraft.stats.StatisticsManager;
+import net.minecraft.util.MovementInput;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
@@ -52,7 +53,15 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 				return this.entitiesById.lookup(id);
 			}
 		};
-		player = new EntityPlayerSP(mc, world, nethandler, new StatisticsManager(), new RecipeBook());
+		player = new EntityPlayerSP(mc, world, nethandler, new StatisticsManager(), new RecipeBook()) {
+			 
+			@Override
+			public float getCooledAttackStrength(float adjustTicks) {
+				return 1F;
+			}
+		};
+		player.setGameType(GameType.SPECTATOR);
+		player.movementInput = new MovementInput();
 		playerController = new PlayerControllerMP(mc, nethandler);
 		return world;
 	}

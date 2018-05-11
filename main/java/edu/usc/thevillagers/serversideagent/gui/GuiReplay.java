@@ -3,7 +3,7 @@ package edu.usc.thevillagers.serversideagent.gui;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.concurrent.ExecutionException;
+import java.util.List;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import org.lwjgl.input.Keyboard;
@@ -12,7 +12,6 @@ import org.lwjgl.opengl.GL11;
 
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayerClient;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -20,11 +19,17 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.chunk.ChunkRenderWorker;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.client.config.GuiSlider;
 
@@ -35,10 +40,6 @@ public class GuiReplay extends GuiScreen {
 	
 	private WorldRecordReplayerClient record;
 	private int speed;
-	
-	private Vec3d camPos = Vec3d.ZERO.addVector(0, 10, 0);
-	private float camYaw = 0;
-	private float camPitch = -90;
 	
 	private Entity followedEntity;
 	
@@ -57,12 +58,14 @@ public class GuiReplay extends GuiScreen {
 				record.readInfo();
 				
 				record.seek(0);
-				
-				camPos = new Vec3d(record.from.add(record.to)).scale(.5);
+				Vec3d pos = new Vec3d(record.from.add(record.to)).scale(.5);
+				record.player.setPosition(pos.x, pos.y, pos.z);
 				
 				mc.renderGlobal.setWorldAndLoadRenderers((WorldClient) record.world);
 				ChunkRenderDispatcher dispatcher =
 						ServerSideAgentMod.<ChunkRenderDispatcher>getPrivateField(RenderGlobal.class, "renderDispatcher", mc.renderGlobal);
+				Method processTask = ChunkRenderWorker.class.getDeclaredMethod("processTask", ChunkCompileTaskGenerator.class);
+				processTask.setAccessible(true);
 				ServerSideAgentMod.<PriorityBlockingQueue<ChunkCompileTaskGenerator>>setPrivateField(
 						ChunkRenderDispatcher.class, "queueChunkUpdates", dispatcher,
 						new PriorityBlockingQueue<ChunkCompileTaskGenerator>() {
@@ -70,7 +73,13 @@ public class GuiReplay extends GuiScreen {
 							
 							@Override
 							public boolean offer(ChunkCompileTaskGenerator e) {
-								return false;
+								try {
+									processTask.invoke(ServerSideAgentMod.getPrivateField(ChunkRenderDispatcher.class, "renderWorker", dispatcher), e);
+								} catch (Exception e1) {
+									e1.printStackTrace();
+									return false;
+								}
+								return true;
 							}
 						});
 			}
@@ -138,7 +147,7 @@ public class GuiReplay extends GuiScreen {
 		super.keyTyped(typedChar, keyCode);
 		if(keyCode == mc.gameSettings.keyBindInventory.getKeyCode()) {
 			if(followedEntity == null) {
-				Vec3d rayStart = record.player.getPositionVector();
+				Vec3d rayStart = record.player.getPositionEyes(1);
 				Vec3d rayEnd = rayStart.add(record.player.getLookVec().scale(5));
 				for(Entity e : record.world.getLoadedEntityList()) { //TODO use world ray trace ;)
 					if(e.getEntityBoundingBox() != null && e.getEntityBoundingBox().calculateIntercept(rayStart, rayEnd) != null)
@@ -160,59 +169,64 @@ public class GuiReplay extends GuiScreen {
 	public void updateScreen() {
 		super.updateScreen();
 		if(followedEntity != null) {
-			camPos = followedEntity.getPositionVector().addVector(0, followedEntity.getEyeHeight(), 0);
-			camPitch = -followedEntity.rotationPitch;
-			camYaw = followedEntity.rotationYaw + 180;
+			Vec3d pos = followedEntity.getPositionVector();
+			record.player.setPositionAndRotation(pos.x, pos.y, pos.z, followedEntity.rotationYaw, followedEntity.rotationPitch);
 		} else {
-			Vec3d move = Vec3d.ZERO;
-			if(Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode())) move = move.addVector(+0, +0, -1);
-			if(Keyboard.isKeyDown(mc.gameSettings.keyBindBack	.getKeyCode())) move = move.addVector(+0, +0, +1);
-			if(Keyboard.isKeyDown(mc.gameSettings.keyBindRight	.getKeyCode())) move = move.addVector(+1, +0, +0);
-			if(Keyboard.isKeyDown(mc.gameSettings.keyBindLeft	.getKeyCode())) move = move.addVector(-1, +0, +0);
-			if(Keyboard.isKeyDown(mc.gameSettings.keyBindJump	.getKeyCode())) move = move.addVector(+0, +1, +0);
-			if(Keyboard.isKeyDown(mc.gameSettings.keyBindSneak	.getKeyCode())) move = move.addVector(+0, -1, +0);
-			move = move.normalize();
-			
 			if(Mouse.isGrabbed()) {
-				camPos = camPos.add(move.rotateYaw((float)Math.toRadians(-camYaw)).scale(.5));
-				
-				camYaw += Mouse.getDX() * .2;
-				camPitch += Mouse.getDY() * .2;
+				Vec3d move = Vec3d.ZERO;
+				if(Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode())) move = move.addVector(+0, +0, -1);
+				if(Keyboard.isKeyDown(mc.gameSettings.keyBindBack	.getKeyCode())) move = move.addVector(+0, +0, +1);
+				if(Keyboard.isKeyDown(mc.gameSettings.keyBindRight	.getKeyCode())) move = move.addVector(+1, +0, +0);
+				if(Keyboard.isKeyDown(mc.gameSettings.keyBindLeft	.getKeyCode())) move = move.addVector(-1, +0, +0);
+				if(Keyboard.isKeyDown(mc.gameSettings.keyBindJump	.getKeyCode())) move = move.addVector(+0, +1, +0);
+				if(Keyboard.isKeyDown(mc.gameSettings.keyBindSneak	.getKeyCode())) move = move.addVector(+0, -1, +0);
+				move = move.normalize();
+				move = move.rotateYaw((float)Math.toRadians(180-record.player.rotationYaw)).scale(.8);
+				record.player.noClip = true;
+				record.player.move(MoverType.SELF, move.x, move.y, move.z);
+				record.player.turn(Mouse.getDX(), Mouse.getDY());
+				Mouse.setCursorPosition(mc.displayWidth / 2, mc.displayHeight / 2);
+			}
+		}
+		for(EnumHand hand : EnumHand.values()) {
+			ItemStack item = ItemStack.EMPTY;
+			record.player.setInvisible(true);
+			if(followedEntity != null && followedEntity instanceof EntityPlayer) {
+				record.player.setInvisible(false);
+				item = ((EntityPlayer)followedEntity).getHeldItem(hand);
+			}
+			if(!ItemStack.areItemsEqual(item, record.player.getHeldItem(hand))) {
+				record.player.setHeldItem(hand, item);
 			}
 		}
 		
-		EntityPlayerSP player = record.player;
-		player.prevRotationPitch 	= player.rotationPitch;
-		player.prevRotationYaw 		= player.rotationYaw;
-		player.lastTickPosX			= player.posX;
-		player.lastTickPosY 		= player.posY;
-		player.lastTickPosZ 		= player.posZ;
-		player.rotationYaw 			= 180+camYaw;
-		player.rotationPitch 		= -camPitch;
-		player.posX					= camPos.x;
-		player.posY 				= camPos.y;
-		player.posZ					= camPos.z;
-		player.turn(0, 0); //TODO useful?
-		
 		try {
+			Method method = EntityLivingBase.class.getDeclaredMethod("updateEntityActionState");
+			method.setAccessible(true);
 			for(int i = 0; i < speed; i ++) {
 				record.endReplayTick();
 				for(Entity e : record.world.getLoadedEntityList()) {
 					if(e instanceof EntityPlayer) {
 						EntityPlayer p = (EntityPlayer) e;
-						try {
-							Method method = EntityLivingBase.class.getDeclaredMethod("updateArmSwingProgress");
-							method.setAccessible(true);
-							method.invoke(p);
-						} catch(Exception ex) {
-							ex.printStackTrace();
-						}
+						method.invoke(p);
+					}
+				}
+				if(followedEntity != null) {
+					mc.setRenderViewEntity(record.player);
+					record.player.updateEntityActionState();
+					if(followedEntity instanceof EntityLivingBase) {
+						EntityLivingBase e = (EntityLivingBase)followedEntity;
+						record.player.swingProgress = e.swingProgress;
+						record.player.swingingHand = e.swingingHand;
+						record.player.swingProgressInt = e.swingProgressInt;
+						record.player.isSwingInProgress = e.isSwingInProgress;
 					}
 				}
 			}
+			record.world.updateEntityWithOptionalForce(record.player, false);
 			seekSlider.setValue(record.currentTick / 20F);
 			seekSlider.updateSlider();
-		} catch (InterruptedException | ExecutionException e) {
+		} catch (Exception e) {
 			throw new RuntimeException("Replay tick failure", e);
 		}
 		
@@ -226,7 +240,15 @@ public class GuiReplay extends GuiScreen {
 		mc.world = (WorldClient) record.world;
 		mc.player = record.player;
 		mc.playerController = record.playerController;
-		mc.setRenderViewEntity(mc.player);
+		mc.setRenderViewEntity(followedEntity != null ? followedEntity : record.player);
+		record.world.tick();
+		List<Object> renderInfos =
+				ServerSideAgentMod.getPrivateField(RenderGlobal.class, "renderInfos", mc.renderGlobal);
+		for(Object obj : renderInfos) {
+			RenderChunk renderChunk = ServerSideAgentMod.getPrivateField(obj.getClass(), "renderChunk", obj);
+			if(renderChunk.compiledChunk == CompiledChunk.DUMMY)
+				renderChunk.setNeedsUpdate(true);
+		}
 		
 		try {
 			GlStateManager.matrixMode(GL11.GL_PROJECTION);
@@ -235,10 +257,8 @@ public class GuiReplay extends GuiScreen {
 			GlStateManager.matrixMode(GL11.GL_MODELVIEW);
 			GlStateManager.pushMatrix();
 			GlStateManager.loadIdentity();
-			mc.entityRenderer.renderWorld(1, System.nanoTime() + 100000); //TODO interpolation?
-//			setupCamera(partialTicks);
-//	        renderBlocks(world);
-//	        renderEntities(world);
+			mc.entityRenderer.updateRenderer();
+			mc.entityRenderer.renderWorld(1, System.nanoTime() + 0); //TODO interpolation?
 	        GlStateManager.matrixMode(GL11.GL_PROJECTION);
 			GlStateManager.popMatrix();
 			GlStateManager.matrixMode(GL11.GL_MODELVIEW);
@@ -252,6 +272,9 @@ public class GuiReplay extends GuiScreen {
 		if(followedEntity != null) {
 			drawCenteredString(mc.fontRenderer, followedEntity.getName(), width / 2, 2, 0xFFFFFF);
 		}
+		drawString(fontRenderer, ""+record.player.getPosition()+
+				" | "+record.player.chunkCoordX+", "+record.player.chunkCoordY+" "+record.player.chunkCoordZ, 2, 2, 0xFFFFFF);
+		drawString(fontRenderer, record.from+" | "+record.to, 2, 15, 0xFFFFFF);
         itemRender.renderItemAndEffectIntoGUI(new ItemStack(Items.CLOCK), width-18, height-18);
 		mc.world = null;
 		mc.player = null;

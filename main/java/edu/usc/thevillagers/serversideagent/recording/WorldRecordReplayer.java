@@ -74,6 +74,8 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		for(Entry<BlockPos, NBTTagCompound> entry : tileEntitiesData.entrySet())
 			updateTileEntity(entry.getKey(), entry.getValue());
 		currentTick++;
+		for(Entity e : world.getLoadedEntityList())
+			world.updateEntityWithOptionalForce(e, false);
 //		world.fakeWorld.setTotalWorldTime(worldTimeOffset + currentTick); TODO that's client side only...
 		world.setWorldTime((worldTimeOffset + currentTick) % 24000);
 	}
@@ -116,7 +118,7 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 			System.out.println("Missing entity "+id);
 			return;
 		}
-		world.removeEntity(e);
+		world.removeEntityDangerously(e);
 	}
 
 	public void updateEntity(int id, NBTTagCompound data) {
