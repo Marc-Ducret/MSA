@@ -240,7 +240,6 @@ public class GuiReplay extends GuiScreen {
 		mc.player = record.player;
 		mc.playerController = record.playerController;
 		mc.setRenderViewEntity(followedEntity != null ? followedEntity : record.player);
-		record.world.tick();
 		List<Object> renderInfos =
 				ServerSideAgentMod.getPrivateField(RenderGlobal.class, "renderInfos", mc.renderGlobal);
 		for(Object obj : renderInfos) {
@@ -274,6 +273,7 @@ public class GuiReplay extends GuiScreen {
 		drawString(fontRenderer, ""+record.player.getPosition()+
 				" | "+record.player.chunkCoordX+", "+record.player.chunkCoordY+" "+record.player.chunkCoordZ, 2, 2, 0xFFFFFF);
 		drawString(fontRenderer, record.from+" | "+record.to, 2, 15, 0xFFFFFF);
+		drawString(fontRenderer, record.world.getDebugLoadedEntities(), 2, 28, 0xFFFFFF);
         itemRender.renderItemAndEffectIntoGUI(new ItemStack(Items.CLOCK), width-18, height-18);
 		mc.world = null;
 		mc.player = null;

@@ -53,16 +53,20 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 				return this.entitiesById.lookup(id);
 			}
 		};
-		player = new EntityPlayerSP(mc, world, nethandler, new StatisticsManager(), new RecipeBook()) {
-			 
-			@Override
-			public float getCooledAttackStrength(float adjustTicks) {
-				return 1F;
-			}
-		};
-		player.setGameType(GameType.SPECTATOR);
-		player.movementInput = new MovementInput();
-		playerController = new PlayerControllerMP(mc, nethandler);
+		if(player != null) {
+			player.setWorld(world);
+		} else {
+			player = new EntityPlayerSP(mc, world, nethandler, new StatisticsManager(), new RecipeBook()) {
+				
+				@Override
+				public float getCooledAttackStrength(float adjustTicks) {
+					return 1F;
+				}
+			};
+			player.setGameType(GameType.SPECTATOR);
+			player.movementInput = new MovementInput();
+			playerController = new PlayerControllerMP(mc, nethandler);
+		}
 		return world;
 	}
 	
@@ -82,6 +86,13 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 	
 	@Override
 	public void spawnEntity(Entity e) {
+		e.forceSpawn = true;
 		world.addEntityToWorld(e.getEntityId(), e);
+	}
+	
+	@Override
+	public void killEntity(int id) {
+		super.killEntity(id);
+		world.removeEntityFromWorld(id);
 	}
 }

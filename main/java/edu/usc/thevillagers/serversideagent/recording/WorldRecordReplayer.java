@@ -44,7 +44,6 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	@Override
 	public void readInfo() throws IOException {
 		super.readInfo();
-		world = createWorld();
 	}
 	
 	protected World createWorld() {
@@ -84,6 +83,7 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	}
 	
 	public void seek(int tick) throws IOException, InterruptedException, ExecutionException {
+		reset();
 		long start = System.currentTimeMillis();
 		
 		if(tick >= duration) tick = duration - 1;
@@ -164,9 +164,9 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		tileEntity.readFromNBT(data);
 	}
 
-	public void reset() { //TODO do
-//		Arrays.fill(blockBuffer, Blocks.AIR.getDefaultState());
-//		entities.clear();
-//		tileEntities.clear();
+	public void reset() {
+		world = createWorld();
+		entitiesData.clear();
+		tileEntitiesData.clear();
 	}
 }
