@@ -15,4 +15,10 @@ public class ActuatorJump extends Actuator {
 	public void act(Actor actor) {
 		actor.actionState.jump = values[0] > .5F;
 	}
+
+	@Override
+	public Reverser reverser(Actor actor) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

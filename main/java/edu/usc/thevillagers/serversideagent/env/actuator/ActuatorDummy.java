@@ -14,4 +14,25 @@ public class ActuatorDummy extends Actuator {
 	@Override
 	public void act(Actor actor) {
 	}
+
+	@Override
+	public Reverser reverser(Actor actor) {
+		return new Reverser(actor) {
+			
+			@Override
+			public void tick() {
+			}
+			
+			@Override
+			public void startStep() {
+			}
+			
+			@Override
+			public float[] endStep() {
+				for(int i = 0; i < dim; i++)
+					values[i] = 0;
+				return values;
+			}
+		};
+	}
 }

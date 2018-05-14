@@ -16,4 +16,20 @@ public abstract class Actuator {
 	}
 	
 	public abstract void act(Actor actor);
+	public abstract Reverser reverser(Actor actor);
+	
+	public abstract class Reverser {
+		
+		public final Actor actor;
+		public final float[] values;
+		
+		public Reverser(Actor actor) {
+			this.actor = actor;
+			this.values = new float[dim];
+		}
+		
+		public abstract void startStep();
+		public abstract void tick();
+		public abstract float[] endStep();
+	}
 }

@@ -7,9 +7,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import edu.ucar.ral.nujan.hdf.HdfException;
+import edu.ucar.ral.nujan.hdf.HdfFileWriter;
+import edu.ucar.ral.nujan.hdf.HdfGroup;
 import edu.usc.thevillagers.serversideagent.agent.Human;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
+import edu.usc.thevillagers.serversideagent.env.actuator.Actuator;
+import edu.usc.thevillagers.serversideagent.env.actuator.Actuator.Reverser;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -18,6 +22,7 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -54,9 +59,21 @@ public class CommandCompile extends CommandBase {
 				record = file;
 			}
 		}
+		final WorldRecordReplayer replayer = new WorldRecordReplayer(record);
 		try {
 			Class<?> envClass = envManager.findEnvClass(args[1]);
-			compile(new WorldRecordReplayer(record), (Environment) envClass.newInstance());
+			new Thread(() -> {
+				try {
+					compile(replayer, (Environment) envClass.newInstance());
+					server.addScheduledTask(() -> {
+						sender.sendMessage(new TextComponentString("Compile success!"));
+					});
+				} catch (Exception e) {
+					server.addScheduledTask(() -> {
+						sender.sendMessage(new TextComponentString("An error occured: "+e.toString()));
+					});
+				}
+			}).start();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new CommandException("An error occured: "+e.toString());
@@ -74,29 +91,53 @@ public class CommandCompile extends CommandBase {
 		env.readPars(new float[]{});
 		env.init((WorldServer) replay.world);
 		List<Human> humans = new ArrayList<>();
+		List<List<Actuator.Reverser>> reversers = new ArrayList<>();
 		for(Entity e : replay.world.loadedEntityList) {
-			if(e instanceof EntityPlayerMP)
-				humans.add(new Human(env, (EntityPlayerMP) e));
-		}
-		while(replay.currentTick < replay.duration) {
-			for(Human h : humans) {
-				env.encodeObservation(h, h.observationVector);
+			if(e instanceof EntityPlayerMP) {
+				Human h = new Human(env, (EntityPlayerMP) e);
+				humans.add(h);
+				List<Actuator.Reverser> hReversers = new ArrayList<>();
+				for(Actuator actuator : env.actuators)
+					hReversers.add(actuator.reverser(h));
+				reversers.add(hReversers);
 			}
-			System.out.println("TICK: " + replay.currentTick);
-			for(Human h : humans) {
-				System.out.println(h.entity);
-				for(float f : h.observationVector) System.out.print(f+" ");
-				System.out.println();
+		}
+		int samples = replay.duration;
+		int[] obsDim = {samples, humans.size(), env.observationDim};
+		int[] actDim = {samples, humans.size(), env.actionDim};
+		float[] obsBuffer = new float[obsDim[0] * obsDim[1] * obsDim[2]];
+		float[] actBuffer = new float[actDim[0] * actDim[1] * actDim[2]]; //TODO use java.nio?
+		while(replay.currentTick < replay.duration) {
+			for(int h = 0; h < humans.size(); h ++) {
+				Human human = humans.get(h);
+				env.encodeObservation(human, human.observationVector);
+				int offset = ((replay.currentTick * obsDim[1]) + h) * obsDim[2];
+				for(int i = 0; i < env.observationDim; i ++) {
+					obsBuffer[offset + i] = human.observationVector[i];
+				}
+				for(Reverser reverser : reversers.get(h)) {
+					reverser.startStep();
+				}
 			}
 			replay.endReplayTick();
+			int offset = (replay.currentTick-1) * actDim[1] * actDim[2];
+			for(int h = 0; h < humans.size(); h ++) {
+				for(Reverser reverser : reversers.get(h)) {
+					reverser.tick();
+					for(float v : reverser.endStep())
+						actBuffer[offset++] = v;
+				}
+			}
 		}
-//		File file = new File("tmp/imitation/dataset.h5");
-//		file.getParentFile().mkdirs();
-//		HdfFileWriter writer = new HdfFileWriter(file.getAbsolutePath(), HdfFileWriter.OPT_ALLOW_OVERWRITE);
-//		int[] dim = {10};
-//		HdfGroup var = writer.getRootGroup().addVariable("var", HdfGroup.DTYPE_FIXED32, 0, dim, dim, 0, 0);
-//		writer.endDefine();
-//		var.writeData(new int[] {0}, new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, true);
-//		writer.close();
+		File file = new File("tmp/imitation/dataset.h5");
+		file.getParentFile().mkdirs();
+		HdfFileWriter writer = new HdfFileWriter(file.getAbsolutePath(), HdfFileWriter.OPT_ALLOW_OVERWRITE);
+		
+		HdfGroup obsVar = writer.getRootGroup().addVariable("obsVar", HdfGroup.DTYPE_FLOAT32, 0, obsDim, obsDim, 0F, 0);
+		HdfGroup actVar = writer.getRootGroup().addVariable("actVar", HdfGroup.DTYPE_FLOAT32, 0, actDim, actDim, 0F, 0);
+		writer.endDefine();
+		obsVar.writeData(new int[] {0, 0, 0}, obsBuffer, true);
+		actVar.writeData(new int[] {0, 0, 0}, actBuffer, true);
+		writer.close();
 	}
 }
