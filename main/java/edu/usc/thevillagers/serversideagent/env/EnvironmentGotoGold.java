@@ -2,13 +2,17 @@ package edu.usc.thevillagers.serversideagent.env;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
+import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorLook;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
-import edu.usc.thevillagers.serversideagent.env.sensor.SensorBlocks;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorRaytrace;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 public class EnvironmentGotoGold extends Environment {
 	
@@ -16,24 +20,38 @@ public class EnvironmentGotoGold extends Environment {
 	
 	@Override
 	public void readPars(float[] pars) {
-		size = getRoundPar(pars, 0, 5);
+		size = getRoundPar(pars, 0, 2);
 		allocator = new AllocatorEmptySpace(new BlockPos(-size, -1, -size), new BlockPos(size, 2, size));
 	}
 	
 	@Override
 	protected void buildSensors() {
-		sensors.add(new SensorBlocks(new BlockPos(-size, -1, -size), new BlockPos(size, -1, size), (state) -> {
-			if(state.getBlock() == Blocks.STAINED_GLASS) {
-				return state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F;
-			} else {
-				return -1F;
+//		sensors.add(new SensorBlocks(new BlockPos(-size, -1, -size), new BlockPos(size, -1, size), (state) -> {
+//			if(state.getBlock() == Blocks.STAINED_GLASS) {
+//				return state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F;
+//			} else {
+//				return -1F;
+//			}
+//		}));
+		sensors.add(new SensorRaytrace(10, 5, 70, 2) {
+			
+			@Override
+			protected float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res) {
+				if(res == null) return -1;
+				IBlockState state = world.getBlockState(res.getBlockPos());
+				if(state.getBlock() == Blocks.STAINED_GLASS) {
+					return state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F;
+				} else {
+					return -1F;
+				}
 			}
-		}));
+		});
 	}
 	
 	@Override
 	protected void buildActuators() {
 		actuators.add(new ActuatorForwardStrafe());
+		actuators.add(new ActuatorLook());
 	}
 	
 	@Override
