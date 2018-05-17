@@ -11,7 +11,9 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
+import edu.usc.thevillagers.serversideagent.env.sensor.SensorRaytrace;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayerClient;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -28,7 +30,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.client.config.GuiSlider;
 
 /**
@@ -259,6 +263,8 @@ public class GuiReplay extends GuiScreen {
 			GlStateManager.matrixMode(GL11.GL_MODELVIEW);
 			GlStateManager.popMatrix();
 			GlStateManager.disableDepth();
+			
+			if(Keyboard.isKeyDown(Keyboard.KEY_V)) drawDebugVision();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -275,6 +281,44 @@ public class GuiReplay extends GuiScreen {
 		mc.world = null;
 		mc.player = null;
 		mc.playerController = null;
+	}
+	
+	private void drawDebugVision() {
+		int res = 24;
+		float fov = 70;
+		float ratio = (float) width / height;
+		SensorRaytrace depthSensor = new SensorRaytrace(res, (int) (res / ratio), fov, ratio) {
+			
+			@Override
+			protected float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res) {
+				if(res == null)
+					return 0;
+				IBlockState state = world.getBlockState(res.getBlockPos());
+				float brightness = 1 - (float) (res.hitVec.distanceTo(from) / dist);
+				int color = state.getMapColor(world, res.getBlockPos()).colorValue;
+				int r = (int) (brightness * ((color >>  0) & 0xFF));
+				int g = (int) (brightness * ((color >>  8) & 0xFF));
+				int b = (int) (brightness * ((color >> 16) & 0xFF));
+				return (b << 16) | (g << 8) | (r << 0);
+			}
+		};
+//	long timeStart = System.currentTimeMillis();
+		depthSensor.sense(record.world, record.player.getPositionEyes(1), record.player.rotationYaw, record.player.rotationPitch);
+//	long elapsed = System.currentTimeMillis() - timeStart;
+//	System.out.println(elapsed+" ms for "+depthSensor.dim+" raytrace ("+(elapsed * 1000 / depthSensor.dim)+" us per ray)");
+//	System.out.println("max dist is: "+(depthSensor.d*depthSensor.hRes));
+		float rW = width / (float) depthSensor.hRes;
+		float rH = height / (float) depthSensor.vRes;
+		for(int v = 0; v < depthSensor.vRes; v++) {
+			for(int h = 0; h < depthSensor.hRes; h++) {
+				float val = depthSensor.values[v * depthSensor.hRes + h];
+				int d = (int) (val * 0xFF);
+				int color = (d << 16) | (d << 8) | d;
+				color = (int) val;
+				color |= 0xFF000000;
+				drawRect((int) (h * rW), (int) (v * rH), (int) ((h+1) * rW), (int) ((v+1) * rH), color);
+			}
+		}
 	}
 	
 	@Override
