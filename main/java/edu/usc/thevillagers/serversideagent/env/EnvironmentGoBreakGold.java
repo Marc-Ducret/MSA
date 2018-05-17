@@ -28,7 +28,7 @@ public class EnvironmentGoBreakGold extends Environment {
 	
 	@Override
 	protected void buildSensors() {
-		sensors.add(new SensorRaytrace(12, 6, 70, 2) {
+		sensors.add(new SensorRaytrace(24, 12, 70, 2) {
 			
 			@Override
 			protected float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res) {
@@ -70,6 +70,10 @@ public class EnvironmentGoBreakGold extends Environment {
 		goldBlock = ref.add(x, 0, z);
 		world.setBlockState(goldBlock, 
 				Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.YELLOW));
+		applyToActiveActors((actor) -> {
+			actor.entity.rotationPitch = -80 + world.rand.nextFloat() * 160;
+			actor.entity.rotationYaw = -180 + world.rand.nextFloat() * 360;
+		});
 	}
 
 	@Override

@@ -129,7 +129,7 @@ public class CommandCompile extends CommandBase {
 						actBuffer[offset++] = v;
 				}
 			}
-			if(System.currentTimeMillis() - lastReport > 1000 * 30)  {
+			if(System.currentTimeMillis() - lastReport > 1000 * 10)  {
 				lastReport = System.currentTimeMillis();
 				System.out.printf("compile: %.1f\n", (replay.currentTick * 100F / replay.duration));
 			}

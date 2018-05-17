@@ -31,6 +31,18 @@ def policy_cnn(obs_dim_w, obs_dim_h, act_dim):
             'SAME'
         )
         layer = tf.nn.depthwise_conv2d(
+            obs_in,
+            tf.Variable(np.random.normal(size=3*3*3).astype('float32').reshape((3, 3, 1, 3))),
+            [1, 1, 1, 1],
+            'SAME'
+        )
+        layer = tf.nn.max_pool(
+            layer,
+            [1, 2, 2, 1],
+            [1, 2, 2, 1],
+            'SAME'
+        )
+        layer = tf.nn.depthwise_conv2d(
             layer,
             tf.Variable(np.random.normal(size=3*3*3).astype('float32').reshape((3, 3, 3, 1))),
             [1, 1, 1, 1],
@@ -52,7 +64,7 @@ def train(obs_dataset, act_dataset, policy):
     n = obs_dataset.shape[0] * obs_dataset.shape[1]
     obs_dim = obs_dataset.shape[2]
     act_dim = act_dataset.shape[2]
-    obs_dataset = obs_dataset.reshape((n, 6, 12, 1))
+    obs_dataset = obs_dataset.reshape((n, 12, 24, 1))
     act_dataset = act_dataset.reshape((n, act_dim))
     obs_in, act_in, act_out = policy
 
@@ -112,15 +124,15 @@ def main():
 
     #dots = np.array([np.dot(simple(f['obsVar'][i][0])[0], f['actVar'][i][0]) for i in range(len(f['obsVar']))])
     #print(np.mean(dots))
-    train(np.array(f['obsVar']), np.array(f['actVar']), policy_cnn(12, 6, np.array(f['actVar']).shape[2]))
+    train(np.array(f['obsVar']), np.array(f['actVar']), policy_cnn(24, 12, np.array(f['actVar']).shape[2]))
 
 def play(args, env):
-    obs_in, act_in, act_out = policy_cnn(12, 6, env.action_dim)
+    obs_in, act_in, act_out = policy_cnn(24, 12, env.action_dim)
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, 'tmp/models/imitation_epoch_%i.ckpt' % args.epoch)
         def act(obs):
-            action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, 6, 12, 1))})
+            action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, 12, 24, 1))})
             print(action)
             return action
         while True:
