@@ -3,8 +3,8 @@ import numpy as np
 
 def run(args, env):
     def act(obs):
-        w = 10
-        h = 5
+        w = 12
+        h = 6
         obs = obs.reshape((h, w))
         fwd = 0
         stf = 0
@@ -21,12 +21,12 @@ def run(args, env):
             i = np.argmax(obs)
             x = i % w
             y = i // w
-            yaw = .5 * (x - (w-1)/2) / ((w-1)/2)
-            pch = .5 * (y - (h-1)/2) / ((h-1)/2)
-            fwd = .1
-            if np.abs(yaw) + np.abs(pch) < .1:
-                fwd = .5
-
+            yaw = (x - (w-1)/2) / ((w-1)/2)
+            pch = (y - (h-1)/2) / ((h-1)/2)
+            fwd = 1 - min((yaw ** 2 + pch ** 2) * 3, 1)
+            fwd *= .5
+            yaw *= .5
+            pch *= .2
         return np.array([fwd, stf, yaw, pch])
     while True:
         obs, _, _ = env.reset()

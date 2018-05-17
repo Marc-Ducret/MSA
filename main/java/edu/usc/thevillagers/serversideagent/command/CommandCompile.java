@@ -107,6 +107,7 @@ public class CommandCompile extends CommandBase {
 		int[] actDim = {samples, humans.size(), env.actionDim};
 		float[] obsBuffer = new float[obsDim[0] * obsDim[1] * obsDim[2]];
 		float[] actBuffer = new float[actDim[0] * actDim[1] * actDim[2]]; //TODO use java.nio?
+		long lastReport = System.currentTimeMillis();
 		while(replay.currentTick < replay.duration) {
 			for(int h = 0; h < humans.size(); h ++) {
 				Human human = humans.get(h);
@@ -127,6 +128,10 @@ public class CommandCompile extends CommandBase {
 					for(float v : reverser.endStep())
 						actBuffer[offset++] = v;
 				}
+			}
+			if(System.currentTimeMillis() - lastReport > 1000 * 30)  {
+				lastReport = System.currentTimeMillis();
+				System.out.printf("compile: %.1f\n", (replay.currentTick * 100F / replay.duration));
 			}
 		}
 		File file = new File("tmp/imitation/dataset.h5");

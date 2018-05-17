@@ -13,6 +13,7 @@ import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
@@ -54,7 +55,10 @@ public class EntityAgent extends EntityPlayerMP {
 		this.setPositionAndRotation(posX, posY, posZ, 
 				rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
 				rotationPitch + state.momentumPitch * ROTATION_SPEED);
-		this.travel(state.strafe, 0, state.forward);
+		Vec3d move = new Vec3d(state.strafe, 0, state.forward).rotateYaw(-rotationYaw * (float) Math.PI / 180).scale(.15F);
+		motionX = move.x;
+		motionZ = move.z;
+		this.travel(0, 0, 0);
 		this.setJumping(state.jump);
 		this.setSneaking(state.crouch);
 	}

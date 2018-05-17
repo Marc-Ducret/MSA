@@ -33,7 +33,7 @@ public class EnvironmentGotoGold extends Environment {
 //				return -1F;
 //			}
 //		}));
-		sensors.add(new SensorRaytrace(10, 5, 70, 2) {
+		sensors.add(new SensorRaytrace(12, 6, 70, 2) {
 			
 			@Override
 			protected float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res) {

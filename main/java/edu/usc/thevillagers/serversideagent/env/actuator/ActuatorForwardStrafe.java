@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env.actuator;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 /**
@@ -41,9 +42,9 @@ public class ActuatorForwardStrafe extends Actuator {
 			@Override
 			public float[] endStep() {
 				Vec3d pos = actor.entity.getPositionVector();
-				Vec3d move = pos.subtract(prevPos).rotateYaw(-yaw);
-				values[0] = (float) move.z / ct;
-				values[1] = (float) move.x / ct;
+				Vec3d move = pos.subtract(prevPos).rotateYaw(yaw * (float) Math.PI / 180);
+				values[0] = MathHelper.clamp((float) move.z / ct / .15F, -1, 1);
+				values[1] = MathHelper.clamp((float) move.x / ct / .15F, -1, 1); //TODO more precise normalisation? not right derivative...
 				return values;
 			}
 		};
