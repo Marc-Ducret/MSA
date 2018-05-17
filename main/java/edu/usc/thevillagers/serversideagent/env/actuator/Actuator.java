@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env.actuator;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 
 /**
  * Represents a part of an Environment's action space.
@@ -16,7 +17,7 @@ public abstract class Actuator {
 	}
 	
 	public abstract void act(Actor actor);
-	public abstract Reverser reverser(Actor actor);
+	public abstract Reverser reverser(Actor actor, WorldRecordReplayer replay);
 	
 	public abstract class Reverser {
 		

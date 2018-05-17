@@ -68,6 +68,7 @@ public class EntityAgent extends EntityPlayerMP {
 		case HIT:
 			if(action.targetBlockPos != null) {
 				interactionManager.onBlockClicked(action.targetBlockPos, action.targetBlockFace);
+				interactionManager.blockRemoving(action.targetBlockPos);
 			} else if(action.targetEntityId >= 0) {
 				Entity e = world.getEntityByID(action.targetEntityId);
 				if(e != null) attackTargetEntityWithCurrentItem(e);

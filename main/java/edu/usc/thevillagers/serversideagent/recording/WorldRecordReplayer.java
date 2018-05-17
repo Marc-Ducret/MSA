@@ -2,7 +2,9 @@ package edu.usc.thevillagers.serversideagent.recording;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -39,6 +41,7 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	public long worldTimeOffset;
 	
 	private Future<ChangeSet> nextChangeSet;
+	public Set<ActionListener> actionListeners = new HashSet<>();
 	
 	public WorldRecordReplayer(File saveFolder) {
 		this.world = null;

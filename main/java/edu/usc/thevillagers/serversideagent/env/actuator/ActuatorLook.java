@@ -2,6 +2,7 @@ package edu.usc.thevillagers.serversideagent.env.actuator;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.EntityAgent;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -20,7 +21,7 @@ public class ActuatorLook extends Actuator {
 	}
 
 	@Override
-	public Reverser reverser(Actor actor) {
+	public Reverser reverser(Actor actor, WorldRecordReplayer replay) {
 		return new Reverser(actor) {
 			
 			private float prevYaw, prevPitch;

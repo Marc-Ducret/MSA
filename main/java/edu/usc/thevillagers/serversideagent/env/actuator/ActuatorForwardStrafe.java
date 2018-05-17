@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env.actuator;
 
 import edu.usc.thevillagers.serversideagent.agent.Actor;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
@@ -20,7 +21,7 @@ public class ActuatorForwardStrafe extends Actuator {
 	}
 
 	@Override
-	public Reverser reverser(Actor actor) {
+	public Reverser reverser(Actor actor, WorldRecordReplayer replay) {
 		return new Reverser(actor) {
 			
 			private Vec3d prevPos;

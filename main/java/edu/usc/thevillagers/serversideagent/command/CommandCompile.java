@@ -98,7 +98,7 @@ public class CommandCompile extends CommandBase {
 				humans.add(h);
 				List<Actuator.Reverser> hReversers = new ArrayList<>();
 				for(Actuator actuator : env.actuators)
-					hReversers.add(actuator.reverser(h));
+					hReversers.add(actuator.reverser(h, replay));
 				reversers.add(hReversers);
 			}
 		}
