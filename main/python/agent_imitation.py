@@ -83,7 +83,7 @@ def train(obs_dataset, act_dataset, policy):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         losses = [compute_loss()]
-        epochs = 200
+        epochs = 40
         print('initial loss=%f' % losses[-1])
         for e in range(epochs):
             for batch in epoch(32):
@@ -91,7 +91,7 @@ def train(obs_dataset, act_dataset, policy):
                 sess.run(optimize, feed_dict={obs_in: obs_batch, act_in: act_batch})
             losses.append(compute_loss())
             print('epoch %i: loss=%f' % (e+1, losses[-1]))
-            if e % 10 == 0:
+            if e % 5 == 0:
                 print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_epoch_%i.ckpt' % e))
 
         print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_final.ckpt'))
@@ -112,13 +112,13 @@ def main():
 
     #dots = np.array([np.dot(simple(f['obsVar'][i][0])[0], f['actVar'][i][0]) for i in range(len(f['obsVar']))])
     #print(np.mean(dots))
-    train(np.array(f['obsVar']), np.array(f['actVar']), policy_cnn(12, 6, 4))
+    train(np.array(f['obsVar']), np.array(f['actVar']), policy_cnn(12, 6, np.array(f['actVar']).shape[2]))
 
 def play(args, env):
-    obs_in, act_in, act_out = policy_cnn(12, 6, 4)
+    obs_in, act_in, act_out = policy_cnn(12, 6, env.action_dim)
     saver = tf.train.Saver()
     with tf.Session() as sess:
-        saver.restore(sess, 'tmp/models/imitation_epoch_40.ckpt')
+        saver.restore(sess, 'tmp/models/imitation_epoch_%i.ckpt' % args.epoch)
         def act(obs):
             action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, 6, 12, 1))})
             print(action)
@@ -134,6 +134,6 @@ def play(args, env):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
-        single_env_agent.run_agent(play)
+        single_env_agent.run_agent(play, {'epoch': 0})
     else:
         main()
