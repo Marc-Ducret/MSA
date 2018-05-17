@@ -61,7 +61,7 @@ public class AllocatorEmptySpace implements Allocator {
 	@Override
 	public BlockPos allocate(World world) {
 		for(int i = 0; i < SAMPLES; i ++) {
-			BlockPos sample = sample();
+			BlockPos sample = i > 0 ? sample() : new BlockPos(0, 15, 0);
 			if(test(sample, world)) {
 				reserve(sample);
 				return sample;
