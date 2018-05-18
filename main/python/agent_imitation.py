@@ -6,6 +6,11 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 import single_env_agent
 
+def size(dim, ratio):
+    w = int(np.sqrt(dim * ratio))
+    h = w // ratio
+    return w, h
+
 def policy(obs_dim, act_dim, hid_layers, hid_size):
     obs_in = tf.placeholder(tf.float32, shape=(None, obs_dim), name='observation')
     act_in = tf.placeholder(tf.float32, shape=(None, act_dim), name='action')
@@ -64,7 +69,8 @@ def train(obs_dataset, act_dataset, policy):
     n = obs_dataset.shape[0] * obs_dataset.shape[1]
     obs_dim = obs_dataset.shape[2]
     act_dim = act_dataset.shape[2]
-    obs_dataset = obs_dataset.reshape((n, 12, 24, 1))
+    w, h = size(obs_dim, 2)
+    obs_dataset = obs_dataset.reshape((n, h, w, 1))
     act_dataset = act_dataset.reshape((n, act_dim))
     obs_in, act_in, act_out = policy
 
@@ -111,28 +117,22 @@ def train(obs_dataset, act_dataset, policy):
         py.iplot([trace], filename='basic-line')
 
 def main():
-    #N = 1000
-    #x = np.linspace(0, 3, num=N)
-    #y = np.sin(x)
-    #train(x.reshape((N, 1, 1)), y.reshape((N, 1, 1)))
     f = h5py.File('tmp/imitation/dataset.h5')
-#    def simple(obs):
-#        s = np.sqrt(obs.shape[0])
-#        i = np.argmax(obs)
-#        x, y = (i%s) - (s+1)/2, (i//s) - (s+1)/2
-#        return [[y, x]] / ((s-1)/2)
-
-    #dots = np.array([np.dot(simple(f['obsVar'][i][0])[0], f['actVar'][i][0]) for i in range(len(f['obsVar']))])
-    #print(np.mean(dots))
-    train(np.array(f['obsVar']), np.array(f['actVar']), policy_cnn(24, 12, np.array(f['actVar']).shape[2]))
+    obs_dataset = np.array(f['obsVar'])
+    act_dataset = np.array(f['actVar'])
+    obs_dim = obs_dataset.shape[2]
+    act_dim = act_dataset.shape[2]
+    w, h = size(obs_dim, 2)
+    train(obs_dataset, act_dataset, policy_cnn(w, h, act_dim))
 
 def play(args, env):
-    obs_in, act_in, act_out = policy_cnn(24, 12, env.action_dim)
+    w, h = size(env.observation_dim, 2)
+    obs_in, act_in, act_out = policy_cnn(w, h, env.action_dim)
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, 'tmp/models/imitation_epoch_%i.ckpt' % args.epoch)
         def act(obs):
-            action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, 12, 24, 1))})
+            action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, h, w, 1))})
             print(action)
             return action
         while True:
