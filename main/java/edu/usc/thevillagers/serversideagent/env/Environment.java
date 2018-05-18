@@ -20,7 +20,7 @@ import net.minecraft.world.WorldServer;
  */
 public abstract class Environment { //TODO document functions that should be overridden
 	
-	public long emptyTime = 0;
+	public long allocationTime = 0;
 	
 	public final String name;
 	public String id;
@@ -190,6 +190,7 @@ public abstract class Environment { //TODO document functions that should be ove
 		if(pos == null) return false;
 		setOrigin(pos);
 		allocated = true;
+		allocationTime = System.currentTimeMillis();
 		return true;
 	}
 	

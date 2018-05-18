@@ -40,14 +40,10 @@ public class EnvironmentManager {
 				switch(phase) {
 				case START:
 					if(env.isAllocated() && env.isEmpty()) {
-						if(env.emptyTime > 0) {
-							if(System.currentTimeMillis() - env.emptyTime > 10000) {
-								throw new Exception("Empty");
-							}
-						} else {
-							env.emptyTime = System.currentTimeMillis();
+						if(System.currentTimeMillis() - env.allocationTime > 10000) {
+							throw new Exception("Empty");
 						}
-					} else env.emptyTime = -1;
+					}
 					env.preTick();
 					break;
 				case END:
