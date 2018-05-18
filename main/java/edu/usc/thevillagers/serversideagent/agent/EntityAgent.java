@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.mojang.authlib.GameProfile;
 
 import edu.usc.thevillagers.serversideagent.HighLevelAction;
+import edu.usc.thevillagers.serversideagent.HighLevelAction.Phase;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -64,6 +65,7 @@ public class EntityAgent extends EntityPlayerMP {
 	}
 	
 	private void executeAction(HighLevelAction action) { //TODO testing needed
+		if(action.actionPhase != Phase.STOP) swingArm(action.hand);
 		switch(action.actionType) {
 		case HIT:
 			if(action.targetBlockPos != null) {
