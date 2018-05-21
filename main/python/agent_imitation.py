@@ -1,10 +1,11 @@
 import tensorflow as tf
 import numpy as np
 import h5py
-from baselines.common import tf_util as U, distributions
 import plotly.plotly as py
 import plotly.graph_objs as go
 import single_env_agent
+from collections import deque
+from time import time
 
 def size(dim, ratio):
     w = int(np.sqrt(dim * ratio))
@@ -18,10 +19,8 @@ def policy(obs_dim, act_dim, hid_layers, hid_size):
         layer = obs_in
         for i in range(hid_layers):
             layer = tf.layers.dense(layer, hid_size, name='dense_%i' % i,
-                        activation=tf.nn.tanh,
-                        kernel_initializer=U.normc_initializer(1))
-        act_out = tf.layers.dense(layer, act_dim, name='action',
-                        kernel_initializer=U.normc_initializer(1))
+                        activation=tf.nn.tanh)
+        act_out = tf.layers.dense(layer, act_dim, name='action')
         return obs_in, act_in, act_out
 
 def policy_cnn(obs_dim_w, obs_dim_h, act_dim):
@@ -36,8 +35,14 @@ def policy_cnn(obs_dim_w, obs_dim_h, act_dim):
             'SAME'
         )
         layer = tf.nn.depthwise_conv2d(
-            obs_in,
-            tf.Variable(np.random.normal(size=3*3*3).astype('float32').reshape((3, 3, 1, 3))),
+            layer,
+            tf.Variable(np.random.normal(size=3*3*3*3).astype('float32').reshape((3, 3, 3, 3))),
+            [1, 1, 1, 1],
+            'SAME'
+        )
+        layer = tf.nn.depthwise_conv2d(
+            layer,
+            tf.Variable(np.random.normal(size=3*3*9).astype('float32').reshape((3, 3, 9, 1))),
             [1, 1, 1, 1],
             'SAME'
         )
@@ -49,7 +54,7 @@ def policy_cnn(obs_dim_w, obs_dim_h, act_dim):
         )
         layer = tf.nn.depthwise_conv2d(
             layer,
-            tf.Variable(np.random.normal(size=3*3*3).astype('float32').reshape((3, 3, 3, 1))),
+            tf.Variable(np.random.normal(size=3*3*9).astype('float32').reshape((3, 3, 9, 1))),
             [1, 1, 1, 1],
             'SAME'
         )
@@ -92,7 +97,7 @@ def train(obs_dataset, act_dataset, policy):
     optimize = optimizer.apply_gradients(optimizer.compute_gradients(loss))
     def compute_loss():
         losses = []
-        for batch in epoch(32):
+        for batch in epoch(1024):
             obs_batch, act_batch = batch
             losses.append(sess.run(loss, feed_dict={obs_in: obs_batch, act_in: act_batch}))
         return np.mean(np.array(losses))
@@ -101,18 +106,23 @@ def train(obs_dataset, act_dataset, policy):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         losses = [compute_loss()]
-        epochs = 40
+        epochs = 20
+        batchsize = 64
         print('initial loss=%f' % losses[-1])
         for e in range(epochs):
-            for batch in epoch(32):
+            start_time = time()
+            pairs = 0
+            for batch in epoch(batchsize):
                 obs_batch, act_batch = batch
                 sess.run(optimize, feed_dict={obs_in: obs_batch, act_in: act_batch})
+                pairs += batchsize
+            speed = pairs / (time() - start_time)
             losses.append(compute_loss())
-            print('epoch %i: loss=%f' % (e+1, losses[-1]))
+            print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
             if e % 5 == 0:
                 print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_epoch_%i.ckpt' % e))
 
-        print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_final.ckpt'))
+        print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_epoch_%i.ckpt' % epochs))
         trace = go.Scatter(x=list(range(epochs+1)), y=losses)
         py.iplot([trace], filename='basic-line')
 
@@ -133,13 +143,17 @@ def play(args, env):
         saver.restore(sess, 'tmp/models/imitation_epoch_%i.ckpt' % args.epoch)
         def act(obs):
             action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, h, w, 1))})
-            print(action)
             return action
+        eps_rew = deque(maxlen=10000)
         while True:
             obs, _, _ = env.reset()
+            ep_rew = 0
             while True:
-                (obs, _, _), _, done, _ = env.step(act(obs))
+                (obs, _, _), rew, done, _ = env.step(act(obs))
+                ep_rew += rew
                 if done:
+                    eps_rew.append(ep_rew)
+                    print('rew=%.2f \tmean=%.2f \t(ct=%i)' % (ep_rew, np.mean(eps_rew), len(eps_rew)))
                     break
 
 

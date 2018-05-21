@@ -144,5 +144,6 @@ public class CommandCompile extends CommandBase {
 		obsVar.writeData(new int[] {0, 0, 0}, obsBuffer, true);
 		actVar.writeData(new int[] {0, 0, 0}, actBuffer, true);
 		writer.close();
+		System.out.println("compile: done");
 	}
 }
