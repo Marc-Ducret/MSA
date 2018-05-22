@@ -5,7 +5,7 @@ unzip ../forge.zip -d ../
 rm ../forge.zip
 
 mkdir libs
-wget https://svwh.dl.sourceforge.net/project/nujan/Nujan-1.4.2.jar -O libs/Nujan-1.4.2.jar
+wget http://svwh.dl.sourceforge.net/project/nujan/Nujan-1.4.2.jar -O libs/Nujan-1.4.2.jar
 
 cp -r ../gradle .
 cp ../gradlew .
