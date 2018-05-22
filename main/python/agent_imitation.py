@@ -4,8 +4,11 @@ import h5py
 import plotly.plotly as py
 import plotly.graph_objs as go
 import single_env_agent
+import minecraft_environment
 from collections import deque
 from time import time
+import concurrent.futures
+import traceback
 
 def size(dim, ratio):
     w = int(np.sqrt(dim * ratio))
@@ -92,7 +95,7 @@ def train(obs_dataset, act_dataset, policy):
             act_batch = act_dataset[i * batch_size : (i+1) * batch_size]
             yield obs_batch, act_batch
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=1e-3)
+    optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
     loss = tf.losses.mean_squared_error(act_in, act_out)
     optimize = optimizer.apply_gradients(optimizer.compute_gradients(loss))
     def compute_loss():
@@ -102,29 +105,32 @@ def train(obs_dataset, act_dataset, policy):
             losses.append(sess.run(loss, feed_dict={obs_in: obs_batch, act_in: act_batch}))
         return np.mean(np.array(losses))
 
-    saver = tf.train.Saver()
+    saver = tf.train.Saver(max_to_keep=50)
     with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        losses = [compute_loss()]
-        epochs = 20
-        batchsize = 64
-        print('initial loss=%f' % losses[-1])
-        for e in range(epochs):
-            start_time = time()
-            pairs = 0
-            for batch in epoch(batchsize):
-                obs_batch, act_batch = batch
-                sess.run(optimize, feed_dict={obs_in: obs_batch, act_in: act_batch})
-                pairs += batchsize
-            speed = pairs / (time() - start_time)
-            losses.append(compute_loss())
-            print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
-            if e % 5 == 0:
-                print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_epoch_%i.ckpt' % e))
-
-        print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_epoch_%i.ckpt' % epochs))
-        trace = go.Scatter(x=list(range(epochs+1)), y=losses)
-        py.iplot([trace], filename='basic-line')
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            sess.run(tf.global_variables_initializer())
+            losses = [compute_loss()]
+            rewards_futures = []
+            epochs = 20
+            batchsize = 64
+            print('initial loss=%f' % losses[-1])
+            for e in range(epochs):
+                start_time = time()
+                pairs = 0
+                for batch in epoch(batchsize):
+                    obs_batch, act_batch = batch
+                    sess.run(optimize, feed_dict={obs_in: obs_batch, act_in: act_batch})
+                    pairs += batchsize
+                speed = pairs / (time() - start_time)
+                losses.append(compute_loss())
+                print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
+                if e % 1 == 0:
+                    print('Model saved at: %s' % saver.save(sess, 'tmp/models/imitation_epoch_%i.ckpt' % e))
+                    rewards_futures.append(executor.submit(estimate_reward, e))
+            trace_loss = go.Scatter(x=list(range(epochs+1)), y=losses)
+            trace_rew  = go.Scatter(x=list(range(epochs)), y=[f.result() for f in rewards_futures])
+            py.iplot([trace_rew], filename='reward')
+            py.iplot([trace_loss], filename='loss')
 
 def main():
     f = h5py.File('tmp/imitation/dataset.h5')
@@ -156,6 +162,36 @@ def play(args, env):
                     print('rew=%.2f \tmean=%.2f \t(ct=%i)' % (ep_rew, np.mean(eps_rew), len(eps_rew)))
                     break
 
+def estimate_reward(epoch):
+    try:
+        tf.reset_default_graph()
+        print('estimating %i...' % epoch)
+        env = minecraft_environment.MinecraftEnv('GoBreakGold')
+        env.init_spaces()
+        print('env started....')
+        n_eps = 1000
+        w, h = size(env.observation_dim, 2)
+        obs_in, act_in, act_out = policy_cnn(w, h, env.action_dim)
+        saver = tf.train.Saver()
+        with tf.Session(config=tf.ConfigProto(device_count = {'GPU': 0})) as sess:
+            saver.restore(sess, 'tmp/models/imitation_epoch_%i.ckpt' % epoch)
+            def act(obs):
+                action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, h, w, 1))})
+                return action
+            mean_rew = 0
+            for i in range(n_eps):
+                obs, _, _ = env.reset()
+                ep_rew = 0
+                while True:
+                    (obs, _, _), rew, done, _ = env.step(act(obs))
+                    ep_rew += rew
+                    if done:
+                        mean_rew += ep_rew / n_eps
+                        break
+            print('estimated %.2f for epoch %i' % (mean_rew, epoch))
+            return mean_rew
+    except:
+        traceback.print_exc()
 
 if __name__ == '__main__':
     import sys
