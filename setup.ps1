@@ -4,6 +4,9 @@ wget http://files.minecraftforge.net/maven/net/minecraftforge/forge/1.12.2-14.23
 Expand-Archive ../forge.zip ../
 rm ../forge.zip
 
+mkdir libs
+wget https://svwh.dl.sourceforge.net/project/nujan/Nujan-1.4.2.jar -out libs/Nujan-1.4.2.jar
+
 cp -r ../gradle .
 cp ../gradlew .
 cp ../gradlew.bat .
