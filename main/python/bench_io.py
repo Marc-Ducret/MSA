@@ -1,5 +1,5 @@
 import sys
-from data_stream import *
+from minecraft.data_stream import *
 import socket
 
 def bench(stream_in, stream_out):

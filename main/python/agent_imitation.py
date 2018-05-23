@@ -4,7 +4,7 @@ import h5py
 import plotly.plotly as py
 import plotly.graph_objs as go
 import single_env_agent
-import minecraft_environment
+import minecraft.environment
 from collections import deque
 from time import time
 import concurrent.futures

@@ -1,4 +1,4 @@
-from minecraft_environment import *
+from minecraft.environment import *
 from baselines.common import set_global_seeds
 from baselines.ppo2 import ppo2
 from baselines.ppo2.policies import MlpPolicy

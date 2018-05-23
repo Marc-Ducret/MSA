@@ -1,4 +1,4 @@
-from minecraft_environment import MinecraftEnv
+from minecraft.environment import MinecraftEnv
 import argparse
 import subprocess
 

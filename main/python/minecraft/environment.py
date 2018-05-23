@@ -1,5 +1,5 @@
 import sys
-from data_stream import *
+from .data_stream import *
 import socket
 
 import numpy as np
@@ -8,9 +8,10 @@ from gym import spaces
 
 class MinecraftEnv(gym.Env):
 
-    def __init__(self, env_type, env_id=""):
+    def __init__(self, env_type, env_id="", use_entities=False):
         self.env_type = env_type
         self.env_id = env_id
+        self.use_entities = use_entities
         self.sok = socket.create_connection(('localhost', 1337))
         self.sok.settimeout(5)
         self.in_stream  = DataInputStream (self.sok.makefile(mode='rb'))
@@ -50,9 +51,9 @@ class MinecraftEnv(gym.Env):
             obs_entities = np.array(self.in_stream.read_float_array(size))
             obs_entities.resize((self.entity_max * self.entity_dim,))
             entity_mask = np.array([i < size // self.entity_dim for i in range(self.entity_max)])
-            return (obs, obs_entities, entity_mask)
+            return (obs, obs_entities, entity_mask) if self.use_entities else obs
         else:
-            return (obs, np.zeros((0,)), np.zeros((0,)))
+            return (obs, np.zeros((0,)), np.zeros((0,))) if self.use_entities else obs
 
     def _receive_reward(self):
         return self.in_stream.read_float()

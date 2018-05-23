@@ -1,4 +1,4 @@
-from minecraft_environment import *
+from minecraft.environment import *
 import argparse
 import time
 import random
