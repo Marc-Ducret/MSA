@@ -48,7 +48,7 @@ public class RequestManager {
 	}
 	
 	private void newSocket(DataSocket sok) throws Exception {
-		sok.socket.setSoTimeout(3000);
+		sok.socket.setSoTimeout(60000);
 		String envString = sok.in.readUTF();
 		int parStart = envString.indexOf('[');
 		String envClassName;

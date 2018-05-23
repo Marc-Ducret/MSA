@@ -66,5 +66,6 @@ public class Agent extends Actor {
 		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 		env.decodeAction(this, actionVector);
 		actionState.clamp();
+		sok.socket.setSoTimeout(3000);
 	}
 }
