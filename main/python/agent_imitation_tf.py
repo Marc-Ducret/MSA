@@ -95,7 +95,7 @@ def train(obs_dataset, act_dataset, policy):
             act_batch = act_dataset[i * batch_size : (i+1) * batch_size]
             yield obs_batch, act_batch
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=1e-4)
+    optimizer = tf.train.AdamOptimizer(learning_rate=1e-5)
     loss = tf.losses.mean_squared_error(act_in, act_out)
     optimize = optimizer.apply_gradients(optimizer.compute_gradients(loss))
     def compute_loss():
@@ -186,6 +186,7 @@ def estimate_reward(epoch):
                     obs, rew, done, _ = env.step(act(obs))
                     ep_rew += rew
                     if done:
+                        ep_rew = 100 if ep_rew > 0 else 0
                         mean_rew += ep_rew / n_eps
                         break
             print('estimated %.2f for epoch %i' % (mean_rew, epoch))
