@@ -28,33 +28,35 @@ class Flatten(nn.Module):
 class Policy(nn.Module):
     def __init__(self, obs_dim_w, obs_dim_h, act_dim):
         super(Policy, self).__init__()
-        init_ = lambda m: init(m,
-                      nn.init.orthogonal_,
-                      lambda x: nn.init.constant_(x, 0),
-                      nn.init.calculate_gain('tanh')) if hasattr(m, 'weight') else m
+        def init_(m):
+            if hasattr(m, 'weight'):
+                print(m)
+                print(m.weight.shape)
+                nn.init.normal_(m.weight)
+            return m
         self.main = nn.Sequential(
-            init_(nn.ReflectionPad2d(1)),
-            init_(nn.Conv2d(1, 3, 3, groups=1)),
-            init_(nn.ReflectionPad2d(1)),
-            init_(nn.Conv2d(3, 9, 3, groups=3)),
-            init_(nn.ReflectionPad2d(1)),
-            init_(nn.Conv2d(9, 9, 3, groups=9)),
-            init_(nn.MaxPool2d(2)),
-            init_(nn.ReflectionPad2d(1)),
-            init_(nn.Conv2d(9, 9, 3, groups=9)),
-            init_(nn.MaxPool2d(3)),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(1, 3, 3, groups=1, bias=False)),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(3, 9, 3, groups=3, bias=False)),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(9, 9, 3, groups=9, bias=False)),
+            nn.MaxPool2d(2),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(9, 9, 3, groups=9, bias=False)),
+            nn.MaxPool2d(3),
             Flatten(),
-            init_(nn.Linear(9 * 2 * 4, 64)),
+            nn.Linear(9 * 2 * 4, 64),
             nn.Tanh(),
-            init_(nn.Linear(64, 64)),
+            nn.Linear(64, 64),
             nn.Tanh(),
-            init_(nn.Linear(64, act_dim))
+            nn.Linear(64, act_dim)
         ).cuda()
         print(self.main)
         self.train()
 
 def train(obs_dataset, act_dataset, policy):
-    optimizer = optim.Adam(policy.main.parameters(), lr=1e-6)
+    optimizer = optim.Adam(policy.main.parameters(), lr=3e-6)
 
     def epoch(batch_size, n=None):
         n = n if n else obs_dataset.size(0)
@@ -136,7 +138,7 @@ def estimate_reward(epoch, policy):
         print('estimating %i...' % epoch)
         env = minecraft.environment.MinecraftEnv('GoBreakGold')
         env.init_spaces()
-        n_eps = 100
+        n_eps = 400
         w, h = size(env.observation_dim, 2)
         def act(obs):
             action = policy.main(th.from_numpy(obs.reshape((1, h, w, 1)).transpose(0, 3, 1, 2)).float().cuda())
