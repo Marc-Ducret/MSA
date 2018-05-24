@@ -14,6 +14,7 @@ from time import time
 import concurrent.futures
 import traceback
 import copy
+from rl.utils import init
 
 def size(dim, ratio):
     w = int(np.sqrt(dim * ratio))
@@ -27,15 +28,20 @@ class Flatten(nn.Module):
 class Policy(nn.Module):
     def __init__(self, obs_dim_w, obs_dim_h, act_dim):
         super(Policy, self).__init__()
-
-        init_ = lambda m: m
-
+        init_ = lambda m: init(m,
+                      nn.init.orthogonal_,
+                      lambda x: nn.init.constant_(x, 0),
+                      nn.init.calculate_gain('tanh')) if hasattr(m, 'weight') else m
         self.main = nn.Sequential(
-            init_(nn.Conv2d(1, 3, 3, groups=1, padding=1)),
-            init_(nn.Conv2d(3, 9, 3, groups=3, padding=1)),
-            init_(nn.Conv2d(9, 9, 3, groups=9, padding=1)),
+            init_(nn.ReflectionPad2d(1)),
+            init_(nn.Conv2d(1, 3, 3, groups=1)),
+            init_(nn.ReflectionPad2d(1)),
+            init_(nn.Conv2d(3, 9, 3, groups=3)),
+            init_(nn.ReflectionPad2d(1)),
+            init_(nn.Conv2d(9, 9, 3, groups=9)),
             init_(nn.MaxPool2d(2)),
-            init_(nn.Conv2d(9, 9, 3, groups=9, padding=1)),
+            init_(nn.ReflectionPad2d(1)),
+            init_(nn.Conv2d(9, 9, 3, groups=9)),
             init_(nn.MaxPool2d(3)),
             Flatten(),
             init_(nn.Linear(9 * 2 * 4, 64)),
@@ -48,7 +54,7 @@ class Policy(nn.Module):
         self.train()
 
 def train(obs_dataset, act_dataset, policy):
-    optimizer = optim.Adam(policy.main.parameters(), lr=1e-4)
+    optimizer = optim.Adam(policy.main.parameters(), lr=1e-6)
 
     def epoch(batch_size, n=None):
         n = n if n else obs_dataset.size(0)
@@ -130,7 +136,7 @@ def estimate_reward(epoch, policy):
         print('estimating %i...' % epoch)
         env = minecraft.environment.MinecraftEnv('GoBreakGold')
         env.init_spaces()
-        n_eps = 200
+        n_eps = 100
         w, h = size(env.observation_dim, 2)
         def act(obs):
             action = policy.main(th.from_numpy(obs.reshape((1, h, w, 1)).transpose(0, 3, 1, 2)).float().cuda())
@@ -144,6 +150,7 @@ def estimate_reward(epoch, policy):
                 obs, rew, done, _ = env.step(act(obs))
                 ep_rew += rew
                 if done:
+                    ep_rew = 100 if ep_rew > 0 else 0
                     mean_rew += ep_rew / n_eps
                     break
         print('estimated %.2f for epoch %i' % (mean_rew, epoch))

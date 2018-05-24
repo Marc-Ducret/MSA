@@ -152,10 +152,10 @@ def play(args, env):
             return action
         eps_rew = deque(maxlen=10000)
         while True:
-            obs, _, _ = env.reset()
+            obs = env.reset()
             ep_rew = 0
             while True:
-                (obs, _, _), rew, done, _ = env.step(act(obs))
+                obs, rew, done, _ = env.step(act(obs))
                 ep_rew += rew
                 if done:
                     eps_rew.append(ep_rew)
@@ -180,10 +180,10 @@ def estimate_reward(epoch):
                 return action
             mean_rew = 0
             for i in range(n_eps):
-                obs, _, _ = env.reset()
+                obs = env.reset()
                 ep_rew = 0
                 while True:
-                    (obs, _, _), rew, done, _ = env.step(act(obs))
+                    obs, rew, done, _ = env.step(act(obs))
                     ep_rew += rew
                     if done:
                         mean_rew += ep_rew / n_eps
