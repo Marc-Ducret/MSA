@@ -33,7 +33,6 @@ class DiagGaussian(nn.Module):
         self.logstd = AddBias(torch.zeros(dim))
 
     def forward(self, x):
-        #  An ugly hack for my KFAC implementation.
         zeros = torch.zeros(x.size())
         if x.is_cuda:
             zeros = zeros.cuda()
