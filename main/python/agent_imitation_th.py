@@ -31,14 +31,14 @@ class Policy(nn.Module):
         init_ = lambda m: m
 
         self.main = nn.Sequential(
-            init_(nn.Conv2d(1, 16, 5, groups=1)),
-            nn.ReLU(),
-            init_(nn.Conv2d(16, 16, 3, groups=4, stride=(1, 3))),
-            nn.ReLU(),
-            init_(nn.Conv2d(16, 16, 4, groups=4)),
-            nn.ReLU(),
+            init_(nn.Conv2d(1, 3, 3, groups=1, padding=1)),
+            init_(nn.Conv2d(3, 9, 3, groups=3, padding=1)),
+            init_(nn.Conv2d(9, 9, 3, groups=9, padding=1)),
+            init_(nn.MaxPool2d(2)),
+            init_(nn.Conv2d(9, 9, 3, groups=9, padding=1)),
+            init_(nn.MaxPool2d(3)),
             Flatten(),
-            init_(nn.Linear(16 * 3 * 3, 64)),
+            init_(nn.Linear(9 * 2 * 4, 64)),
             nn.Tanh(),
             init_(nn.Linear(64, 64)),
             nn.Tanh(),
@@ -48,7 +48,7 @@ class Policy(nn.Module):
         self.train()
 
 def train(obs_dataset, act_dataset, policy):
-    optimizer = optim.Adam(policy.main.parameters(), lr=1e-5)
+    optimizer = optim.Adam(policy.main.parameters(), lr=1e-4)
 
     def epoch(batch_size, n=None):
         n = n if n else obs_dataset.size(0)
@@ -64,7 +64,7 @@ def train(obs_dataset, act_dataset, policy):
 
     def opt():
         pairs = 0
-        for obs_batch, act_batch in epoch(256):
+        for obs_batch, act_batch in epoch(64):
             loss = F.mse_loss(act_batch, policy.main(obs_batch))
             loss.backward()
             optimizer.step()
