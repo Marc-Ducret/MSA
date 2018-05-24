@@ -166,7 +166,7 @@ def estimate_reward(epoch):
     try:
         tf.reset_default_graph()
         print('estimating %i...' % epoch)
-        env = minecraft_environment.MinecraftEnv('GoBreakGold')
+        env = minecraft.environment.MinecraftEnv('GoBreakGold')
         env.init_spaces()
         print('env started....')
         n_eps = 1000
