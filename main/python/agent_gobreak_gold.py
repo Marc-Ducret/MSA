@@ -35,16 +35,17 @@ def run(args, env):
             yaw *= .3
             pch *= .15
         return np.array([fwd, stf, yaw, pch, hit])
-    eps_rew = deque(maxlen=10000)
+    sucesses = deque(maxlen=10000)
     while True:
-        obs, _, _ = env.reset()
+        obs = env.reset()
         ep_rew = 0
         while True:
-            (obs, _, _), rew, done, _ = env.step(act(obs))
+            obs, rew, done, _ = env.step(act(obs))
             ep_rew += rew
             if done:
-                eps_rew.append(ep_rew)
-                print('rew=%.2f \tmean=%.2f \t(ct=%i)' % (ep_rew, np.mean(eps_rew), len(eps_rew)))
+                success = 100 if ep_rew > 0 else 0
+                sucesses.append(success)
+                print('rew=%.2f \tmean=%.2f \t(ct=%i)' % (ep_rew, np.mean(sucesses), len(sucesses)))
                 break
 
 if __name__ == '__main__':
