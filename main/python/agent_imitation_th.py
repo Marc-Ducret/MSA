@@ -37,7 +37,7 @@ class DiagGaussian(nn.Module):
         if x.is_cuda:
             zeros = zeros.cuda()
 
-        action_logstd = self.logstd(zeros)
+        action_logstd = self.logstd(zeros) - 3
         return FixedNormal(x, action_logstd.exp())
 
 class Policy(nn.Module):
@@ -47,25 +47,27 @@ class Policy(nn.Module):
             if hasattr(m, 'weight'):
                 nn.init.normal_(m.weight)
             return m
-
+        C = 8
         self.vision = nn.Sequential(
+            nn.ReflectionPad2d(3),
+            init_(nn.Conv2d(1, C, 7, groups=1, bias=False)),
+            nn.Tanh(),
+            nn.ReflectionPad2d(2),
+            init_(nn.Conv2d(C, C, 5, groups=C, bias=False)),
+            nn.Tanh(),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(1, 3, 3, groups=1, bias=False)),
-            nn.ReLU(),
-            nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(3, 9, 3, groups=3, bias=False)),
-            nn.ReLU(),
-            nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(9, 9, 3, groups=9, bias=False)),
+            init_(nn.Conv2d(C, C, 3, groups=C, bias=False)),
+            nn.Tanh(),
             nn.MaxPool2d(2),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(9, 9, 3, groups=9, bias=False)),
+            init_(nn.Conv2d(C, C, 3, groups=C, bias=False)),
+            nn.Tanh(),
             nn.MaxPool2d(3),
             Flatten(),
 
         ).cuda()
 
-        self.feature_dim = 9 * 2 * 4
+        self.feature_dim = C * 2 * 4
 
         self.action = nn.Sequential(
             nn.Linear(self.feature_dim, 64),
@@ -87,12 +89,20 @@ class Policy(nn.Module):
 
         self.train()
 
-    def act(self, inputs, states=None, masks=None):
+        self.state_size = 1
+
+    def _adapt_inputs(inputs):
+        if len(inputs.shape) < 4:
+            inputs = inputs.view(-1, 12, 24, 1).permute(0, 3, 1, 2)
+        return inputs
+
+    def act(self, inputs, states=None, masks=None, deterministic=False):
+        inputs = Policy._adapt_inputs(inputs)
         features = self.vision(inputs)
         value, actor_features = self.critic(features), self.action(features)
         dist = self.dist(actor_features)
 
-        action = actor_features#dist.rsample()
+        action = actor_features if deterministic else dist.rsample()
 
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
@@ -100,9 +110,11 @@ class Policy(nn.Module):
         return value, action, action_log_probs, states
 
     def get_value(self, inputs, states=None, masks=None):
+        inputs = Policy._adapt_inputs(inputs)
         return self.critic(self.vision(inputs))
 
     def evaluate_actions(self, inputs, states, masks, action):
+        inputs = Policy._adapt_inputs(inputs)
         features = self.vision(inputs)
         value, actor_features = self.critic(features), self.action(features)
         dist = self.dist(actor_features)
@@ -115,25 +127,28 @@ class Policy(nn.Module):
 
 def train(obs_dataset, act_dataset, policy):
     optimizer = optim.Adam(policy.parameters(), lr=5e-6)
+    n = obs_dataset.size(0)
 
-    def epoch(batch_size, n=None):
-        n = n if n else obs_dataset.size(0)
-        ids = th.randperm(n).cuda()
+    def epoch(batch_size, size=None, offset=None):
+        size = size if size else n
+        ids = th.randperm(size).cuda()
+        if offset:
+            ids += offset
         for batch_ids in ids.split(batch_size):
             yield obs_dataset[batch_ids], act_dataset[batch_ids]
 
     def compute_loss():
         with th.no_grad():
             losses = []
-            for obs_batch, act_batch in epoch(1024 * 16):
-                _, action, _, _ = policy.act(obs_batch)
+            for obs_batch, act_batch in epoch(1024 * 16, n//2, n//2):
+                _, action, _, _ = policy.act(obs_batch, deterministic=True)
                 losses.append(F.mse_loss(act_batch, action).cpu().detach().numpy())
             return np.mean(np.array(losses))
 
     def opt():
         pairs = 0
-        for obs_batch, act_batch in epoch(64):
-            _, action, _, _ = policy.act(obs_batch)
+        for obs_batch, act_batch in epoch(64, n//2):
+            _, action, _, _ = policy.act(obs_batch, deterministic=True)
             loss = F.mse_loss(act_batch, action)
             loss.backward()
             optimizer.step()
@@ -199,11 +214,12 @@ def estimate_reward(epoch, policy):
         print('estimating %i...' % epoch)
         env = minecraft.environment.MinecraftEnv('GoBreakGold')
         env.init_spaces()
-        n_eps = 400
+        n_eps = 50
         w, h = size(env.observation_dim, 2)
         def act(obs):
             with th.no_grad():
-                _, action, _, _ = policy.act(th.from_numpy(obs.reshape((1, h, w, 1)).transpose(0, 3, 1, 2)).float().cuda())
+                obs_th = th.from_numpy(obs.reshape((1, h, w, 1)).transpose(0, 3, 1, 2)).float().cuda()
+                _, action, _, _ = policy.act(obs_th, deterministic=True)
                 action = action.cpu().detach().numpy()
             return action
         mean_rew = 0
@@ -225,7 +241,7 @@ def estimate_reward(epoch, policy):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
-        #single_env_agent.run_agent(play, {'epoch': 0})
-        pass
+        import rl.main
+        rl.main.main(lambda obs_space, act_space, recurrent: th.load(rl.main.args.load) if rl.main.args.load else Policy(24, 12, 5))
     else:
         main()
