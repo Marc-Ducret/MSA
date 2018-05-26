@@ -16,7 +16,7 @@ import net.minecraft.world.World;
 public class AllocatorEmptySpace implements Allocator {
 	
 	private static final int SAMPLES = 30;
-	private static final BlockPos SAMPLE_MIN = new BlockPos(-20, 10, -20), SAMPLE_MAX = new BlockPos(20, 200, 20);
+	private static final BlockPos SAMPLE_MIN = new BlockPos(-200, 10, -200), SAMPLE_MAX = new BlockPos(200, 200, 200);
 	private static final List<AxisAlignedBB> takenSpace = new ArrayList<>();
 	
 	private final BlockPos min, max;
@@ -47,15 +47,18 @@ public class AllocatorEmptySpace implements Allocator {
 		for(AxisAlignedBB bb : takenSpace)
 			if(bb.intersects(boundingBox.offset(origin)))
 				return false;
-		for(BlockPos p : BlockPos.getAllInBoxMutable(origin.add(min), origin.add(max)))
-			if(world.getBlockState(p).getBlock() != Blocks.AIR) 
-				return false;
+//		for(BlockPos p : BlockPos.getAllInBoxMutable(origin.add(min), origin.add(max)))
+//			if(world.getBlockState(p).getBlock() != Blocks.AIR) 
+//				return false;
 		return true;
 	}
 	
-	private void reserve(BlockPos origin) {
+	private void reserve(BlockPos origin, World world) {
 		boundingBox = boundingBox.offset(origin);
 		takenSpace.add(boundingBox);
+		for(BlockPos p : BlockPos.getAllInBoxMutable(origin.add(min), origin.add(max)))
+			if(world.getBlockState(p).getBlock() != Blocks.AIR) 
+				world.setBlockState(p, Blocks.AIR.getDefaultState());
 	}
 
 	@Override
@@ -63,7 +66,7 @@ public class AllocatorEmptySpace implements Allocator {
 		for(int i = 0; i < SAMPLES; i ++) {
 			BlockPos sample = i > 0 ? sample() : new BlockPos(0, 15, 0);
 			if(test(sample, world)) {
-				reserve(sample);
+				reserve(sample, world);
 				return sample;
 			}
 		}

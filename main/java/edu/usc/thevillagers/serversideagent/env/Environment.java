@@ -14,6 +14,7 @@ import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 /**
  * Represents an environment for Agents inside of Minecraft.
@@ -174,7 +175,7 @@ public abstract class Environment { //TODO document functions that should be ove
 			try {
 				if(filter.test(a)) app.apply(a);
 			} catch(Exception e) {
-				a.terminate();
+				FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> a.terminate());
 				iter.remove();
 				System.out.println("Actor terminated ("+e+")");
 				if(!(e instanceof IOException)) {

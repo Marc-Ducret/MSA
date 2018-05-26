@@ -80,7 +80,7 @@ public class RequestManager {
     public void serverTick(ServerTickEvent event) {
 		if(event.phase == Phase.START) {
 			synchronized(requests) {
-				if(System.currentTimeMillis() - lastRequestTime > 100 && !requests.isEmpty()) {
+				if(System.currentTimeMillis() - lastRequestTime > 400 && !requests.isEmpty()) {
 					System.out.println("Processing "+requests.size()+" requests");
 					while(!requests.isEmpty())
 						processRequest(requests.remove(0));

@@ -1,8 +1,14 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -13,6 +19,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 public class EnvironmentManager {
 	
 	private Map<String, Environment> envs = new HashMap<>();
+	private ExecutorService executor = Executors.newFixedThreadPool(16);
 	
 	public EnvironmentManager() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -33,29 +40,42 @@ public class EnvironmentManager {
 	}
 	
 	private void tickEnvs(Phase phase) {
-    	Iterator<Environment> iter = envs.values().iterator();
-		while(iter.hasNext()) {
-			Environment env = iter.next();
-			try {
-				switch(phase) {
-				case START:
-					if(env.isAllocated() && env.isEmpty()) {
-						if(System.currentTimeMillis() - env.allocationTime > 10000) {
-							throw new Exception("Empty");
+		List<Future<String>> futures = new ArrayList<>();
+		for(Environment env : envs.values()) {
+			futures.add(executor.submit(() -> {
+				try {
+					switch(phase) {
+					case START:
+						if(env.isAllocated() && env.isEmpty()) {
+							if(System.currentTimeMillis() - env.allocationTime > 10000) {
+								throw new Exception("Empty");
+							}
 						}
+						env.preTick();
+						break;
+					case END:
+						env.postTick();
+						break;
+					default:
+						break;
 					}
-					env.preTick();
-					break;
-				case END:
-					env.postTick();
-					break;
-				default:
-					break;
+					return null;
+				} catch(Exception e) {
+					if(e instanceof ConcurrentModificationException) e.printStackTrace();
+					System.err.println("Env "+env.name+" terminated ("+e+")");
+					return env.id;
 				}
-			} catch(Exception e) {
-				env.terminate();
-				iter.remove();
-				System.err.println("Env "+env.name+" terminated ("+e+")");
+			}));
+		}
+		for(int i = 0; i < futures.size(); i++) {
+			try {
+				String envId = futures.get(i).get();
+				if(envId != null) {
+					envs.get(envId).terminate();
+					envs.remove(envId);
+				}
+			} catch (InterruptedException | ExecutionException e) {
+				throw new RuntimeException(e);
 			}
 		}
     }
