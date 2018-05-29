@@ -6,7 +6,7 @@ N = 5
 if len(sys.argv) > 1:
     N = int(sys.argv[1])
 
-dummy = MinecraftEnv('Pattern[16,4,20]')
+dummy = MinecraftEnv('Pattern[16,6,20]')
 dummy.init_spaces()
 dummy.reset()
 dummy.step_act(dummy.action_space.sample())

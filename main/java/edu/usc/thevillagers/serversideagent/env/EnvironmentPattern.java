@@ -115,6 +115,8 @@ public class EnvironmentPattern extends Environment {
 			}
 			a.entity.rotationPitch = -80 + world.rand.nextFloat() * 160;
 			a.entity.rotationYaw = -180 + world.rand.nextFloat() * 360;
+			if(trees == 0)
+				a.entity.inventory.addItemStackToInventory(new ItemStack(BLOCK, 64));
 			team[0] = (team[0]+1) % teams;
 		});
 	}
