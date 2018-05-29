@@ -5,6 +5,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,6 +102,10 @@ public class EnvironmentManager {
 	public void removeEnv(String envId) {
 		if(!doesEnvExists(envId)) throw new RuntimeException("Env "+envId+" doesn't exists");
 		envs.remove(envId);
+	}
+	
+	public Set<String> getEnvIds() {
+		return envs.keySet();
 	}
 	
 	public Class<?> findEnvClass(String envName) throws ClassNotFoundException {

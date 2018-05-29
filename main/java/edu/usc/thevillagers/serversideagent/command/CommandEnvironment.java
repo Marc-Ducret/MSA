@@ -1,5 +1,7 @@
 package edu.usc.thevillagers.serversideagent.command;
 
+import java.util.List;
+
 import edu.usc.thevillagers.serversideagent.agent.Human;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
@@ -52,7 +54,6 @@ public class CommandEnvironment extends CommandBase {
 				origin = sender.getPosition();
 			Environment env = createEnvironment(args[2]);
 			env.setOrigin(origin);
-			env.readPars(new float[] {}); //TODO parse pars
 			env.init(world);
 			envManager.registerEnv(env, envId);
 			break;
@@ -67,7 +68,7 @@ public class CommandEnvironment extends CommandBase {
 			if(!envManager.doesEnvExists(envId)) throw new CommandException(envId+" doesn't exist");
 			env = envManager.getEnv(envId);
 			for(int i = 2; i < args.length; i ++) {
-				EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(args[i]);
+				EntityPlayerMP player = getPlayer(server, sender, args[i]);
 				if(player == null) throw new CommandException("No such player '"+args[i]+"'");
 				env.newActor(new Human(env, player));
 			}
@@ -78,19 +79,42 @@ public class CommandEnvironment extends CommandBase {
 		}
 	}
 	
-	private Environment createEnvironment(String name) throws CommandException {
+	private Environment createEnvironment(String envString) throws CommandException {
 		try {
-			Class<?> clazz = Class.forName("edu.usc.thevillagers.serversideagent.env.Environment"+name);
-			Environment env = (Environment) clazz.newInstance();
+			int parStart = envString.indexOf('[');
+			String envClassName;
+			float[] pars;
+			if(parStart >= 0) {
+				envClassName = envString.substring(0, parStart);
+				String[] parsStrs = envString.substring(parStart+1, envString.indexOf(']')).split(",");
+				pars = new float[parsStrs.length];
+				for(int i = 0; i < parsStrs.length; i++)
+					pars[i] = Float.parseFloat(parsStrs[i]);
+			} else {
+				envClassName = envString;
+				pars = new float[] {};
+			}
+			Class<?> envClass = envManager.findEnvClass(envClassName);
+			Environment env = (Environment) envClass.newInstance();
+			env.readPars(pars);
 			return env;
 			
 		} catch (Exception e) {
-			throw new CommandException("Env "+name+" not found ("+e+")", e);
+			throw new CommandException("Env "+envString+" not found ("+e+")", e);
 		}
 	}
 	
 	@Override
 	public int getRequiredPermissionLevel() {
 		return 2;
+	}
+	
+	@Override
+	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args,
+			BlockPos targetPos) {
+		if(args.length <= 1) return getListOfStringsMatchingLastWord(args, "add", "remove", "player");
+		if(args.length <= 2) return getListOfStringsMatchingLastWord(args, envManager.getEnvIds());
+		if(args[0].equals("player")) return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+		return getListOfStringsMatchingLastWord(args);
 	}
 }

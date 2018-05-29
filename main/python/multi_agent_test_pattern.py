@@ -6,13 +6,17 @@ N = 5
 if len(sys.argv) > 1:
     N = int(sys.argv[1])
 
-dummy = MinecraftEnv('Territory')
+dummy = MinecraftEnv('Pattern[16,4,20]')
 dummy.init_spaces()
+dummy.reset()
+dummy.step_act(dummy.action_space.sample())
 dummy.close()
 
 envs = [MinecraftEnv(dummy.env_type, dummy.env_id) for _ in range(N)]
 for env in envs:
+    env.sok.settimeout(60)
     env.init_spaces()
+    env.sok.settimeout(5)
 
 while True:
     for env in envs:
