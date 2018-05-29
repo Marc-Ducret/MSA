@@ -16,6 +16,7 @@ import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -120,12 +121,20 @@ public class EnvironmentPattern extends Environment {
 	
 	private void generateTree() {
 		BlockPos ref = getOrigin();
-		int x = world.rand.nextInt(2 * size - 1) - size + 1;
-		int z = world.rand.nextInt(2 * size - 1) - size + 1;
-		BlockPos treePos = ref.add(x, 0, z);
+		BlockPos treePos = null;
+		for(int i = 0; i < 100; i++) {
+			int x = world.rand.nextInt(2 * size - 1) - size + 1;
+			int z = world.rand.nextInt(2 * size - 1) - size + 1;
+			BlockPos pos = ref.add(x, 0, z);
+			if(world.getBlockState(pos).getBlock() == Blocks.AIR && 
+					world.getEntitiesWithinAABB(EntityPlayer.class, new AxisAlignedBB(pos)).isEmpty()) {
+				treePos = pos;
+				break;
+			}
+		}
+		if(treePos == null) return;
 		for(int i = 0; i < HEIGHT; i++) {
-			if(world.getBlockState(treePos).getBlock() == Blocks.AIR)
-				world.setBlockState(treePos, BLOCK.getDefaultState().withProperty(BlockColored.COLOR, TREE));
+			world.setBlockState(treePos, BLOCK.getDefaultState().withProperty(BlockColored.COLOR, TREE));
 			treePos = treePos.up();
 		}
 	}
@@ -246,6 +255,7 @@ public class EnvironmentPattern extends Environment {
 				p = p.up();
 			}
 			event.getPlayer().inventory.addItemStackToInventory(new ItemStack(BLOCK, 5));
+			generateTree();
 		}
 	}
 }
