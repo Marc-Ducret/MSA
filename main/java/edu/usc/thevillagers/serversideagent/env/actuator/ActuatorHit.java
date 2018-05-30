@@ -1,6 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env.actuator;
 
 import edu.usc.thevillagers.serversideagent.HighLevelAction;
+import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.HighLevelAction.Type;
 import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.recording.ActionListener;
@@ -27,7 +28,7 @@ public class ActuatorHit extends Actuator {
 		World world = actor.entity.world;
 		Vec3d from = actor.entity.getPositionVector().addVector(0, actor.entity.getEyeHeight(), 0);
 		Vec3d to = from.add(actor.entity.getLookVec().scale(REACH));
-		RayTraceResult result = world.rayTraceBlocks(from, to);
+		RayTraceResult result = ServerSideAgentMod.rayTrace(world, from, to, true, actor.entity);
 		if(result == null) return;
 		switch(result.typeOfHit) {
 		case BLOCK:
@@ -38,7 +39,7 @@ public class ActuatorHit extends Actuator {
 					-1, result.getBlockPos(), result.sideHit, result.hitVec);
 			break;
 			
-		case ENTITY: // TODO make this case possible
+		case ENTITY: // TODO test
 			actor.actionState.action = new HighLevelAction(
 					HighLevelAction.Type.HIT, 
 					HighLevelAction.Phase.START, actor.entity.getEntityId(), 
