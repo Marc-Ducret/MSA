@@ -1,6 +1,8 @@
 package edu.usc.thevillagers.serversideagent.env.sensor;
 
+import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.agent.Actor;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -10,8 +12,13 @@ public abstract class SensorRaytrace extends Sensor {
 	public final int hRes, vRes, channels;
 	public final float fov, focal, ratio;
 	public final float dist;
-
+	public final boolean hitEntitites;
+	
 	public SensorRaytrace(int hRes, int vRes, int channels, float fov, float ratio) {
+		this(hRes, vRes, channels, fov, ratio, false);
+	}
+
+	public SensorRaytrace(int hRes, int vRes, int channels, float fov, float ratio, boolean hitEntities) {
 		super(hRes * vRes * channels);
 		this.hRes = hRes;
 		this.vRes = vRes;
@@ -20,14 +27,15 @@ public abstract class SensorRaytrace extends Sensor {
 		this.focal = 1 / (2 * (float) Math.sin(Math.toRadians(fov / 2)));
 		this.ratio = ratio;
 		this.dist = focal * hRes;
+		this.hitEntitites = hitEntities;
 	}
 
 	@Override
 	public void sense(Actor actor) {
-		sense(actor.entity.world, actor.entity.getPositionEyes(1), actor.entity.rotationYaw, actor.entity.rotationPitch);
+		sense(actor.entity.world, actor.entity.getPositionEyes(1), actor.entity.rotationYaw, actor.entity.rotationPitch, actor.entity);
 	}
 	
-	public void sense(World world, Vec3d from, float yaw, float pitch) {
+	public void sense(World world, Vec3d from, float yaw, float pitch, Entity viewer) {
 		float[] buffer = new float[channels];
 		for(int v = 0; v < vRes; v++) {
 			for(int h = 0; h < hRes; h++) {
@@ -37,15 +45,15 @@ public abstract class SensorRaytrace extends Sensor {
 						focal).normalize();
 				dir = dir.rotatePitch((float) Math.toRadians(-pitch))
 						 .rotateYaw((float) Math.toRadians(-yaw));
-				raytrace(world, from, dir, buffer);
+				raytrace(world, from, dir, viewer, buffer);
 				for(int c = 0; c < channels; c++)
 					values[(v * hRes + h) * channels + c] = buffer[c];
 			}
 		}
 	}
 	
-	private void raytrace(World world, Vec3d from, Vec3d dir, float[] result) {
-		RayTraceResult res = world.rayTraceBlocks(from, from.add(dir.scale(dist)));
+	private void raytrace(World world, Vec3d from, Vec3d dir, Entity viewer, float[] result) {
+		RayTraceResult res = ServerSideAgentMod.rayTrace(world, from, from.add(dir.scale(dist)), hitEntitites, viewer);
 		encode(world, from, dir, res, result);
 	}
 	

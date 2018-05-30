@@ -2,6 +2,10 @@ package edu.usc.thevillagers.serversideagent;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.List;
+
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 
 import edu.usc.thevillagers.serversideagent.command.CommandCompile;
 import edu.usc.thevillagers.serversideagent.command.CommandEnvironment;
@@ -12,7 +16,14 @@ import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
 import edu.usc.thevillagers.serversideagent.proxy.Proxy;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import edu.usc.thevillagers.serversideagent.request.RequestManager;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.EntitySelectors;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.RayTraceResult.Type;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.DimensionType;
+import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -89,4 +100,37 @@ public class ServerSideAgentMod {
 		} catch (Exception e) {
 		}
     }
+    
+    public static RayTraceResult rayTrace(World world, Vec3d from, Vec3d to) {
+    	return rayTrace(world, from, to, false);
+    }
+    
+	public static RayTraceResult rayTrace(World world, Vec3d from, Vec3d to, boolean hitEntitites) {
+    	return rayTrace(world, from, to, hitEntitites, null);
+    }
+	
+	public static RayTraceResult rayTrace(World world, Vec3d from, Vec3d to, boolean hitEntitites, Entity viewer) {
+		Vec3d diff = to.subtract(from);
+		RayTraceResult closest = world.rayTraceBlocks(from, to);
+		if(hitEntitites) {
+			AxisAlignedBB bounds = viewer == null ? new AxisAlignedBB(from.x, from.y, from.z, from.x, from.y, from.z) : viewer.getEntityBoundingBox();
+			bounds = bounds.expand(diff.x, diff.y, diff.z).grow(1);
+			List<Entity> entities = world.getEntitiesInAABBexcluding(viewer, bounds, Predicates.and(EntitySelectors.NOT_SPECTATING, new Predicate<Entity>() {
+				@Override
+				public boolean apply(Entity e) {
+					return e != null && e.canBeCollidedWith();
+				}
+			}));
+			for(Entity e : entities) {
+				RayTraceResult hit = e.getEntityBoundingBox().grow(e.getCollisionBorderSize()).calculateIntercept(from, to);
+				if(hit != null &&
+						(closest == null || hit.hitVec.squareDistanceTo(from) < closest.hitVec.squareDistanceTo(from))) {
+					hit.typeOfHit = Type.ENTITY;
+					hit.entityHit = e;
+					closest = hit;
+				}
+			}
+		}
+        return closest;
+	}
 }

@@ -284,10 +284,10 @@ public class GuiReplay extends GuiScreen {
 	}
 	
 	private void drawDebugVision() {
-		int res = 24;
+		int res = 48;
 		float fov = 70;
 		float ratio = (float) width / height;
-		SensorRaytrace depthSensor = new SensorRaytrace(res, (int) (res / ratio), 1, fov, ratio) {
+		SensorRaytrace depthSensor = new SensorRaytrace(res, (int) (res / ratio), 1, fov, ratio, true) {
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
@@ -295,17 +295,29 @@ public class GuiReplay extends GuiScreen {
 					result[0] = 0;
 					return;
 				}
-				IBlockState state = world.getBlockState(res.getBlockPos());
-				float brightness = 1 - (float) (res.hitVec.distanceTo(from) / dist);
-				int color = state.getMapColor(world, res.getBlockPos()).colorValue;
-				int r = (int) (brightness * ((color >>  0) & 0xFF));
-				int g = (int) (brightness * ((color >>  8) & 0xFF));
-				int b = (int) (brightness * ((color >> 16) & 0xFF));
-				result[0] = (b << 16) | (g << 8) | (r << 0);
+				switch(res.typeOfHit) {
+				case BLOCK:
+					IBlockState state = world.getBlockState(res.getBlockPos());
+					float brightness = 1 - (float) (res.hitVec.distanceTo(from) / dist);
+					int color = state.getMapColor(world, res.getBlockPos()).colorValue;
+					int r = (int) (brightness * ((color >>  0) & 0xFF));
+					int g = (int) (brightness * ((color >>  8) & 0xFF));
+					int b = (int) (brightness * ((color >> 16) & 0xFF));
+					result[0] = (b << 16) | (g << 8) | (r << 0);
+					break;
+					
+				case ENTITY:
+					result[0] = 0x8020A0;
+					break;
+					
+				default:
+					result[0] = 0;
+					break;
+				}
 			}
 		};
 //	long timeStart = System.currentTimeMillis();
-		depthSensor.sense(record.world, record.player.getPositionEyes(1), record.player.rotationYaw, record.player.rotationPitch);
+		depthSensor.sense(record.world, record.player.getPositionEyes(1), record.player.rotationYaw, record.player.rotationPitch, followedEntity == null ? record.player : followedEntity);
 //	long elapsed = System.currentTimeMillis() - timeStart;
 //	System.out.println(elapsed+" ms for "+depthSensor.dim+" raytrace ("+(elapsed * 1000 / depthSensor.dim)+" us per ray)");
 //	System.out.println("max dist is: "+(depthSensor.d*depthSensor.hRes));
