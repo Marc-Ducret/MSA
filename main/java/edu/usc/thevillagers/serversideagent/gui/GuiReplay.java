@@ -287,19 +287,21 @@ public class GuiReplay extends GuiScreen {
 		int res = 24;
 		float fov = 70;
 		float ratio = (float) width / height;
-		SensorRaytrace depthSensor = new SensorRaytrace(res, (int) (res / ratio), fov, ratio) {
+		SensorRaytrace depthSensor = new SensorRaytrace(res, (int) (res / ratio), 1, fov, ratio) {
 			
 			@Override
-			protected float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res) {
-				if(res == null)
-					return 0;
+			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
+				if(res == null) {
+					result[0] = 0;
+					return;
+				}
 				IBlockState state = world.getBlockState(res.getBlockPos());
 				float brightness = 1 - (float) (res.hitVec.distanceTo(from) / dist);
 				int color = state.getMapColor(world, res.getBlockPos()).colorValue;
 				int r = (int) (brightness * ((color >>  0) & 0xFF));
 				int g = (int) (brightness * ((color >>  8) & 0xFF));
 				int b = (int) (brightness * ((color >> 16) & 0xFF));
-				return (b << 16) | (g << 8) | (r << 0);
+				result[0] = (b << 16) | (g << 8) | (r << 0);
 			}
 		};
 //	long timeStart = System.currentTimeMillis();

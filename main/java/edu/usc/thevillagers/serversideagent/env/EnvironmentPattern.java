@@ -64,16 +64,19 @@ public class EnvironmentPattern extends Environment {
 	
 	@Override
 	protected void buildSensors() {
-		sensors.add(new SensorRaytrace(24, 12, 70, 2) {
+		sensors.add(new SensorRaytrace(24, 12, 1, 70, 2) {
 			
 			@Override
-			protected float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res) {
-				if(res == null) return -1;
+			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
+				if(res == null) {
+					result[0] = -1F;
+					return;
+				}
 				IBlockState state = world.getBlockState(res.getBlockPos());
 				if(state.getBlock() == BLOCK) {
-					return state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F; //TODO encoding
+					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F; //TODO encoding
 				} else {
-					return -1F;
+					result[0] = -1F;
 				}
 			}
 		});

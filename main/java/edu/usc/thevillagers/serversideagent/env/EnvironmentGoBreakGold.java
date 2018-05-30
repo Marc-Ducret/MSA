@@ -28,16 +28,19 @@ public class EnvironmentGoBreakGold extends Environment {
 	
 	@Override
 	protected void buildSensors() {
-		sensors.add(new SensorRaytrace(24, 12, 70, 2) {
+		sensors.add(new SensorRaytrace(24, 12, 1, 70, 2) {
 			
 			@Override
-			protected float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res) {
-				if(res == null) return -1;
+			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
+				if(res == null) {
+					result[0] = -1;
+					return;
+				}
 				IBlockState state = world.getBlockState(res.getBlockPos());
 				if(state.getBlock() == Blocks.STAINED_GLASS) {
-					return state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F;
+					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1 : 0;
 				} else {
-					return -1F;
+					result[0] = -1;
 				}
 			}
 		});

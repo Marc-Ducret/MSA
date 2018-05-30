@@ -7,14 +7,15 @@ import net.minecraft.world.World;
 
 public abstract class SensorRaytrace extends Sensor {
 	
-	public final int hRes, vRes;
+	public final int hRes, vRes, channels;
 	public final float fov, focal, ratio;
 	public final float dist;
 
-	public SensorRaytrace(int hRes, int vRes, float fov, float ratio) {
-		super(hRes * vRes);
+	public SensorRaytrace(int hRes, int vRes, int channels, float fov, float ratio) {
+		super(hRes * vRes * channels);
 		this.hRes = hRes;
 		this.vRes = vRes;
+		this.channels = channels;
 		this.fov = fov;
 		this.focal = 1 / (2 * (float) Math.sin(Math.toRadians(fov / 2)));
 		this.ratio = ratio;
@@ -27,6 +28,7 @@ public abstract class SensorRaytrace extends Sensor {
 	}
 	
 	public void sense(World world, Vec3d from, float yaw, float pitch) {
+		float[] buffer = new float[channels];
 		for(int v = 0; v < vRes; v++) {
 			for(int h = 0; h < hRes; h++) {
 				Vec3d dir = new Vec3d(
@@ -35,15 +37,17 @@ public abstract class SensorRaytrace extends Sensor {
 						focal).normalize();
 				dir = dir.rotatePitch((float) Math.toRadians(-pitch))
 						 .rotateYaw((float) Math.toRadians(-yaw));
-				values[v * hRes + h] = raytrace(world, from, dir);
+				raytrace(world, from, dir, buffer);
+				for(int c = 0; c < channels; c++)
+					values[(v * hRes + h) * channels + c] = buffer[c];
 			}
 		}
 	}
 	
-	private float raytrace(World world, Vec3d from, Vec3d dir) {
+	private void raytrace(World world, Vec3d from, Vec3d dir, float[] result) {
 		RayTraceResult res = world.rayTraceBlocks(from, from.add(dir.scale(dist)));
-		return encode(world, from, dir, res);
+		encode(world, from, dir, res, result);
 	}
 	
-	protected abstract float encode(World world, Vec3d from, Vec3d dir, RayTraceResult res);
+	protected abstract void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result);
 }
