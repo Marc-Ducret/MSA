@@ -2,7 +2,9 @@ package edu.usc.thevillagers.serversideagent.recording.event;
 
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordWorker;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 
 /**
@@ -42,5 +44,10 @@ public class RecordEventTileEntityUpdate extends RecordEvent {
 							compound.getInteger("Y"), 
 							compound.getInteger("Z"));
 		data = compound.getCompoundTag("Data");
+	}
+	
+	@Override
+	public boolean isWithinBounds(WorldRecordWorker record, AxisAlignedBB bounds) {
+		return true;
 	}
 }

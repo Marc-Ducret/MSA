@@ -1,10 +1,13 @@
 package edu.usc.thevillagers.serversideagent.recording.event;
 
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordWorker;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 
 /**
  * Record of the change of {@link IBlockState} at a specific {@link BlockPos}.
@@ -40,5 +43,10 @@ public class RecordEventBlockChange extends RecordEvent {
 	public void read(NBTTagCompound compound) {
 		pos = new BlockPos(compound.getInteger("X"), compound.getInteger("Y"), compound.getInteger("Z"));
 		state = Block.getStateById(compound.getInteger("State"));
+	}
+
+	@Override
+	public boolean isWithinBounds(WorldRecordWorker record, AxisAlignedBB bounds) {
+		return bounds.contains(new Vec3d(pos).addVector(.5, .5, .5));
 	}
 }

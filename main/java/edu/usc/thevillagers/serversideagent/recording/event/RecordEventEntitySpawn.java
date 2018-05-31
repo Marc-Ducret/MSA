@@ -4,8 +4,10 @@ import com.mojang.authlib.GameProfile;
 
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordWorker;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.registries.GameData;
 
 /**
@@ -50,5 +52,10 @@ public class RecordEventEntitySpawn extends RecordEvent {
 		id = compound.getInteger("Id");
 		type = compound.getInteger("Type");
 		data = compound.getCompoundTag("Data");
+	}
+
+	@Override
+	public boolean isWithinBounds(WorldRecordWorker record, AxisAlignedBB bounds) {
+		return true;
 	}
 }

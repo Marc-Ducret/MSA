@@ -3,8 +3,11 @@ package edu.usc.thevillagers.serversideagent.recording.event;
 import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import edu.usc.thevillagers.serversideagent.recording.ActionListener;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordWorker;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 
 /**
  * Record of an {@link HighLevelAction}.
@@ -36,5 +39,12 @@ public class RecordEventAction extends RecordEvent {
 	@Override
 	public void read(NBTTagCompound compound) {
 		action = HighLevelAction.fromNBT(compound.getCompoundTag("Action"));
+	}
+
+	@Override
+	public boolean isWithinBounds(WorldRecordWorker record, AxisAlignedBB bounds) {
+		return record.entitiesData.containsKey(action.actorId) && 
+				(action.targetEntityId < 0 || record.entitiesData.containsKey(action.targetEntityId)) &&
+				(action.targetBlockPos == null || bounds.contains(new Vec3d(action.targetBlockPos).addVector(.5, .5, .5)));
 	}
 }

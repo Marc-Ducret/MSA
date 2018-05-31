@@ -34,11 +34,13 @@ import net.minecraft.world.World;
 public class WorldRecordRecorder extends WorldRecordWorker {
 	
 	private List<RecordEvent> currentTickEvents;
+	private AxisAlignedBB bounds;
 	
 	public WorldRecordRecorder(World world, BlockPos from, BlockPos to) {
 		this.world = world;
 		this.from = from;
 		this.to = to;
+		this.bounds = new AxisAlignedBB(from, to);
 		String name = String.format("%1$ty_%1$tm_%1$td-%1$tH_%1$tM_%1$tS", Calendar.getInstance());
 		this.saveFolder = new File("tmp/records/"+name);
 	}
@@ -81,7 +83,7 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 	}
 	
 	public void recordEvent(RecordEvent event) {
-		if(currentTickEvents != null)
+		if(currentTickEvents != null && event.isWithinBounds(this, bounds))
 			currentTickEvents.add(event);
 	}
 	
@@ -97,7 +99,7 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 	}
 	
 	public Map<Integer, NBTTagCompound> computeEntitiesData(World world) {
-		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(from, to));
+		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, bounds);
 		Map<Integer, NBTTagCompound> data = new HashMap<>();
 		for(Entity e : entities)
 			data.put(e.getEntityId(), entityNBT(e));

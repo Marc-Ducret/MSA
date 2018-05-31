@@ -2,7 +2,9 @@ package edu.usc.thevillagers.serversideagent.recording.event;
 
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordRecorder;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordWorker;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.AxisAlignedBB;
 
 /**
  * An event that can be recorded by {@link WorldRecordRecorder} and replayed by {@link WorldRecordReplayer}
@@ -12,6 +14,7 @@ public abstract class RecordEvent {
 	public abstract void replay(WorldRecordReplayer wr);
 	public abstract void write(NBTTagCompound compound);
 	public abstract void read(NBTTagCompound compound);
+	public abstract boolean isWithinBounds(WorldRecordWorker record, AxisAlignedBB bounds);
 	
 	private static final Class<?>[] classes = new Class<?>[] {
 		RecordEventBlockChange.class,
