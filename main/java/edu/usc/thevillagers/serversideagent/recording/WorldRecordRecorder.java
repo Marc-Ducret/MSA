@@ -99,7 +99,9 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 	}
 	
 	public Map<Integer, NBTTagCompound> computeEntitiesData(World world) {
-		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, bounds);
+		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, bounds, (e) ->
+			e != null && (!(e instanceof EntityPlayer) || !((EntityPlayer)e).isSpectator())
+		);
 		Map<Integer, NBTTagCompound> data = new HashMap<>();
 		for(Entity e : entities)
 			data.put(e.getEntityId(), entityNBT(e));

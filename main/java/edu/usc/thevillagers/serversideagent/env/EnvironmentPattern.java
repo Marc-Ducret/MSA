@@ -46,7 +46,7 @@ public class EnvironmentPattern extends Environment {
 	private static final EnumDyeColor[] TEAMS = 
 		{EnumDyeColor.LIGHT_BLUE, EnumDyeColor.YELLOW, EnumDyeColor.RED, EnumDyeColor.PURPLE, EnumDyeColor.ORANGE, EnumDyeColor.BROWN};
 	
-	private static final Block BLOCK = Blocks.CONCRETE;
+	private static final Block BLOCK = Blocks.STAINED_GLASS;
 	
 	private int size;
 	private int teams;
@@ -172,9 +172,11 @@ public class EnvironmentPattern extends Environment {
 			if(((int)a.envData) == winner) {
 				a.reward = 10;
 				a.entity.sendMessage(new TextComponentString("You won!"));
+				a.entity.sendMessage(new TextComponentString("Time = "+time));
 			} else {
 				a.reward = -10;
 				a.entity.sendMessage(new TextComponentString("You lost!"));
+				a.entity.sendMessage(new TextComponentString("Time = "+time));
 			}
 		} else if(time >= 599) {
 			done = true;
@@ -259,7 +261,7 @@ public class EnvironmentPattern extends Environment {
 				world.setBlockState(p, Blocks.AIR.getDefaultState());
 				p = p.up();
 			}
-			event.getPlayer().inventory.addItemStackToInventory(new ItemStack(BLOCK, 5));
+			event.getPlayer().inventory.addItemStackToInventory(new ItemStack(BLOCK, 2));
 			generateTree();
 		}
 	}

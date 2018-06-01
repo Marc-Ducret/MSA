@@ -17,4 +17,6 @@ cp ../build.gradle .
 
 cmd /c mklink /d run\python ..\src\main\python
 
+echo "runClient { args '--username', username }" | Out-File build.gradle -append -encoding utf8
+
 cd src

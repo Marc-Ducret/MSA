@@ -17,4 +17,6 @@ cp ../build.gradle .
 
 ln -s ../src/main/python run/python
 
+echo "runClient { args '--username', username }" >> build.gradle
+
 cd src
