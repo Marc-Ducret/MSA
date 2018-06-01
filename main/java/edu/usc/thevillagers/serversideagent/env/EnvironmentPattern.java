@@ -31,12 +31,21 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class EnvironmentPattern extends Environment {
 	
-	private static final String[] PATTERN = {
+	private static final String[][] PATTERNS = {
+		{
+			"#####",
+			"#...#",
+			"#...#",
+			"#...#",
+			"#####",
+		},
+		{
 			"..#..",
 			"..#..",
 			"#####",
 			"..#..",
 			"..#..",
+		}
 	};
 	
 	private static final int HEIGHT = 4;
@@ -51,6 +60,7 @@ public class EnvironmentPattern extends Environment {
 	private int size;
 	private int teams;
 	private int trees;
+	private String[] pattern;
 	
 	private int winner = -1;
 	
@@ -59,6 +69,7 @@ public class EnvironmentPattern extends Environment {
 		size = getRoundPar(pars, 0, 10);
 		teams = getRoundPar(pars, 1, 1);
 		trees = getRoundPar(pars, 2, 0);
+		pattern = PATTERNS[getRoundPar(pars, 3, 0)];
 		allocator = new AllocatorEmptySpace(new BlockPos(-size-1, -1, -size-1), new BlockPos(size+1, HEIGHT, size+1));
 	}
 	
@@ -214,10 +225,10 @@ public class EnvironmentPattern extends Environment {
 	}
 	
 	private boolean checkPattern(BlockPos start, EnumDyeColor color) {
-		int patternSize = PATTERN.length;
+		int patternSize = pattern.length;
 		for(int z = 0; z < patternSize; z++)
 			for(int x = 0; x < patternSize; x++)
-				if(PATTERN[z].charAt(x) == '#') {
+				if(pattern[z].charAt(x) == '#') {
 					IBlockState state = world.getBlockState(start.add(x, 0, z));
 					if(state.getBlock() != BLOCK || state.getValue(BlockColored.COLOR) != color)
 						return false;
@@ -229,12 +240,13 @@ public class EnvironmentPattern extends Environment {
 	public void blockPlaced(BlockEvent.PlaceEvent event) {
 		Actor actor = getActor(event.getPlayer());
 		if(actor == null) return;
-		if(event.getPos().getY() != getOrigin().getY()) event.setCanceled(true);
-		else {
+		if(event.getPos().getY() != getOrigin().getY()) {
+			event.setCanceled(true);
+		} else {
 			EnumDyeColor teamColor = TEAMS[(int)actor.envData];
 			world.setBlockState(event.getPos(), 
 					BLOCK.getDefaultState().withProperty(BlockColored.COLOR, teamColor));
-			int patternSize = PATTERN.length;
+			int patternSize = pattern.length;
 			for(int patternZ = 0; patternZ < patternSize; patternZ++) {
 				for(int patternX = 0; patternX < patternSize; patternX++) {
 					if(checkPattern(event.getPos().add(-patternX, 0, -patternZ), teamColor)) {
