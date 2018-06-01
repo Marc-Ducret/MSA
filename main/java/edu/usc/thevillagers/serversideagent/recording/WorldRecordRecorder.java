@@ -100,7 +100,7 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 	
 	public Map<Integer, NBTTagCompound> computeEntitiesData(World world) {
 		List<Entity> entities = world.<Entity>getEntitiesWithinAABB(Entity.class, bounds, (e) ->
-			e != null && (!(e instanceof EntityPlayer) || !((EntityPlayer)e).isSpectator())
+			e != null && (!(e instanceof EntityPlayer) || !((EntityPlayer)e).isSpectator() || ((EntityPlayer)e).isCreative())
 		);
 		Map<Integer, NBTTagCompound> data = new HashMap<>();
 		for(Entity e : entities)
