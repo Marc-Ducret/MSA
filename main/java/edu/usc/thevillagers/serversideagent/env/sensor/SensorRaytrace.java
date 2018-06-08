@@ -54,7 +54,11 @@ public abstract class SensorRaytrace extends Sensor {
 	
 	private void raytrace(World world, Vec3d from, Vec3d dir, Entity viewer, float[] result) {
 		RayTraceResult res = ServerSideAgentMod.rayTrace(world, from, from.add(dir.scale(dist)), hitEntitites, viewer);
+		preView(viewer);
 		encode(world, from, dir, res, result);
+	}
+	
+	protected void preView(Entity viewer) {
 	}
 	
 	protected abstract void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result);

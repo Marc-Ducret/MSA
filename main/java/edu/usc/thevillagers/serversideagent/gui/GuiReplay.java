@@ -13,6 +13,7 @@ import org.lwjgl.opengl.GL11;
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.env.sensor.SensorRaytrace;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayerClient;
+import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -28,12 +29,15 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.client.config.GuiSlider;
+
+import static edu.usc.thevillagers.serversideagent.env.EnvironmentPattern.*;
 
 /**
  * Display for {@link WorldRecordReplayerClient}
@@ -287,48 +291,77 @@ public class GuiReplay extends GuiScreen {
 		int res = 48;
 		float fov = 70;
 		float ratio = (float) width / height;
-		SensorRaytrace depthSensor = new SensorRaytrace(res, (int) (res / ratio), 1, fov, ratio, true) {
+		SensorRaytrace sensor = new SensorRaytrace(res, (int) (res / ratio), 4, fov, ratio, true) {
+			
+			EnumDyeColor teamColor;
+			
+			@Override
+			protected void preView(Entity viewer) {
+				super.preView(viewer);
+				teamColor = getEntityArmorColor(viewer);
+			}
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-				if(res == null) {
-					result[0] = 0;
-					return;
+				// Channels: TEAM, BLOCK, ENTITY, DEPTH
+				if(res != null) {
+					switch(res.typeOfHit) {
+					case MISS:
+						break;
+						
+					case BLOCK:
+						IBlockState state = world.getBlockState(res.getBlockPos());
+						if(state.getBlock() != BLOCK) break;
+						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
+						if(blockColor == GROUND || blockColor == WALL || blockColor == TREE) {
+							result[0] = 0;
+							result[1] = blockColor == TREE ? -1 : +1;
+							result[2] = 0;
+						} else {
+							result[0] = blockColor == teamColor ? +1 : -1;
+							result[1] = 1;
+							result[2] = 0;
+						}
+						result[3] = (float) res.hitVec.distanceTo(from) / dist;
+						return;
+						
+					case ENTITY:
+						EnumDyeColor entityColor = getEntityArmorColor(res.entityHit);
+						result[0] = entityColor == teamColor ? +1 : -1;
+						result[1] = 0;
+						result[2] = 1;
+						result[3] = (float) res.hitVec.distanceTo(from) / dist;
+						return;
+					}
 				}
-				switch(res.typeOfHit) {
-				case BLOCK:
-					IBlockState state = world.getBlockState(res.getBlockPos());
-					float brightness = 1 - (float) (res.hitVec.distanceTo(from) / dist);
-					int color = state.getMapColor(world, res.getBlockPos()).colorValue;
-					int r = (int) (brightness * ((color >>  0) & 0xFF));
-					int g = (int) (brightness * ((color >>  8) & 0xFF));
-					int b = (int) (brightness * ((color >> 16) & 0xFF));
-					result[0] = (b << 16) | (g << 8) | (r << 0);
-					break;
-					
-				case ENTITY:
-					result[0] = 0x8020A0;
-					break;
-					
-				default:
-					result[0] = 0;
-					break;
-				}
+				result[0] = 0;
+				result[1] = 0;
+				result[2] = 0;
+				result[3] = 1;
+				return;
 			}
 		};
 //	long timeStart = System.currentTimeMillis();
-		depthSensor.sense(record.world, record.player.getPositionEyes(1), record.player.rotationYaw, record.player.rotationPitch, followedEntity == null ? record.player : followedEntity);
+		sensor.sense(record.world, record.player.getPositionEyes(1), record.player.rotationYaw, record.player.rotationPitch, followedEntity == null ? record.player : followedEntity);
 //	long elapsed = System.currentTimeMillis() - timeStart;
 //	System.out.println(elapsed+" ms for "+depthSensor.dim+" raytrace ("+(elapsed * 1000 / depthSensor.dim)+" us per ray)");
 //	System.out.println("max dist is: "+(depthSensor.d*depthSensor.hRes));
-		float rW = width / (float) depthSensor.hRes;
-		float rH = height / (float) depthSensor.vRes;
-		for(int v = 0; v < depthSensor.vRes; v++) {
-			for(int h = 0; h < depthSensor.hRes; h++) {
-				float val = depthSensor.values[v * depthSensor.hRes + h];
-				int d = (int) (val * 0xFF);
-				int color = (d << 16) | (d << 8) | d;
-				color = (int) val;
+		int channel = 0;
+		if(Keyboard.isKeyDown(Keyboard.KEY_1)) channel += 1;
+		if(Keyboard.isKeyDown(Keyboard.KEY_2)) channel += 2;
+		if(Keyboard.isKeyDown(Keyboard.KEY_3)) channel += 3;
+		if(Keyboard.isKeyDown(Keyboard.KEY_4)) channel += 4;
+		if(Keyboard.isKeyDown(Keyboard.KEY_5)) channel += 5;
+		channel = channel % sensor.channels;
+		float rW = width / (float) sensor.hRes;
+		float rH = height / (float) sensor.vRes;
+		for(int v = 0; v < sensor.vRes; v++) {
+			for(int h = 0; h < sensor.hRes; h++) {
+				float val = sensor.values[(v * sensor.hRes + h) * sensor.channels + channel];
+				int r = (0x7F + Math.round(0x80 * Math.max(0, +val)));
+				int g = 0x7F;
+				int b = (0x7F + Math.round(0x80 * Math.max(0, -val)));
+				int color = (r << 16) | (g << 8) | b;
 				color |= 0xFF000000;
 				drawRect((int) (h * rW), (int) (v * rH), (int) ((h+1) * rW), (int) ((v+1) * rH), color);
 			}

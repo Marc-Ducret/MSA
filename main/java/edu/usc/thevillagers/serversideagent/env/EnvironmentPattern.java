@@ -10,10 +10,12 @@ import edu.usc.thevillagers.serversideagent.env.sensor.SensorRaytrace;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -31,7 +33,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class EnvironmentPattern extends Environment {
 	
-	private static final String[][] PATTERNS = {
+	public static final String[][] PATTERNS = {
 		{
 			"#####",
 			"#...#",
@@ -48,14 +50,14 @@ public class EnvironmentPattern extends Environment {
 		}
 	};
 	
-	private static final int HEIGHT = 4;
-	private static final EnumDyeColor GROUND = EnumDyeColor.WHITE;
-	private static final EnumDyeColor WALL = EnumDyeColor.GRAY;
-	private static final EnumDyeColor TREE = EnumDyeColor.LIME;
-	private static final EnumDyeColor[] TEAMS = 
+	public static final int HEIGHT = 4;
+	public static final EnumDyeColor GROUND = EnumDyeColor.WHITE;
+	public static final EnumDyeColor WALL = EnumDyeColor.GRAY;
+	public static final EnumDyeColor TREE = EnumDyeColor.LIME;
+	public static final EnumDyeColor[] TEAMS = 
 		{EnumDyeColor.LIGHT_BLUE, EnumDyeColor.YELLOW, EnumDyeColor.RED, EnumDyeColor.PURPLE, EnumDyeColor.ORANGE, EnumDyeColor.BROWN};
 	
-	private static final Block BLOCK = Blocks.STAINED_GLASS;
+	public static final Block BLOCK = Blocks.STAINED_GLASS;
 	
 	private int size;
 	private int teams;
@@ -73,22 +75,72 @@ public class EnvironmentPattern extends Environment {
 		allocator = new AllocatorEmptySpace(new BlockPos(-size-1, -1, -size-1), new BlockPos(size+1, HEIGHT, size+1));
 	}
 	
+	public static EnumDyeColor getEntityArmorColor(Entity e) {
+		for(ItemStack itemStack : e.getArmorInventoryList()) {
+			Item item = itemStack.getItem();
+			if(item != null && item instanceof ItemArmor) {
+				ItemArmor armor = (ItemArmor) item;
+				int armorColor = armor.getColor(itemStack);
+				for(EnumDyeColor team : TEAMS) {
+					if(armorColor == (int) ServerSideAgentMod.getPrivateField(EnumDyeColor.class, "colorValue", team)) {
+						return team;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
 	@Override
 	protected void buildSensors() {
-		sensors.add(new SensorRaytrace(24, 12, 1, 70, 2) {
+		sensors.add(new SensorRaytrace(24, 12, 4, 70, 2) {
+			
+			EnumDyeColor teamColor;
+			
+			@Override
+			protected void preView(Entity viewer) {
+				super.preView(viewer);
+				teamColor = getEntityArmorColor(viewer);
+			}
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-				if(res == null) {
-					result[0] = -1F;
-					return;
+				// Channels: TEAM, BLOCK, ENTITY, DEPTH
+				if(teamColor == null) return;
+				if(res != null) {
+					switch(res.typeOfHit) {
+					case MISS:
+						break;
+						
+					case BLOCK:
+						IBlockState state = world.getBlockState(res.getBlockPos());
+						if(state.getBlock() == BLOCK) break;
+						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
+						if(blockColor == GROUND || blockColor == WALL || blockColor == TREE) {
+							result[0] = 0;
+							result[1] = 0;
+							result[2] = blockColor == TREE ? -1 : +1;
+						} else {
+							result[0] = blockColor == teamColor ? +1 : -1;
+							result[1] = 0;
+							result[2] = 1;
+						}
+						result[3] = (float) res.hitVec.distanceTo(from) / dist;
+						return;
+						
+					case ENTITY:
+						EnumDyeColor entityColor = getEntityArmorColor(res.entityHit);
+						result[0] = entityColor == teamColor ? +1 : -1;
+						result[1] = 0;
+						result[2] = 1;
+						result[3] = (float) res.hitVec.distanceTo(from) / dist;
+					}
 				}
-				IBlockState state = world.getBlockState(res.getBlockPos());
-				if(state.getBlock() == BLOCK) {
-					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F; //TODO encoding
-				} else {
-					result[0] = -1F;
-				}
+				result[0] = 0;
+				result[1] = 0;
+				result[2] = 0;
+				result[3] = 1;
+				return;
 			}
 		});
 	}

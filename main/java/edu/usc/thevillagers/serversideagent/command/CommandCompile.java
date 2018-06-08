@@ -51,16 +51,16 @@ public class CommandCompile extends CommandBase {
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if(args.length < 2) throw new WrongUsageException(getUsage(sender));
-		File record = null;
-		for(File file : new File("tmp/records/").listFiles()) {
-			if(file.getName().contains(args[0])) {
-				if(record != null) 
-					throw new WrongUsageException(file.getName()+" and "+record.getName() + " match " + args[0]);
-				record = file;
-			}
-		}
-		final WorldRecordReplayer replayer = new WorldRecordReplayer(record);
 		try {
+			File record = null;
+			for(File file : new File("tmp/records/").listFiles()) {
+				if(file.getName().contains(args[0])) {
+					if(record != null) 
+						throw new WrongUsageException(file.getName()+" and "+record.getName() + " match " + args[0]);
+					record = file;
+				}
+			}
+			final WorldRecordReplayer replayer = new WorldRecordReplayer(record);
 			Class<?> envClass = envManager.findEnvClass(args[1]);
 			new Thread(() -> {
 				try {
@@ -70,6 +70,7 @@ public class CommandCompile extends CommandBase {
 					});
 				} catch (Exception e) {
 					server.addScheduledTask(() -> {
+						e.printStackTrace();
 						sender.sendMessage(new TextComponentString("An error occured: "+e.toString()));
 					});
 				}

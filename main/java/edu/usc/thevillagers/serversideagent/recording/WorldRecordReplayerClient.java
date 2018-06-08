@@ -46,7 +46,7 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 	
 	@Override
 	protected World createWorld() {
-		WorldSettings settings = new WorldSettings(0, GameType.NOT_SET, false, false, WorldType.FLAT);
+		WorldSettings settings = new WorldSettings(0, GameType.SPECTATOR, false, false, WorldType.FLAT);
 		GameProfile profile = new GameProfile(UUID.randomUUID(), "dummy");
 		Minecraft mc = Minecraft.getMinecraft();
 		NetHandlerPlayClient nethandler = new NetHandlerPlayClient(mc, mc.currentScreen, new NetworkManager(EnumPacketDirection.CLIENTBOUND), profile);
@@ -65,6 +65,11 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 				@Override
 				public float getCooledAttackStrength(float adjustTicks) {
 					return 1F;
+				}
+				
+				@Override
+				public boolean isSpectator() {
+					return true;
 				}
 			};
 			player.setGameType(GameType.SPECTATOR);
