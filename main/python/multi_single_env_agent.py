@@ -18,7 +18,7 @@ def main():
     env_id = alloc_env(args.env_type)
     command = "%s --env_id %s %s" % (args.partial_command, env_id, args.env_type)
 
-    processes = [subprocess.Popen(command) for _ in range(args.count)]
+    processes = [subprocess.Popen(command.split()) for _ in range(args.count)]
 
     for p in processes:
         p.wait()

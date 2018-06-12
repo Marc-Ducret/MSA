@@ -91,20 +91,21 @@ public class RequestManager {
 	
 	private void processRequest(Request req) {
 		try {
-			Environment env;
+			Environment env = null;
 			if(req.envId != null) {
 				env = envManager.getEnv(req.envId);
-				if(env == null)
-					throw new Exception("No such env "+req.envId);
-				if(env.getClass() != req.envClass)
+				if(env == null) System.out.println("Env "+req.envId+" not found, will try to allocate");
+				if(env != null && env.getClass() != req.envClass)
 					throw new Exception("Missmatch event types: "+env.getClass()+" | "+req.envClass);
-			} else {
+			}
+			if(env == null) {
 				env = envManager.createEnv(req.envClass);
 				env.readPars(req.pars);
 				WorldServer world = FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0];
 				if(!env.tryAllocate(world)) throw new Exception("Cannot allocate "+req.envClass);
 				env.init(world);
-				envManager.registerEnv(env);
+				if(req.envId != null) envManager.registerEnv(env, req.envId);
+				else envManager.registerEnv(env);
 			}
 			String name = env.id;
 			if(name.length() > 16) name = name.substring(0, 16);

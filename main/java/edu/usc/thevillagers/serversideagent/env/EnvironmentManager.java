@@ -20,7 +20,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 public class EnvironmentManager {
 	
 	private Map<String, Environment> envs = new HashMap<>();
-	private ExecutorService executor = Executors.newFixedThreadPool(16);
+	private ExecutorService executor = Executors.newFixedThreadPool(1);
 	
 	public EnvironmentManager() {
 		MinecraftForge.EVENT_BUS.register(this);

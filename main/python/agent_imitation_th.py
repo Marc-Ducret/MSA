@@ -17,10 +17,10 @@ import copy
 from rl.utils import AddBias
 from rl.distributions import FixedNormal
 
-def size(dim, ratio):
-    w = int(np.sqrt(dim * ratio))
+def size(dim, ratio, channels):
+    w = int(np.sqrt(dim * ratio / channels))
     h = w // ratio
-    return w, h
+    return w, h, channels
 
 class Flatten(nn.Module):
     def forward(self, x):
@@ -41,7 +41,7 @@ class DiagGaussian(nn.Module):
         return FixedNormal(x, action_logstd.exp())
 
 class Policy(nn.Module):
-    def __init__(self, obs_dim_w, obs_dim_h, act_dim):
+    def __init__(self, obs_dim_w, obs_dim_h, obs_dim_c, act_dim):
         super(Policy, self).__init__()
         def init_(m):
             if hasattr(m, 'weight'):
@@ -50,7 +50,7 @@ class Policy(nn.Module):
         C = 8
         self.vision = nn.Sequential(
             nn.ReflectionPad2d(3),
-            init_(nn.Conv2d(1, C, 7, groups=1, bias=False)),
+            init_(nn.Conv2d(obs_dim_c, C, 7, groups=1, bias=False)),
             nn.Tanh(),
             nn.ReflectionPad2d(2),
             init_(nn.Conv2d(C, C, 5, groups=C, bias=False)),
@@ -93,7 +93,7 @@ class Policy(nn.Module):
 
     def _adapt_inputs(inputs):
         if len(inputs.shape) < 4:
-            inputs = inputs.view(-1, 12, 24, 1).permute(0, 3, 1, 2)
+            inputs = inputs.view(-1, 12, 24, 4).permute(0, 3, 1, 2)
         return inputs
 
     def act(self, inputs, states=None, masks=None, deterministic=False):
@@ -168,7 +168,7 @@ def train(obs_dataset, act_dataset, policy):
             print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
             if e % 1 == 0:
                 th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
-                rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy)))
+                #rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy)))
         trace_loss = go.Scatter(x=list(range(epochs+1)), y=losses)
         trace_rew  = go.Scatter(x=list(range(epochs)), y=[f.result() for f in rewards_futures])
         py.iplot([trace_rew], filename='reward')
@@ -181,33 +181,37 @@ def main():
     n = obs_dataset.shape[0] * obs_dataset.shape[1]
     obs_dim = obs_dataset.shape[2]
     act_dim = act_dataset.shape[2]
-    w, h = size(obs_dim, 2)
+    w, h, c = size(obs_dim, 2, 4)
+    print('w = %i, h = %i, c = %i' % (w, h, c))
     train(
-        th.from_numpy(obs_dataset.reshape((n, h, w, 1)).transpose(0, 3, 1, 2)).cuda(),
+        th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),
         th.from_numpy(act_dataset.reshape((n, act_dim))).cuda(),
-        Policy(w, h, act_dim)
+        Policy(w, h, c, act_dim)
     )
 
-"""def play(args, env):
-    w, h = size(env.observation_dim, 2)
-    obs_in, act_in, act_out = policy_cnn(w, h, env.action_dim)
-    saver = tf.train.Saver()
-    with tf.Session() as sess:
-        saver.restore(sess, 'tmp/models/imitation_epoch_%i.ckpt' % args.epoch)
-        def act(obs):
-            action = sess.run(act_out, feed_dict={obs_in: obs.reshape((1, h, w, 1))})
-            return action
-        eps_rew = deque(maxlen=10000)
+def play(args, env):
+    epoch = 5
+    w, h, c = size(env.observation_dim, 2, 4)
+    policy = th.load('tmp/models/imitation_th_epoch_%i.pt' % epoch)
+    n_eps = 50
+    def act(obs):
+        with th.no_grad():
+            obs_th = th.from_numpy(obs.reshape((1, h, w, c)).transpose(0, 3, 1, 2)).float().cuda()
+            _, action, _, _ = policy.act(obs_th, deterministic=True)
+            action = action.cpu().detach().numpy()
+        return action
+    mean_rew = 0
+    for i in range(n_eps):
+        obs = env.reset()
+        ep_rew = 0
         while True:
-            obs, _, _ = env.reset()
-            ep_rew = 0
-            while True:
-                (obs, _, _), rew, done, _ = env.step(act(obs))
-                ep_rew += rew
-                if done:
-                    eps_rew.append(ep_rew)
-                    print('rew=%.2f \tmean=%.2f \t(ct=%i)' % (ep_rew, np.mean(eps_rew), len(eps_rew)))
-                    break"""
+            obs, rew, done, _ = env.step(act(obs))
+            ep_rew += rew
+            if done:
+                ep_rew = 100 if ep_rew > 0 else 0
+                mean_rew += ep_rew / n_eps
+                break
+    print('estimated %.2f for epoch %i' % (mean_rew, epoch))
 
 def estimate_reward(epoch, policy):
     try:
@@ -241,7 +245,7 @@ def estimate_reward(epoch, policy):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
-        import rl.main
-        rl.main.main(lambda obs_space, act_space, recurrent: th.load(rl.main.args.load) if rl.main.args.load else Policy(24, 12, 5))
+        import single_env_agent
+        single_env_agent.run_agent(play, {})
     else:
         main()

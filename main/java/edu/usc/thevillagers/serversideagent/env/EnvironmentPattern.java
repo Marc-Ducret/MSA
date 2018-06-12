@@ -5,6 +5,7 @@ import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorHit;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorLook;
+import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorUse;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import edu.usc.thevillagers.serversideagent.env.sensor.SensorRaytrace;
 import net.minecraft.block.Block;
@@ -150,6 +151,7 @@ public class EnvironmentPattern extends Environment {
 		actuators.add(new ActuatorForwardStrafe());
 		actuators.add(new ActuatorLook());
 		actuators.add(new ActuatorHit());
+		actuators.add(new ActuatorUse());
 	}
 	
 	@Override
