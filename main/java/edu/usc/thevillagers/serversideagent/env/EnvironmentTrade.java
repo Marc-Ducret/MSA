@@ -1,5 +1,12 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.env.actuator.Actuator;
 import edu.usc.thevillagers.serversideagent.env.allocation.Allocator;
@@ -9,7 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class EnvironmentTrade extends Environment {
-
+	
 	/**
 	 * number of citizens
 	 */
@@ -25,12 +32,14 @@ public class EnvironmentTrade extends Environment {
 	 */
 	private int T;
 	
+	private StatEntry stat;
+	
 	@Override
 	public void readPars(float[] pars) {
 		C = getRoundPar(pars, 0, 10);
 		R = getRoundPar(pars, 1, 2);
 		T = getRoundPar(pars, 2, 100);
-		System.out.println("C = "+C+", R = "+R+", T = "+T);
+		stat = new StatEntry(C, R, T, 0, 0, 0);
 		allocator = new Allocator() {
 			
 			@Override
@@ -104,8 +113,10 @@ public class EnvironmentTrade extends Environment {
 		Citizen c = (Citizen) a.envData;
 		for(int i = 0; i < C-1; i++) {
 			Citizen p = c.getPeer(i);
-			if(!c.deceive[i]) a.reward -= 1;
-			if(!p.deceive[p.toLocal(c.index)]) a.reward += R;
+			boolean cDp = c.deceive[i], pDc = p.deceive[p.toLocal(c.index)];
+			if(!cDp) a.reward -= 1;
+			if(!pDc) a.reward += R;
+			stat.update(!cDp && !pDc ? 1 : 0, cDp ^ pDc ? 1 : 0, cDp && pDc ? 1 : 0);
 		}
 		if(time >= T) done = true;
 	}
@@ -132,6 +143,12 @@ public class EnvironmentTrade extends Environment {
 		}
 	}
 	
+	@Override
+	public void terminate() {
+		super.terminate();
+		stats.add(stat);
+	}
+	
 	private class Citizen {
 		int index;
 		float[] reputation;
@@ -154,5 +171,48 @@ public class EnvironmentTrade extends Environment {
 		Citizen getPeer(int loc) {
 			return citizens[toGlobal(loc)];
 		}
+	}
+	
+	private static class StatEntry {
+		int c, r, t;
+		float cooperate, deceiveOne, deceiveBoth; 
+		
+		StatEntry(int c, int r, int t, float cooperate, float deceiveOne, float deceiveBoth) {
+			this.c = c;
+			this.r = r;
+			this.t = t;
+			this.cooperate = cooperate;
+			this.deceiveOne = deceiveOne;
+			this.deceiveBoth = deceiveBoth;
+		}
+		
+		void update(float cooperate, float deceiveOne, float deceiveBoth) {
+			this.cooperate = (1 - statHorizon) * this.cooperate + statHorizon * cooperate;
+			this.deceiveOne = (1 - statHorizon) * this.deceiveOne + statHorizon * deceiveOne;
+			this.deceiveBoth = (1 - statHorizon) * this.deceiveBoth + statHorizon * deceiveBoth;
+		}
+	}
+	
+	private static float statHorizon = .001F;
+	private static List<StatEntry> stats = new ArrayList<>();
+	
+	private static String encodeStats() {
+		StringBuilder encoding = new StringBuilder();
+		encoding.append('{');
+		for(StatEntry stat : stats) {
+			encoding.append(String.format("(%d, %d, %d): (%f, %f, %f), ", stat.c, stat.r, stat.t, stat.cooperate, stat.deceiveOne, stat.deceiveBoth));
+		}
+		encoding.append('}');
+		return encoding.toString();
+	}
+	
+	public static void writeStats() throws IOException {
+		BufferedWriter writer = new BufferedWriter(new FileWriter(new File("stats")));
+		writer.write(encodeStats());
+		writer.close();
+	}
+	
+	public static void resetStats() throws IOException {
+		stats.clear();
 	}
 }

@@ -9,6 +9,7 @@ import com.google.common.base.Predicates;
 
 import edu.usc.thevillagers.serversideagent.command.CommandCompile;
 import edu.usc.thevillagers.serversideagent.command.CommandEnvironment;
+import edu.usc.thevillagers.serversideagent.command.CommandExecute;
 import edu.usc.thevillagers.serversideagent.command.CommandFastTick;
 import edu.usc.thevillagers.serversideagent.command.CommandRecord;
 import edu.usc.thevillagers.serversideagent.command.CommandTPS;
@@ -72,6 +73,7 @@ public class ServerSideAgentMod {
     	event.registerServerCommand(new CommandTPS());
     	event.registerServerCommand(new CommandRecord());
     	event.registerServerCommand(new CommandCompile(envManager));
+    	event.registerServerCommand(new CommandExecute());
     	
     	DimensionManager.registerDimension(WorldRecordReplayer.DUMMY_DIMENSION, DimensionType.OVERWORLD);
     }
