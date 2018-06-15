@@ -106,6 +106,21 @@ public class EnvironmentTrade extends Environment {
 			}
 		});
 	}
+	
+	private float normative(Citizen a, Citizen b) {
+		return a.deceive(b) == b.deceive(a) ? 1 : -1;
+	}
+	
+	private float empathy(Citizen a, Citizen b) {
+		return material(b, a);
+	}
+	
+	private float material(Citizen a, Citizen b) {
+		float m = 0;
+		if(!a.deceive(b)) m -= 1 / (float) R;
+		if(!b.deceive(a)) m += 1;
+		return m;
+	}
 
 	@Override
 	protected void stepActor(Actor a) throws Exception {
@@ -113,10 +128,9 @@ public class EnvironmentTrade extends Environment {
 		Citizen c = (Citizen) a.envData;
 		for(int i = 0; i < C-1; i++) {
 			Citizen p = c.getPeer(i);
-			boolean cDp = c.deceive[i], pDc = p.deceive[p.toLocal(c.index)];
-			if(!cDp) a.reward -= 1;
-			if(!pDc) a.reward += R;
+			boolean cDp = c.deceive(p), pDc = p.deceive(c);
 			stat.update(!cDp && !pDc ? 1 : 0, cDp ^ pDc ? 1 : 0, cDp && pDc ? 1 : 0);
+			a.reward += material(c, p) + c.empathy * empathy(c, p) + c.normative * normative(c, p);
 		}
 		if(time >= T) done = true;
 	}
@@ -154,6 +168,9 @@ public class EnvironmentTrade extends Environment {
 		float[] reputation;
 		boolean[] deceive;
 		
+		float empathy = .1F;
+		float normative = .1F;
+		
 		Citizen(int index) {
 			reputation = new float[C-1];
 			deceive = new boolean[C-1];
@@ -170,6 +187,10 @@ public class EnvironmentTrade extends Environment {
 		
 		Citizen getPeer(int loc) {
 			return citizens[toGlobal(loc)];
+		}
+		
+		boolean deceive(Citizen c) {
+			return deceive[toLocal(c.index)];
 		}
 	}
 	
