@@ -2,8 +2,15 @@ import subprocess
 
 import torch
 import torch.nn as nn
-from rl.utils import AddBias
 from rl.distributions import FixedNormal
+
+class AddBias(nn.Module):
+    def __init__(self, bias):
+        super(AddBias, self).__init__()
+        self._bias = nn.Parameter(bias).view(1, 1, -1).cuda()
+
+    def forward(self, x):
+        return x + self._bias
 
 class DiagGaussian(nn.Module):
     def __init__(self, dim):
@@ -22,7 +29,7 @@ class DiagGaussian(nn.Module):
 class Policy(nn.Module):
     def __init__(self, n_agents):
         super(Policy, self).__init__()
-        self.n_agents = n_agents
+        self.n_agents = n_agents-1
 
         hidden = 16
         def mlp(i, o):
@@ -43,13 +50,16 @@ class Policy(nn.Module):
 
         self.state_size = 1
 
-    def _adapt_inputs(inputs):
+    def _adapt_inputs(self, inputs):
         if len(inputs.shape) < 3:
             inputs = inputs.view(-1, 2, self.n_agents).permute(0, 2, 1)
         return inputs
 
+    def _adapt_outputs(self, outputs, dim):
+        return outputs.permute(0, 2, 1).contiguous().view(-1, dim * self.n_agents)
+
     def act(self, inputs, states=None, masks=None, deterministic=False):
-        inputs = Policy._adapt_inputs(inputs)
+        inputs = self._adapt_inputs(inputs)
         actor_features = self.action(inputs)
         dist = self.dist(actor_features)
 
@@ -58,41 +68,49 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
 
-        return value, action.permute(0, 2, 1).view(-1, 2 * self.n_agents), action_log_probs.permute(0, 2, 1).view(-1, 2 * self.n_agents), states
+        value = torch.sum(self.critic(inputs), 2)
+        return value, self._adapt_outputs(), action_log_probs.permute(0, 2, 1).view(-1, self.n_agents), states #TODO
 
     def get_value(self, inputs, states=None, masks=None):
-        inputs = Policy._adapt_inputs(inputs)
+        inputs = self._adapt_inputs(inputs)
         return torch.sum(self.critic(inputs), 2)
 
     def evaluate_actions(self, inputs, states, masks, action):
-        inputs = Policy._adapt_inputs(inputs)
+        inputs = self._adapt_inputs(inputs)
         value, actor_features = self.critic(inputs), self.action(inputs)
         value = torch.sum(value, 2)
         dist = self.dist(actor_features)
 
-        action_log_probs = dist.log_probs(action)
+        action_log_probs = dist.log_probs(self._adapt_inputs(action))
         dist_entropy = dist.entropy().mean()
 
-        return value, action_log_probs.permute(0, 2, 1).view(-1, 2 * self.n_agents), dist_entropy, states
+        return value, action_log_probs.permute(0, 2, 1).view(-1, self.n_agents), dist_entropy, states
 
-def create_policy(C):
-    torch.save(Policy(C), "tmp/policy_%i" % C)
+if __name__ == '__main__':
+    def create_policy(C):
+        torch.save(Policy(C), "tmp/policy_%i" % C)
 
-Rs = [4, 3, 2, 1]
-Cs = [3, 5]
-S = 1 #share factor (how many agents with same policy)
+    Rs = [4, 3, 2, 1]
+    Cs = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+    S = 1 #share factor (how many agents with same policy)
 
-for C in Cs:
-    create_policy(C)
-
-for R in Rs:
-    commands = []
     for C in Cs:
-        cmd = ('python python/agent_rl.py --env-name mc.Trade[%i,%i,100].trade[%i,%i] --num-processes %i --no-vis --num-stack 1 ' +
-            '--algo ppo --num-steps 500 --entropy-coef 0 --ppo-epoch 3 --lr 1e-3 --num-frames 100000 --load tmp/policy_%i') % (C, R, C, R, S, C)
-        for i in range(C // S):
-            commands.append(cmd + ' --seed %i' % i)
-    processes = [subprocess.Popen(command.split()) for command in commands]
+        create_policy(C)
 
-    for p in processes:
-        p.wait()
+    commands = []
+    for R in Rs:
+        for C in Cs:
+            cmd = ('python python/agent_rl.py --env-name mc.Trade[%i,%i,20].trade[%i,%i] --num-processes %i --no-vis --num-stack 1 ' +
+                '--algo ppo --num-steps 500 --entropy-coef 0 --ppo-epoch 3 --lr 1e-3 --num-frames 20000 --load tmp/policy_%i') % (C, R, C, R, S, C)
+            for i in range(C // S):
+                commands.append(cmd + ' --seed %i' % i)
+            if len(commands) > 6:
+                processes = [subprocess.Popen(command.split()) for command in commands]
+                for p in processes:
+                    p.wait()
+                commands = []
+    if len(commands) > 0:
+        processes = [subprocess.Popen(command.split()) for command in commands]
+        for p in processes:
+            p.wait()
+        commands = []
