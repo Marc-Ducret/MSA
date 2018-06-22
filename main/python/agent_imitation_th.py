@@ -93,7 +93,9 @@ class Policy(nn.Module):
 
     def _adapt_inputs(inputs):
         if len(inputs.shape) < 4:
-            inputs = inputs.view(-1, 12, 24, 4).permute(0, 3, 1, 2)
+            inputs = inputs.view(-1, 12, 24, 1).permute(0, 3, 1, 2)
+        if th.max(inputs[0]) >= 0:
+            print(inputs[0])
         return inputs
 
     def act(self, inputs, states=None, masks=None, deterministic=False):
@@ -126,7 +128,12 @@ class Policy(nn.Module):
 
 
 def train(obs_dataset, act_dataset, policy):
-    optimizer = optim.Adam(policy.parameters(), lr=5e-6)
+    #PARAMS
+    lr = 5e-6
+    batch_size = 128
+    loss_function = F.mse_loss
+
+    optimizer = optim.Adam(policy.parameters(), lr=lr)
     n = obs_dataset.size(0)
 
     def epoch(batch_size, size=None, offset=None):
@@ -140,16 +147,16 @@ def train(obs_dataset, act_dataset, policy):
     def compute_loss():
         with th.no_grad():
             losses = []
-            for obs_batch, act_batch in epoch(1024 * 16, n//2, n//2):
+            for obs_batch, act_batch in epoch(1024 * 16, n, 0):
                 _, action, _, _ = policy.act(obs_batch, deterministic=True)
-                losses.append(F.mse_loss(act_batch, action).cpu().detach().numpy())
+                losses.append(loss_function(act_batch, action).cpu().detach().numpy())
             return np.mean(np.array(losses))
 
     def opt():
         pairs = 0
-        for obs_batch, act_batch in epoch(64, n//2):
+        for obs_batch, act_batch in epoch(batch_size, n):
             _, action, _, _ = policy.act(obs_batch, deterministic=True)
-            loss = F.mse_loss(act_batch, action)
+            loss = loss_function(act_batch, action)
             loss.backward()
             optimizer.step()
             pairs += obs_batch.shape[0]
@@ -168,7 +175,7 @@ def train(obs_dataset, act_dataset, policy):
             print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
             if e % 1 == 0:
                 th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
-                #rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy)))
+                rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy)))
         trace_loss = go.Scatter(x=list(range(epochs+1)), y=losses)
         trace_rew  = go.Scatter(x=list(range(epochs)), y=[f.result() for f in rewards_futures])
         py.iplot([trace_rew], filename='reward')
@@ -181,7 +188,7 @@ def main():
     n = obs_dataset.shape[0] * obs_dataset.shape[1]
     obs_dim = obs_dataset.shape[2]
     act_dim = act_dataset.shape[2]
-    w, h, c = size(obs_dim, 2, 4)
+    w, h, c = size(obs_dim, 2, 1)
     print('w = %i, h = %i, c = %i' % (w, h, c))
     train(
         th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),
@@ -191,7 +198,7 @@ def main():
 
 def play(args, env):
     epoch = 5
-    w, h, c = size(env.observation_dim, 2, 4)
+    w, h, c = size(env.observation_dim, 2, 1)
     policy = th.load('tmp/models/imitation_th_epoch_%i.pt' % epoch)
     n_eps = 50
     def act(obs):
@@ -219,10 +226,10 @@ def estimate_reward(epoch, policy):
         env = minecraft.environment.MinecraftEnv('GoBreakGold')
         env.init_spaces()
         n_eps = 50
-        w, h = size(env.observation_dim, 2)
+        w, h, c = size(env.observation_dim, 2, 1)
         def act(obs):
             with th.no_grad():
-                obs_th = th.from_numpy(obs.reshape((1, h, w, 1)).transpose(0, 3, 1, 2)).float().cuda()
+                obs_th = th.from_numpy(obs.reshape((1, h, w, c)).transpose(0, 3, 1, 2)).float().cuda()
                 _, action, _, _ = policy.act(obs_th, deterministic=True)
                 action = action.cpu().detach().numpy()
             return action

@@ -39,8 +39,11 @@ def run(args, env):
     while True:
         obs = env.reset()
         ep_rew = 0
+        noise = .0
         while True:
-            obs, rew, done, _ = env.step(act(obs))
+            action = act(obs)
+            action += noise * np.random.normal(size=5)
+            obs, rew, done, _ = env.step(action)
             ep_rew += rew
             if done:
                 success = 100 if ep_rew > 0 else 0
