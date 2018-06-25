@@ -28,6 +28,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
@@ -36,8 +37,6 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.client.config.GuiSlider;
-
-import static edu.usc.thevillagers.serversideagent.env.EnvironmentPattern.*;
 
 /**
  * Display for {@link WorldRecordReplayerClient}
@@ -288,57 +287,23 @@ public class GuiReplay extends GuiScreen {
 	}
 	
 	private void drawDebugVision() {
-		int res = 48;
+		int res = 24;
 		float fov = 70;
 		float ratio = (float) width / height;
-		SensorRaytrace sensor = new SensorRaytrace(res, (int) (res / ratio), 4, fov, ratio, true) {
-			
-			EnumDyeColor teamColor;
-			
-			@Override
-			protected void preView(Entity viewer) {
-				super.preView(viewer);
-				teamColor = getEntityArmorColor(viewer);
-			}
+		SensorRaytrace sensor = new SensorRaytrace(res, (int) (res / ratio), 1, fov, ratio, false) {
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-				// Channels: TEAM, BLOCK, ENTITY, DEPTH
-				if(res != null) {
-					switch(res.typeOfHit) {
-					case MISS:
-						break;
-						
-					case BLOCK:
-						IBlockState state = world.getBlockState(res.getBlockPos());
-						if(state.getBlock() != BLOCK) break;
-						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
-						if(blockColor == GROUND || blockColor == WALL || blockColor == TREE) {
-							result[0] = 0;
-							result[1] = blockColor == TREE ? -1 : +1;
-							result[2] = 0;
-						} else {
-							result[0] = blockColor == teamColor ? +1 : -1;
-							result[1] = 1;
-							result[2] = 0;
-						}
-						result[3] = (float) res.hitVec.distanceTo(from) / dist;
-						return;
-						
-					case ENTITY:
-						EnumDyeColor entityColor = getEntityArmorColor(res.entityHit);
-						result[0] = entityColor == teamColor ? +1 : -1;
-						result[1] = 0;
-						result[2] = 1;
-						result[3] = (float) res.hitVec.distanceTo(from) / dist;
-						return;
-					}
+				if(res == null) {
+					result[0] = -1;
+					return;
 				}
-				result[0] = 0;
-				result[1] = 0;
-				result[2] = 0;
-				result[3] = 1;
-				return;
+				IBlockState state = world.getBlockState(res.getBlockPos());
+				if(state.getBlock() == Blocks.STAINED_GLASS) {
+					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1 : 0;
+				} else {
+					result[0] = -1;
+				}
 			}
 		};
 //	long timeStart = System.currentTimeMillis();

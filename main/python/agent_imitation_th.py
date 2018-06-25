@@ -94,8 +94,6 @@ class Policy(nn.Module):
     def _adapt_inputs(inputs):
         if len(inputs.shape) < 4:
             inputs = inputs.view(-1, 12, 24, 1).permute(0, 3, 1, 2)
-        if th.max(inputs[0]) >= 0:
-            print(inputs[0])
         return inputs
 
     def act(self, inputs, states=None, masks=None, deterministic=False):
@@ -129,8 +127,8 @@ class Policy(nn.Module):
 
 def train(obs_dataset, act_dataset, policy):
     #PARAMS
-    lr = 5e-6
-    batch_size = 128
+    lr = 1e-6
+    batch_size = 64
     loss_function = F.mse_loss
 
     optimizer = optim.Adam(policy.parameters(), lr=lr)
@@ -165,15 +163,15 @@ def train(obs_dataset, act_dataset, policy):
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         losses = [compute_loss()]
         rewards_futures = []
-        epochs = 20
+        epochs = 100000
         print('initial loss=%f' % losses[-1])
         for e in range(epochs):
             start_time = time()
             pairs = opt()
             speed = pairs / (time() - start_time)
-            losses.append(compute_loss())
-            print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
-            if e % 1 == 0:
+            if e % 100 == 0:
+                losses.append(compute_loss())
+                print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
                 th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
                 rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy)))
         trace_loss = go.Scatter(x=list(range(epochs+1)), y=losses)

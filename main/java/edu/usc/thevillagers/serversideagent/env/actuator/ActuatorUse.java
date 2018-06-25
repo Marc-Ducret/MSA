@@ -13,7 +13,7 @@ import net.minecraft.world.World;
 
 public class ActuatorUse extends Actuator {
 	
-	private static final double REACH = 3;
+	private static final double REACH = 5;
 
 	public ActuatorUse() {
 		super(1);

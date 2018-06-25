@@ -103,17 +103,18 @@ public class CommandCompile extends CommandBase {
 				reversers.add(hReversers);
 			}
 		}
-		int samples = replay.duration;
+		int samples = (replay.duration + ((int) replay.worldTimeOffset % 5) + 4) / 5;
 		int[] obsDim = {samples, humans.size(), env.observationDim};
 		int[] actDim = {samples, humans.size(), env.actionDim};
 		float[] obsBuffer = new float[obsDim[0] * obsDim[1] * obsDim[2]];
 		float[] actBuffer = new float[actDim[0] * actDim[1] * actDim[2]]; //TODO use java.nio?
 		long lastReport = System.currentTimeMillis();
 		while(replay.currentTick < replay.duration) {
+			int agentTick = (int) (replay.currentTick + (replay.worldTimeOffset % 5)) / 5;
 			for(int h = 0; h < humans.size(); h ++) {
 				Human human = humans.get(h);
 				env.encodeObservation(human, human.observationVector);
-				int offset = ((replay.currentTick * obsDim[1]) + h) * obsDim[2];
+				int offset = ((agentTick * obsDim[1]) + h) * obsDim[2];
 				for(int i = 0; i < env.observationDim; i ++) {
 					obsBuffer[offset + i] = human.observationVector[i];
 				}
@@ -121,11 +122,15 @@ public class CommandCompile extends CommandBase {
 					reverser.startStep();
 				}
 			}
-			replay.endReplayTick();
-			int offset = (replay.currentTick-1) * actDim[1] * actDim[2];
+			do {
+				replay.endReplayTick();
+				for(int h = 0; h < humans.size(); h ++)
+					for(Reverser reverser : reversers.get(h))
+						reverser.tick();
+			} while((replay.currentTick + replay.worldTimeOffset) % 5 != 0 && replay.currentTick < replay.duration);
+			int offset = agentTick * actDim[1] * actDim[2];
 			for(int h = 0; h < humans.size(); h ++) {
 				for(Reverser reverser : reversers.get(h)) {
-					reverser.tick();
 					for(float v : reverser.endStep())
 						actBuffer[offset++] = v;
 				}
