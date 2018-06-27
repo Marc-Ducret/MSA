@@ -133,6 +133,7 @@ def train(obs_dataset, act_dataset, policy, args):
     batch_size = args.batch
     loss_function = F.mse_loss
     decay = args.decay
+    eval_period = args.eval
 
     vis = visdom.Visdom()
 
@@ -179,7 +180,7 @@ def train(obs_dataset, act_dataset, policy, args):
             opts=opts)
         rewards_futures = []
         epochs = 1000000
-        eval_period = 100
+
         print('initial loss=%f' % initial_loss)
         cur_future = 0
         for e in range(epochs):
@@ -205,12 +206,12 @@ def train(obs_dataset, act_dataset, policy, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset', action='store')
-    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2}
+    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2, 'eval': 100}
     for par, default in params.items():
         parser.add_argument('--'+par, action='store', default=default, type=type(default))
     args = parser.parse_args()
 
-    with h5py.File('tmp/imitation/' + args.dataset, 'r') as f:
+    with h5py.File('tmp/imitation/' + args.dataset + '.h5', 'r') as f:
         obs_dataset = np.array(f['obsVar'])
         act_dataset = np.array(f['actVar'])
 

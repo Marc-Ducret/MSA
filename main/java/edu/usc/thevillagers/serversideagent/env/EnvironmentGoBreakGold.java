@@ -73,9 +73,10 @@ public class EnvironmentGoBreakGold extends Environment {
 		goldBlock = ref.add(x, 0, z);
 		world.setBlockState(goldBlock, 
 				Blocks.STAINED_GLASS.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.YELLOW));
-		applyToActiveActors((actor) -> {
-			actor.entity.rotationPitch = -80 + world.rand.nextFloat() * 160;
-			actor.entity.rotationYaw = -180 + world.rand.nextFloat() * 360;
+		applyToActiveActors((a) -> {
+			a.entity.rotationPitch = -80 + world.rand.nextFloat() * 160;
+			a.entity.rotationYaw = -180 + world.rand.nextFloat() * 360;
+			a.entity.connection.setPlayerLocation(a.entity.posX, a.entity.posY, a.entity.posZ, a.entity.rotationYaw, a.entity.rotationPitch);
 		});
 	}
 

@@ -3,6 +3,7 @@ package edu.usc.thevillagers.serversideagent.env;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -21,6 +23,7 @@ public class EnvironmentManager {
 	
 	private Map<String, Environment> envs = new HashMap<>();
 	private ExecutorService executor = Executors.newFixedThreadPool(16);
+	private List<Function<Phase, Boolean>> tickListeners = new ArrayList<>();
 	
 	public EnvironmentManager() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -79,6 +82,14 @@ public class EnvironmentManager {
 				throw new RuntimeException(e);
 			}
 		}
+		Iterator<Function<Phase, Boolean>> iter = tickListeners.iterator();
+		while(iter.hasNext()) {
+			try {
+				if(iter.next().apply(phase)) iter.remove();
+			} catch (Exception e) {
+				iter.remove();
+			}
+		}
     }
 	
 	public Environment getEnv(String envId) {
@@ -114,5 +125,9 @@ public class EnvironmentManager {
 	
 	public Environment createEnv(Class<?> envClass) throws InstantiationException, IllegalAccessException {
 		return (Environment) envClass.newInstance();
+	}
+	
+	public void addTickListener(Function<Phase, Boolean> listener) {
+		tickListeners.add(listener);
 	}
 }
