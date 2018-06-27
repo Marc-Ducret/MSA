@@ -64,7 +64,7 @@ public class CommandCompile extends CommandBase {
 			Class<?> envClass = envManager.findEnvClass(args[1]);
 			new Thread(() -> {
 				try {
-					compile(replayer, (Environment) envClass.newInstance());
+					compile(replayer, (Environment) envClass.newInstance(), args[0]);
 					server.addScheduledTask(() -> {
 						sender.sendMessage(new TextComponentString("Compile success!"));
 					});
@@ -86,7 +86,7 @@ public class CommandCompile extends CommandBase {
 		return 2;
 	}
 	
-	private void compile(WorldRecordReplayer replay, Environment env) throws HdfException, IOException, InterruptedException, ExecutionException {
+	private void compile(WorldRecordReplayer replay, Environment env, String name) throws HdfException, IOException, InterruptedException, ExecutionException {
 		replay.readInfo();
 		replay.seek(0);
 		env.readPars(new float[]{});
@@ -140,7 +140,7 @@ public class CommandCompile extends CommandBase {
 				System.out.printf("compile: %.1f\n", (replay.currentTick * 100F / replay.duration));
 			}
 		}
-		File file = new File("tmp/imitation/dataset.h5");
+		File file = new File("tmp/imitation/"+name+".h5");
 		file.getParentFile().mkdirs();
 		HdfFileWriter writer = new HdfFileWriter(file.getAbsolutePath(), HdfFileWriter.OPT_ALLOW_OVERWRITE);
 		

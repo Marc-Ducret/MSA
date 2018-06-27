@@ -16,6 +16,8 @@ import traceback
 import copy
 from rl.utils import AddBias
 from rl.distributions import FixedNormal
+import visdom
+import argparse
 
 def size(dim, ratio, channels):
     w = int(np.sqrt(dim * ratio / channels))
@@ -125,13 +127,16 @@ class Policy(nn.Module):
         return value, action_log_probs, dist_entropy, states
 
 
-def train(obs_dataset, act_dataset, policy):
+def train(obs_dataset, act_dataset, policy, args):
     #PARAMS
-    lr = 1e-6
-    batch_size = 64
+    lr = args.lr
+    batch_size = args.batch
     loss_function = F.mse_loss
+    decay = args.decay
 
-    optimizer = optim.Adam(policy.parameters(), lr=lr)
+    vis = visdom.Visdom()
+
+    optimizer = optim.Adam(policy.parameters(), lr=lr, weight_decay=decay)
     n = obs_dataset.size(0)
 
     def epoch(batch_size, size=None, offset=None):
@@ -161,28 +166,54 @@ def train(obs_dataset, act_dataset, policy):
         return pairs
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        losses = [compute_loss()]
+        initial_loss = compute_loss()
+        opts = dict(
+            title='data=%s lr=%.1e bs=%i dc=%.1e' % (args.dataset, lr, batch_size, decay),
+            xlabel='epochs'
+        )
+        opts['ylabel'] = 'loss'
+        loss_plot = vis.line(np.array([initial_loss]), np.array([0]),
+            opts=opts)
+        opts['ylabel'] = 'success'
+        reward_plot = vis.line(np.array([0]), np.array([0]),
+            opts=opts)
         rewards_futures = []
-        epochs = 100000
-        print('initial loss=%f' % losses[-1])
+        epochs = 1000000
+        eval_period = 100
+        print('initial loss=%f' % initial_loss)
+        cur_future = 0
         for e in range(epochs):
             start_time = time()
             pairs = opt()
             speed = pairs / (time() - start_time)
-            if e % 100 == 0:
-                losses.append(compute_loss())
-                print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, losses[-1], speed))
+            if e % eval_period == 0:
+                current_loss = compute_loss()
+                vis.line(
+                    np.array([current_loss]), np.array([e]),
+                    win=loss_plot, update='append')
+                print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, current_loss, speed))
                 th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
                 rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy)))
-        trace_loss = go.Scatter(x=list(range(epochs+1)), y=losses)
-        trace_rew  = go.Scatter(x=list(range(epochs)), y=[f.result() for f in rewards_futures])
-        py.iplot([trace_rew], filename='reward')
-        py.iplot([trace_loss], filename='loss')
+            if len(rewards_futures) > cur_future:
+                future = rewards_futures[cur_future]
+                if future.done():
+                    vis.line(
+                        np.array([future.result()]), np.array([cur_future * eval_period]),
+                        win=reward_plot, update='append')
+                    cur_future += 1
 
 def main():
-    f = h5py.File('tmp/imitation/dataset.h5')
-    obs_dataset = np.array(f['obsVar'])
-    act_dataset = np.array(f['actVar'])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dataset', action='store')
+    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2}
+    for par, default in params.items():
+        parser.add_argument('--'+par, action='store', default=default, type=type(default))
+    args = parser.parse_args()
+
+    with h5py.File('tmp/imitation/' + args.dataset, 'r') as f:
+        obs_dataset = np.array(f['obsVar'])
+        act_dataset = np.array(f['actVar'])
+
     n = obs_dataset.shape[0] * obs_dataset.shape[1]
     obs_dim = obs_dataset.shape[2]
     act_dim = act_dataset.shape[2]
@@ -191,7 +222,8 @@ def main():
     train(
         th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),
         th.from_numpy(act_dataset.reshape((n, act_dim))).cuda(),
-        Policy(w, h, c, act_dim)
+        Policy(w, h, c, act_dim),
+        args
     )
 
 def play(args, env):
@@ -248,9 +280,4 @@ def estimate_reward(epoch, policy):
         traceback.print_exc()
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1:
-        import single_env_agent
-        single_env_agent.run_agent(play, {})
-    else:
-        main()
+    main()
