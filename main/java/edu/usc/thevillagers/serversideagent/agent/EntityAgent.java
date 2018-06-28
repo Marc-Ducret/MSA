@@ -6,6 +6,7 @@ import com.mojang.authlib.GameProfile;
 
 import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import edu.usc.thevillagers.serversideagent.HighLevelAction.Phase;
+import edu.usc.thevillagers.serversideagent.command.CommandConstant;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -54,9 +55,10 @@ public class EntityAgent extends EntityPlayerMP {
 		state.clamp();
 		if(state.action != null) executeAction(state.action);
 		this.setPositionAndRotation(posX, posY, posZ, 
-				rotationYaw   + state.momentumYaw   * ROTATION_SPEED, 
-				rotationPitch + state.momentumPitch * ROTATION_SPEED);
-		Vec3d move = new Vec3d(state.strafe, 0, state.forward).rotateYaw(-rotationYaw * (float) Math.PI / 180).scale(.15F);
+				rotationYaw   + state.momentumYaw   * ROTATION_SPEED * CommandConstant.AGENT_SPEED_FACTOR, 
+				rotationPitch + state.momentumPitch * ROTATION_SPEED * CommandConstant.AGENT_SPEED_FACTOR);
+		Vec3d move = new Vec3d(state.strafe, 0, state.forward).rotateYaw(-rotationYaw * (float) Math.PI / 180)
+				.scale(.15F * CommandConstant.AGENT_SPEED_FACTOR);
 		motionX = move.x;
 		motionZ = move.z;
 		this.travel(0, 0, 0);

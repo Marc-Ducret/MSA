@@ -28,12 +28,13 @@ public class EnvironmentGoBreakGold extends Environment {
 	
 	@Override
 	protected void buildSensors() {
-		sensors.add(new SensorRaytrace(24, 12, 1, 70, 2) {
+		sensors.add(new SensorRaytrace(24, 12, 2, 70, 2) {
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
 				if(res == null) {
 					result[0] = -1;
+					result[1] = 1;
 					return;
 				}
 				IBlockState state = world.getBlockState(res.getBlockPos());
@@ -42,6 +43,7 @@ public class EnvironmentGoBreakGold extends Environment {
 				} else {
 					result[0] = -1;
 				}
+				result[1] = (float) res.hitVec.distanceTo(from) / dist;
 			}
 		});
 	}
@@ -90,7 +92,7 @@ public class EnvironmentGoBreakGold extends Environment {
 			a.reward = 10;
 		}
 		if(state.getBlock() == Blocks.STAINED_GLASS) {
-			if(time > 99) {
+			if(time > 199) {
 				done = true;
 				a.reward = -1;
 			}

@@ -218,7 +218,7 @@ def main():
     n = obs_dataset.shape[0] * obs_dataset.shape[1]
     obs_dim = obs_dataset.shape[2]
     act_dim = act_dataset.shape[2]
-    w, h, c = size(obs_dim, 2, 1)
+    w, h, c = size(obs_dim, 2, 2)
     print('w = %i, h = %i, c = %i' % (w, h, c))
     train(
         th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),
@@ -229,7 +229,7 @@ def main():
 
 def play(args, env):
     epoch = 5
-    w, h, c = size(env.observation_dim, 2, 1)
+    w, h, c = size(env.observation_dim, 2, 2)
     policy = th.load('tmp/models/imitation_th_epoch_%i.pt' % epoch)
     n_eps = 50
     def act(obs):
@@ -257,7 +257,7 @@ def estimate_reward(epoch, policy):
         env = minecraft.environment.MinecraftEnv('GoBreakGold')
         env.init_spaces()
         n_eps = 50
-        w, h, c = size(env.observation_dim, 2, 1)
+        w, h, c = size(env.observation_dim, 2, 2)
         def act(obs):
             with th.no_grad():
                 obs_th = th.from_numpy(obs.reshape((1, h, w, c)).transpose(0, 3, 1, 2)).float().cuda()

@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
+import edu.usc.thevillagers.serversideagent.command.CommandConstant;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -31,7 +32,7 @@ public class EnvironmentManager {
 	
 	@SubscribeEvent
     public void serverTick(ServerTickEvent event) {
-		if(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getWorldTime() % 5 == 0) {
+		if(FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getWorldTime() % (CommandConstant.SKIP_TICK+1) == 0) {
 			tickEnvs(event.phase);
 		}
     }

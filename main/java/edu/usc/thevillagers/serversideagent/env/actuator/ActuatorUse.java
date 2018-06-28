@@ -4,6 +4,7 @@ import edu.usc.thevillagers.serversideagent.HighLevelAction;
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.HighLevelAction.Type;
 import edu.usc.thevillagers.serversideagent.agent.Actor;
+import edu.usc.thevillagers.serversideagent.command.CommandConstant;
 import edu.usc.thevillagers.serversideagent.recording.ActionListener;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.util.EnumHand;
@@ -21,7 +22,7 @@ public class ActuatorUse extends Actuator {
 
 	@Override
 	public void act(Actor actor) {
-		if(values[0] < .5) {
+		if(actor.entity.world.rand.nextFloat() > values[0] * CommandConstant.ACTION_PROB_FACTOR) {
 			actor.actionState.action = null;
 			return;
 		}
