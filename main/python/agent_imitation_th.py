@@ -19,7 +19,8 @@ from rl.distributions import FixedNormal
 import visdom
 import argparse
 
-def size(dim, ratio, channels):
+def size(dim, ratio):
+    channels = 4
     w = int(np.sqrt(dim * ratio / channels))
     h = w // ratio
     return w, h, channels
@@ -193,8 +194,8 @@ def train(obs_dataset, act_dataset, policy, args):
                     np.array([current_loss]), np.array([e]),
                     win=loss_plot, update='append')
                 print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, current_loss, speed))
-                th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
-                rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy)))
+                th.save(policy, 'tmp/models/imitation_th_epoch_latest') #th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
+                rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy), args.gpu))
             if len(rewards_futures) > cur_future:
                 future = rewards_futures[cur_future]
                 if future.done():
@@ -206,30 +207,32 @@ def train(obs_dataset, act_dataset, policy, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset', action='store')
-    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2, 'eval': 100}
+    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2, 'eval': 100, 'gpu': 0}
     for par, default in params.items():
         parser.add_argument('--'+par, action='store', default=default, type=type(default))
     args = parser.parse_args()
 
-    with h5py.File('tmp/imitation/' + args.dataset + '.h5', 'r') as f:
-        obs_dataset = np.array(f['obsVar'])
-        act_dataset = np.array(f['actVar'])
+    with th.cuda.device(args.gpu):
 
-    n = obs_dataset.shape[0] * obs_dataset.shape[1]
-    obs_dim = obs_dataset.shape[2]
-    act_dim = act_dataset.shape[2]
-    w, h, c = size(obs_dim, 2, 2)
-    print('w = %i, h = %i, c = %i' % (w, h, c))
-    train(
-        th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),
-        th.from_numpy(act_dataset.reshape((n, act_dim))).cuda(),
-        Policy(w, h, c, act_dim),
-        args
-    )
+        with h5py.File('tmp/imitation/' + args.dataset + '.h5', 'r') as f:
+            obs_dataset = np.array(f['obsVar'])
+            act_dataset = np.array(f['actVar'])
+
+        n = obs_dataset.shape[0] * obs_dataset.shape[1]
+        obs_dim = obs_dataset.shape[2]
+        act_dim = act_dataset.shape[2]
+        w, h, c = size(obs_dim, 2)
+        print('w = %i, h = %i, c = %i' % (w, h, c))
+        train(
+            th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),
+            th.from_numpy(act_dataset.reshape((n, act_dim))).cuda(),
+            Policy(w, h, c, act_dim),
+            args
+        )
 
 def play(args, env):
     epoch = 5
-    w, h, c = size(env.observation_dim, 2, 2)
+    w, h, c = size(env.observation_dim, 2)
     policy = th.load('tmp/models/imitation_th_epoch_%i.pt' % epoch)
     n_eps = 50
     def act(obs):
@@ -251,34 +254,35 @@ def play(args, env):
                 break
     print('estimated %.2f for epoch %i' % (mean_rew, epoch))
 
-def estimate_reward(epoch, policy):
-    try:
-        print('estimating %i...' % epoch)
-        env = minecraft.environment.MinecraftEnv('GoBreakGold')
-        env.init_spaces()
-        n_eps = 50
-        w, h, c = size(env.observation_dim, 2, 2)
-        def act(obs):
-            with th.no_grad():
-                obs_th = th.from_numpy(obs.reshape((1, h, w, c)).transpose(0, 3, 1, 2)).float().cuda()
-                _, action, _, _ = policy.act(obs_th, deterministic=True)
-                action = action.cpu().detach().numpy()
-            return action
-        mean_rew = 0
-        for i in range(n_eps):
-            obs = env.reset()
-            ep_rew = 0
-            while True:
-                obs, rew, done, _ = env.step(act(obs))
-                ep_rew += rew
-                if done:
-                    ep_rew = 100 if ep_rew > 0 else 0
-                    mean_rew += ep_rew / n_eps
-                    break
-        print('estimated %.2f for epoch %i' % (mean_rew, epoch))
-        return mean_rew
-    except:
-        traceback.print_exc()
+def estimate_reward(epoch, policy, gpu):
+    with th.cuda.device(gpu):
+        try:
+            print('estimating %i...' % epoch)
+            env = minecraft.environment.MinecraftEnv('Pattern')
+            env.init_spaces()
+            n_eps = 50
+            w, h, c = size(env.observation_dim, 2)
+            def act(obs):
+                with th.no_grad():
+                    obs_th = th.from_numpy(obs.reshape((1, h, w, c)).transpose(0, 3, 1, 2)).float().cuda()
+                    _, action, _, _ = policy.act(obs_th, deterministic=True)
+                    action = action.cpu().detach().numpy()
+                return action
+            mean_rew = 0
+            for i in range(n_eps):
+                obs = env.reset()
+                ep_rew = 0
+                while True:
+                    obs, rew, done, _ = env.step(act(obs))
+                    ep_rew += rew
+                    if done:
+                        ep_rew = 100 if ep_rew > 0 else 0
+                        mean_rew += ep_rew / n_eps
+                        break
+            print('estimated %.2f for epoch %i' % (mean_rew, epoch))
+            return mean_rew
+        except:
+            traceback.print_exc()
 
 if __name__ == '__main__':
     main()

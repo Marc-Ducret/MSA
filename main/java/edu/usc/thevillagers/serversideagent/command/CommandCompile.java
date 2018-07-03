@@ -21,6 +21,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
@@ -107,8 +108,10 @@ public class CommandCompile extends CommandBase {
 		int samples = (replay.duration + ((int) replay.worldTimeOffset % p) + p-1) / p;
 		int[] obsDim = {samples, humans.size(), env.observationDim};
 		int[] actDim = {samples, humans.size(), env.actionDim};
+		int[] envInfoDim = {samples, humans.size(), 2};
 		float[] obsBuffer = new float[obsDim[0] * obsDim[1] * obsDim[2]];
 		float[] actBuffer = new float[actDim[0] * actDim[1] * actDim[2]]; //TODO use java.nio?
+		float[] envInfoBuffer = new float[envInfoDim[0] * envInfoDim[1] * envInfoDim[2]];
 		long lastReport = System.currentTimeMillis();
 		while(replay.currentTick < replay.duration) {
 			int agentTick = (int) (replay.currentTick + (replay.worldTimeOffset % p)) / p;
@@ -130,11 +133,15 @@ public class CommandCompile extends CommandBase {
 						reverser.tick();
 			} while((replay.currentTick + replay.worldTimeOffset) % p != 0 && replay.currentTick < replay.duration);
 			int offset = agentTick * actDim[1] * actDim[2];
+			int envInfoOffset = agentTick * envInfoDim[1] * envInfoDim[2];
 			for(int h = 0; h < humans.size(); h ++) {
 				for(Reverser reverser : reversers.get(h)) {
 					for(float v : reverser.endStep())
 						actBuffer[offset++] = v;
 				}
+				NBTTagCompound data = replay.entitiesData.get(humans.get(h).entity.getEntityId());
+				envInfoBuffer[envInfoOffset++] = data.getFloat("Reward");
+				envInfoBuffer[envInfoOffset++] = data.getBoolean("Done") ? 1 : 0;
 			}
 			if(System.currentTimeMillis() - lastReport > 1000 * 10)  {
 				lastReport = System.currentTimeMillis();
@@ -147,9 +154,11 @@ public class CommandCompile extends CommandBase {
 		
 		HdfGroup obsVar = writer.getRootGroup().addVariable("obsVar", HdfGroup.DTYPE_FLOAT32, 0, obsDim, obsDim, 0F, 0);
 		HdfGroup actVar = writer.getRootGroup().addVariable("actVar", HdfGroup.DTYPE_FLOAT32, 0, actDim, actDim, 0F, 0);
+		HdfGroup envInfoVar = writer.getRootGroup().addVariable("envInfoVar", HdfGroup.DTYPE_FLOAT32, 0, envInfoDim, envInfoDim, 0F, 0);
 		writer.endDefine();
 		obsVar.writeData(new int[] {0, 0, 0}, obsBuffer, true);
 		actVar.writeData(new int[] {0, 0, 0}, actBuffer, true);
+		envInfoVar.writeData(new int[] {0, 0, 0}, envInfoBuffer, true);
 		writer.close();
 		System.out.println("compile: done");
 	}

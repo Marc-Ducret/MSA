@@ -12,7 +12,7 @@ import net.minecraft.util.text.TextComponentString;
  */
 public class CommandConstant extends CommandBase {
 	
-	public static int SKIP_TICK = 4;
+	public static int SKIP_TICK = 0;
 	public static float AGENT_SPEED_FACTOR = 1;
 	public static float ACTION_PROB_FACTOR = 1;
 	

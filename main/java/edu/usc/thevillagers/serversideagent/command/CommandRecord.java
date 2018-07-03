@@ -25,6 +25,7 @@ import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -104,7 +105,7 @@ public class CommandRecord extends CommandBase {
 		return 2;
 	}
 	
-	@SubscribeEvent
+	@SubscribeEvent(priority=EventPriority.LOWEST)
     public void serverTick(ServerTickEvent event) {
 		try {
 			switch(event.phase) {

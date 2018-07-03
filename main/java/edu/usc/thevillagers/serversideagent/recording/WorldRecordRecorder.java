@@ -11,6 +11,8 @@ import java.util.Map.Entry;
 
 import com.mojang.authlib.GameProfile;
 
+import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntityDie;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEventEntitySpawn;
@@ -21,6 +23,7 @@ import edu.usc.thevillagers.serversideagent.recording.event.RecordEventTileEntit
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -94,8 +97,17 @@ public class WorldRecordRecorder extends WorldRecordWorker {
 			GameProfile profile = ((EntityPlayer) e).getGameProfile();
 			data.setString("ProfileName", profile.getName());
 			data.setUniqueId("ProfileUUID", profile.getId());
+			appendEnvInfo((EntityPlayerMP) e, data);
 		}
 		return data;
+	}
+	
+	private void appendEnvInfo(EntityPlayerMP player, NBTTagCompound data) {
+		Actor a = ServerSideAgentMod.instance.envManager.getPlayerActor(player);
+		if(a != null) {
+			data.setFloat("Reward", a.reward);
+			data.setBoolean("Done", a.env.done);
+		}
 	}
 	
 	public Map<Integer, NBTTagCompound> computeEntitiesData(World world) {

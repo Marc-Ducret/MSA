@@ -46,7 +46,7 @@ public class ServerSideAgentMod {
     public static final String NAME = "Server Side Agent";
     public static final String VERSION = "1.0";
     
-    private EnvironmentManager envManager;
+    public EnvironmentManager envManager;
     private RequestManager reqManager;
     
     @SidedProxy(clientSide = "edu.usc.thevillagers.serversideagent.proxy.ClientProxy", serverSide = "edu.usc.thevillagers.serversideagent.proxy.ServerProxy")

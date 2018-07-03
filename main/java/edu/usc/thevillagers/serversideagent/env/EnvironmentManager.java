@@ -13,7 +13,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
+import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.command.CommandConstant;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -92,6 +94,15 @@ public class EnvironmentManager {
 			}
 		}
     }
+	
+	public Actor getPlayerActor(EntityPlayerMP player) {
+		final Actor[] result = {null};
+		for(Environment env : envs.values())
+			env.applyToActiveActors((a) -> {
+				if(a.entity == player) result[0] = a;
+			});
+		return result[0];
+	}
 	
 	public Environment getEnv(String envId) {
 		return envs.get(envId);

@@ -95,13 +95,6 @@ public abstract class Environment { //TODO document functions that should be ove
 	}
 	
 	public final void preTick() throws Exception {
-		applyToActiveActors((a) -> a.act());
-	}
-	
-	public final void postTick() throws Exception {
-		step();
-		time++;
-		applyToActiveActors((a) -> a.observe());
 		if(done) {
 			applyToInactivActors((a) -> {
 				a.active = true;
@@ -111,6 +104,13 @@ public abstract class Environment { //TODO document functions that should be ove
 				a.observeNoReward();
 			});
 		}
+		applyToActiveActors((a) -> a.act());
+	}
+	
+	public final void postTick() throws Exception {
+		step();
+		time++;
+		applyToActiveActors((a) -> a.observe());
 	}
 	
 	public BlockPos getSpawnPoint(Actor a) {

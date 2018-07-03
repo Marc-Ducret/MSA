@@ -48,6 +48,11 @@ public class EnvironmentPattern extends Environment {
 			"#####",
 			"..#..",
 			"..#..",
+		},
+		{
+			"###",
+			"# #",
+			"###",
 		}
 	};
 	
@@ -69,10 +74,10 @@ public class EnvironmentPattern extends Environment {
 	
 	@Override
 	public void readPars(float[] pars) {
-		size = getRoundPar(pars, 0, 10);
+		size = getRoundPar(pars, 0, 8);
 		teams = getRoundPar(pars, 1, 1);
 		trees = getRoundPar(pars, 2, 0);
-		pattern = PATTERNS[getRoundPar(pars, 3, 0)];
+		pattern = PATTERNS[getRoundPar(pars, 3, 2)];
 		allocator = new AllocatorEmptySpace(new BlockPos(-size-1, -1, -size-1), new BlockPos(size+1, HEIGHT, size+1));
 	}
 	
@@ -94,54 +99,78 @@ public class EnvironmentPattern extends Environment {
 	
 	@Override
 	protected void buildSensors() {
+//		sensors.add(new SensorRaytrace(24, 12, 4, 70, 2) {
+//			
+//			EnumDyeColor teamColor;
+//			
+//			@Override
+//			protected void preView(Entity viewer) {
+//				super.preView(viewer);
+//				teamColor = getEntityArmorColor(viewer);
+//			}
+//			
+//			@Override
+//			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
+//				// Channels: TEAM, BLOCK, ENTITY, DEPTH
+//				if(teamColor == null) return;
+//				if(res != null) {
+//					switch(res.typeOfHit) {
+//					case MISS:
+//						break;
+//						
+//					case BLOCK:
+//						IBlockState state = world.getBlockState(res.getBlockPos());
+//						if(state.getBlock() == BLOCK) break;
+//						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
+//						if(blockColor == GROUND || blockColor == WALL || blockColor == TREE) {
+//							result[0] = 0;
+//							result[1] = 0;
+//							result[2] = blockColor == TREE ? -1 : +1;
+//						} else {
+//							result[0] = blockColor == teamColor ? +1 : -1;
+//							result[1] = 0;
+//							result[2] = 1;
+//						}
+//						result[3] = (float) res.hitVec.distanceTo(from) / dist;
+//						return;
+//						
+//					case ENTITY:
+//						EnumDyeColor entityColor = getEntityArmorColor(res.entityHit);
+//						result[0] = entityColor == teamColor ? +1 : -1;
+//						result[1] = 0;
+//						result[2] = 1;
+//						result[3] = (float) res.hitVec.distanceTo(from) / dist;
+//					}
+//				}
+//				result[0] = 0;
+//				result[1] = 0;
+//				result[2] = 0;
+//				result[3] = 1;
+//				return;
+//			}
+//		});
 		sensors.add(new SensorRaytrace(24, 12, 4, 70, 2) {
-			
-			EnumDyeColor teamColor;
-			
-			@Override
-			protected void preView(Entity viewer) {
-				super.preView(viewer);
-				teamColor = getEntityArmorColor(viewer);
-			}
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-				// Channels: TEAM, BLOCK, ENTITY, DEPTH
-				if(teamColor == null) return;
-				if(res != null) {
-					switch(res.typeOfHit) {
-					case MISS:
-						break;
-						
-					case BLOCK:
-						IBlockState state = world.getBlockState(res.getBlockPos());
-						if(state.getBlock() == BLOCK) break;
-						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
-						if(blockColor == GROUND || blockColor == WALL || blockColor == TREE) {
-							result[0] = 0;
-							result[1] = 0;
-							result[2] = blockColor == TREE ? -1 : +1;
-						} else {
-							result[0] = blockColor == teamColor ? +1 : -1;
-							result[1] = 0;
-							result[2] = 1;
-						}
-						result[3] = (float) res.hitVec.distanceTo(from) / dist;
-						return;
-						
-					case ENTITY:
-						EnumDyeColor entityColor = getEntityArmorColor(res.entityHit);
-						result[0] = entityColor == teamColor ? +1 : -1;
-						result[1] = 0;
-						result[2] = 1;
-						result[3] = (float) res.hitVec.distanceTo(from) / dist;
-					}
+				if(res == null) {
+					result[0] = -1;
+					result[1] = 1;
+					result[2] = -1;
+					result[3] = -1;
+					return;
 				}
-				result[0] = 0;
-				result[1] = 0;
-				result[2] = 0;
-				result[3] = 1;
-				return;
+				IBlockState state = world.getBlockState(res.getBlockPos());
+				if(state.getBlock() == Blocks.STAINED_GLASS) {
+					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.LIGHT_BLUE ? 1 : 0;
+				} else {
+					result[0] = -1;
+				}
+				result[1] = (float) res.hitVec.distanceTo(from) / dist;
+				Vec3d right = dir.rotateYaw((float) Math.PI * .5F).subtract(0, dir.y, 0).normalize();
+				Vec3d up = right.crossProduct(dir); 
+				result[2] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(right);
+				result[3] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(up);
 			}
 		});
 	}
@@ -183,8 +212,9 @@ public class EnvironmentPattern extends Environment {
 			}
 			a.entity.rotationPitch = -80 + world.rand.nextFloat() * 160;
 			a.entity.rotationYaw = -180 + world.rand.nextFloat() * 360;
+			a.entity.connection.setPlayerLocation(a.entity.posX, a.entity.posY, a.entity.posZ, a.entity.rotationYaw, a.entity.rotationPitch);
 			if(trees == 0)
-				a.entity.inventory.addItemStackToInventory(new ItemStack(BLOCK, 64));
+				a.entity.inventory.addItemStackToInventory(new ItemStack(BLOCK, 16));
 			team[0] = (team[0]+1) % teams;
 		});
 	}
@@ -243,7 +273,7 @@ public class EnvironmentPattern extends Environment {
 				a.entity.sendMessage(new TextComponentString("You lost!"));
 				a.entity.sendMessage(new TextComponentString("Time = "+time));
 			}
-		} else if(time >= 599) {
+		} else if(time >= 199) {
 			done = true;
 			a.entity.sendMessage(new TextComponentString("Time ran out"));
 		}
@@ -282,9 +312,11 @@ public class EnvironmentPattern extends Environment {
 		int patternSize = pattern.length;
 		for(int z = 0; z < patternSize; z++)
 			for(int x = 0; x < patternSize; x++)
-				if(pattern[z].charAt(x) == '#') {
+				if(pattern[z].charAt(x) != '.') {
 					IBlockState state = world.getBlockState(start.add(x, 0, z));
-					if(state.getBlock() != BLOCK || state.getValue(BlockColored.COLOR) != color)
+					if(pattern[z].charAt(x) == ' ') {
+						if(state.getBlock() != Blocks.AIR) return false;
+					} else if(state.getBlock() != BLOCK || state.getValue(BlockColored.COLOR) != color)
 						return false;
 				}
 		return true;
