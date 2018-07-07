@@ -20,7 +20,7 @@ import visdom
 import argparse
 
 def size(dim, ratio):
-    channels = 4
+    channels = 7
     w = int(np.sqrt(dim * ratio / channels))
     h = w // ratio
     return w, h, channels
@@ -213,15 +213,19 @@ def main():
     args = parser.parse_args()
 
     with th.cuda.device(args.gpu):
-
-        with h5py.File('tmp/imitation/' + args.dataset + '.h5', 'r') as f:
-            obs_dataset = np.array(f['obsVar'])
-            act_dataset = np.array(f['actVar'])
+        obs_dataset, act_dataset = None, None
+        for name in args.dataset.split(','):
+            with h5py.File('tmp/imitation/' + name + '.h5', 'r') as f:
+                obs = np.array(f['obsVar'])
+                act = np.array(f['actVar'])
+                obs_dataset = obs if obs_dataset is None else np.concatenate((obs_dataset, obs))
+                act_dataset = act if act_dataset is None else np.concatenate((act_dataset, act))
 
         n = obs_dataset.shape[0] * obs_dataset.shape[1]
         obs_dim = obs_dataset.shape[2]
         act_dim = act_dataset.shape[2]
         w, h, c = size(obs_dim, 2)
+        print('n = %i' % n)
         print('w = %i, h = %i, c = %i' % (w, h, c))
         train(
             th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),

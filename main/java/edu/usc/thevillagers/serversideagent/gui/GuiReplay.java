@@ -11,6 +11,7 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
+import edu.usc.thevillagers.serversideagent.env.EnvironmentPattern;
 import edu.usc.thevillagers.serversideagent.env.sensor.SensorRaytrace;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayerClient;
 import net.minecraft.block.BlockColored;
@@ -28,7 +29,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
@@ -290,28 +290,59 @@ public class GuiReplay extends GuiScreen {
 		int res = 24;
 		float fov = 70;
 		float ratio = (float) width / height;
-		SensorRaytrace sensor = new SensorRaytrace(res, (int) (res / ratio), 4, fov, ratio, false) {
+		SensorRaytrace sensor = new SensorRaytrace(res, (int) (res / ratio), 7, fov, ratio, true) {
+			
+			EnumDyeColor teamColor;
+			
+			@Override
+			protected void preView(Entity viewer) {
+				super.preView(viewer);
+				teamColor = EnvironmentPattern.getEntityArmorColor(viewer);
+			}
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-				if(res == null) {
-					result[0] = -1;
-					result[1] = 1;
-					result[2] = -1;
-					result[3] = -1;
-					return;
-				}
-				IBlockState state = world.getBlockState(res.getBlockPos());
-				if(state.getBlock() == Blocks.STAINED_GLASS) {
-					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.LIGHT_BLUE ? 1 : 0;
+				// Channels: TEAM, SKY, TREE, ENTITY, DEPTH, NORMAL X, NORMAL Y
+				if(teamColor == null) return;
+				if(res != null) {
+					switch(res.typeOfHit) {						
+					case BLOCK:
+						IBlockState state = world.getBlockState(res.getBlockPos());
+						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
+						if(blockColor == EnvironmentPattern.GROUND || blockColor == EnvironmentPattern.WALL || blockColor == EnvironmentPattern.TREE) 
+							result[0] = 0;
+						else
+							result[0] = blockColor == teamColor ? +1 : -1;
+						result[1] = 0;
+						result[2] = blockColor == EnvironmentPattern.TREE ? +1 : 0;
+						result[3] = 0;
+						break;
+						
+					case ENTITY:
+						EnumDyeColor entityColor = EnvironmentPattern.getEntityArmorColor(res.entityHit);
+						result[0] = entityColor == teamColor ? +1 : -1;
+						result[1] = 0;
+						result[2] = 0;
+						result[3] = 1;
+						break;
+						
+					default:
+						throw new RuntimeException("Incorect type of hit");
+					}
+					result[4] = (float) res.hitVec.distanceTo(from) / dist;
+					Vec3d right = dir.rotateYaw((float) Math.PI * .5F).subtract(0, dir.y, 0).normalize();
+					Vec3d up = right.crossProduct(dir); 
+					result[5] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(right);
+					result[6] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(up);
 				} else {
-					result[0] = -1;
+					result[0] = 0;
+					result[1] = 1;
+					result[2] = 0;
+					result[3] = 0;
+					result[4] = 1;
+					result[5] = 0;
+					result[6] = 0;
 				}
-				result[1] = (float) res.hitVec.distanceTo(from) / dist;
-				Vec3d right = dir.rotateYaw((float) Math.PI * .5F).subtract(0, dir.y, 0).normalize();
-				Vec3d up = right.crossProduct(dir); 
-				result[2] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(right);
-				result[3] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(up);
 			}
 		};
 //	long timeStart = System.currentTimeMillis();

@@ -94,18 +94,25 @@ public class CommandCompile extends CommandBase {
 		env.init((WorldServer) replay.world);
 		List<Human> humans = new ArrayList<>();
 		List<List<Actuator.Reverser>> reversers = new ArrayList<>();
-		for(Entity e : replay.world.loadedEntityList) {
-			if(e instanceof EntityPlayerMP) {
-				Human h = new Human(env, (EntityPlayerMP) e);
-				humans.add(h);
-				List<Actuator.Reverser> hReversers = new ArrayList<>();
-				for(Actuator actuator : env.actuators)
-					hReversers.add(actuator.reverser(h, replay));
-				reversers.add(hReversers);
+		int firstTick = -1;
+		while(humans.isEmpty()) {
+			for(Entity e : replay.world.loadedEntityList) {
+				if(e instanceof EntityPlayerMP) {
+					Human h = new Human(env, (EntityPlayerMP) e);
+					humans.add(h);
+					List<Actuator.Reverser> hReversers = new ArrayList<>();
+					for(Actuator actuator : env.actuators)
+						hReversers.add(actuator.reverser(h, replay));
+					reversers.add(hReversers);
+				}
 			}
+			firstTick++;
+			replay.endReplayTick();
+			if(replay.currentTick == replay.duration) throw new IllegalArgumentException("No humans in replay");
 		}
+		System.out.println("FirstTick="+firstTick);
 		int p = CommandConstant.SKIP_TICK + 1;
-		int samples = (replay.duration + ((int) replay.worldTimeOffset % p) + p-1) / p;
+		int samples = (replay.duration-firstTick + ((int) (replay.worldTimeOffset+firstTick) % p) + p-1) / p;
 		int[] obsDim = {samples, humans.size(), env.observationDim};
 		int[] actDim = {samples, humans.size(), env.actionDim};
 		int[] envInfoDim = {samples, humans.size(), 2};
@@ -114,7 +121,7 @@ public class CommandCompile extends CommandBase {
 		float[] envInfoBuffer = new float[envInfoDim[0] * envInfoDim[1] * envInfoDim[2]];
 		long lastReport = System.currentTimeMillis();
 		while(replay.currentTick < replay.duration) {
-			int agentTick = (int) (replay.currentTick + (replay.worldTimeOffset % p)) / p;
+			int agentTick = (int) (replay.currentTick-firstTick + ((replay.worldTimeOffset+firstTick) % p)) / p;
 			for(int h = 0; h < humans.size(); h ++) {
 				Human human = humans.get(h);
 				env.encodeObservation(human, human.observationVector);

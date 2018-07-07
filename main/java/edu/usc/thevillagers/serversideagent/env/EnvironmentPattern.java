@@ -75,8 +75,8 @@ public class EnvironmentPattern extends Environment {
 	@Override
 	public void readPars(float[] pars) {
 		size = getRoundPar(pars, 0, 8);
-		teams = getRoundPar(pars, 1, 1);
-		trees = getRoundPar(pars, 2, 0);
+		teams = getRoundPar(pars, 1, 2);
+		trees = getRoundPar(pars, 2, 4);
 		pattern = PATTERNS[getRoundPar(pars, 3, 2)];
 		allocator = new AllocatorEmptySpace(new BlockPos(-size-1, -1, -size-1), new BlockPos(size+1, HEIGHT, size+1));
 	}
@@ -99,80 +99,85 @@ public class EnvironmentPattern extends Environment {
 	
 	@Override
 	protected void buildSensors() {
-//		sensors.add(new SensorRaytrace(24, 12, 4, 70, 2) {
-//			
-//			EnumDyeColor teamColor;
-//			
-//			@Override
-//			protected void preView(Entity viewer) {
-//				super.preView(viewer);
-//				teamColor = getEntityArmorColor(viewer);
-//			}
-//			
-//			@Override
-//			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-//				// Channels: TEAM, BLOCK, ENTITY, DEPTH
-//				if(teamColor == null) return;
-//				if(res != null) {
-//					switch(res.typeOfHit) {
-//					case MISS:
-//						break;
-//						
-//					case BLOCK:
-//						IBlockState state = world.getBlockState(res.getBlockPos());
-//						if(state.getBlock() == BLOCK) break;
-//						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
-//						if(blockColor == GROUND || blockColor == WALL || blockColor == TREE) {
-//							result[0] = 0;
-//							result[1] = 0;
-//							result[2] = blockColor == TREE ? -1 : +1;
-//						} else {
-//							result[0] = blockColor == teamColor ? +1 : -1;
-//							result[1] = 0;
-//							result[2] = 1;
-//						}
-//						result[3] = (float) res.hitVec.distanceTo(from) / dist;
-//						return;
-//						
-//					case ENTITY:
-//						EnumDyeColor entityColor = getEntityArmorColor(res.entityHit);
-//						result[0] = entityColor == teamColor ? +1 : -1;
-//						result[1] = 0;
-//						result[2] = 1;
-//						result[3] = (float) res.hitVec.distanceTo(from) / dist;
-//					}
-//				}
-//				result[0] = 0;
-//				result[1] = 0;
-//				result[2] = 0;
-//				result[3] = 1;
-//				return;
-//			}
-//		});
-		sensors.add(new SensorRaytrace(24, 12, 4, 70, 2) {
+		sensors.add(new SensorRaytrace(24, 12, 7, 70, 2, true) {
+			
+			EnumDyeColor teamColor;
+			
+			@Override
+			protected void preView(Entity viewer) {
+				super.preView(viewer);
+				teamColor = EnvironmentPattern.getEntityArmorColor(viewer);
+			}
 			
 			@Override
 			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-				if(res == null) {
-					result[0] = -1;
-					result[1] = 1;
-					result[2] = -1;
-					result[3] = -1;
-					return;
-				}
-				IBlockState state = world.getBlockState(res.getBlockPos());
-				if(state.getBlock() == Blocks.STAINED_GLASS) {
-					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.LIGHT_BLUE ? 1 : 0;
+				// Channels: TEAM, SKY, TREE, ENTITY, DEPTH, NORMAL X, NORMAL Y
+				if(teamColor == null) return;
+				if(res != null) {
+					switch(res.typeOfHit) {						
+					case BLOCK:
+						IBlockState state = world.getBlockState(res.getBlockPos());
+						EnumDyeColor blockColor = state.getValue(BlockColored.COLOR);
+						if(blockColor == EnvironmentPattern.GROUND || blockColor == EnvironmentPattern.WALL || blockColor == EnvironmentPattern.TREE) 
+							result[0] = 0;
+						else
+							result[0] = blockColor == teamColor ? +1 : -1;
+						result[1] = 0;
+						result[2] = blockColor == EnvironmentPattern.TREE ? +1 : 0;
+						result[3] = 0;
+						break;
+						
+					case ENTITY:
+						EnumDyeColor entityColor = EnvironmentPattern.getEntityArmorColor(res.entityHit);
+						result[0] = entityColor == teamColor ? +1 : -1;
+						result[1] = 0;
+						result[2] = 0;
+						result[3] = 1;
+						break;
+						
+					default:
+						throw new RuntimeException("Incorect type of hit");
+					}
+					result[4] = (float) res.hitVec.distanceTo(from) / dist;
+					Vec3d right = dir.rotateYaw((float) Math.PI * .5F).subtract(0, dir.y, 0).normalize();
+					Vec3d up = right.crossProduct(dir); 
+					result[5] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(right);
+					result[6] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(up);
 				} else {
-					result[0] = -1;
+					result[0] = 0;
+					result[1] = 1;
+					result[2] = 0;
+					result[3] = 0;
+					result[4] = 1;
+					result[5] = 0;
+					result[6] = 0;
 				}
-				result[1] = (float) res.hitVec.distanceTo(from) / dist;
-				Vec3d right = dir.rotateYaw((float) Math.PI * .5F).subtract(0, dir.y, 0).normalize();
-				Vec3d up = right.crossProduct(dir); 
-				result[2] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(right);
-				result[3] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(up);
 			}
 		});
+//		sensors.add(new SensorRaytrace(24, 12, 4, 70, 2) {
+//			
+//			@Override
+//			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
+//				if(res == null) {
+//					result[0] = -1;
+//					result[1] = 1;
+//					result[2] = -1;
+//					result[3] = -1;
+//					return;
+//				}
+//				IBlockState state = world.getBlockState(res.getBlockPos());
+//				if(state.getBlock() == Blocks.STAINED_GLASS) {
+//					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.LIGHT_BLUE ? 1 : 0;
+//				} else {
+//					result[0] = -1;
+//				}
+//				result[1] = (float) res.hitVec.distanceTo(from) / dist;
+//				Vec3d right = dir.rotateYaw((float) Math.PI * .5F).subtract(0, dir.y, 0).normalize();
+//				Vec3d up = right.crossProduct(dir); 
+//				result[2] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(right);
+//				result[3] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(up);
+//			}
+//		});
 	}
 	
 	@Override
@@ -273,7 +278,7 @@ public class EnvironmentPattern extends Environment {
 				a.entity.sendMessage(new TextComponentString("You lost!"));
 				a.entity.sendMessage(new TextComponentString("Time = "+time));
 			}
-		} else if(time >= 199) {
+		} else if(time >= 20 * 120) {
 			done = true;
 			a.entity.sendMessage(new TextComponentString("Time ran out"));
 		}
