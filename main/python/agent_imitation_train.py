@@ -107,7 +107,7 @@ class Policy(nn.Module):
     def _value_action(self, inputs, states=None, masks=None):
         inputs = Policy._adapt_inputs(inputs)
         features = self.vision(inputs)
-        self.memory.flatten_parameters()
+        #self.memory.flatten_parameters()
         features, states = self.memory(features.view(features.size(0), 1, features.size(1)), states)
         features = features.view(features.size(0), features.size(2))
         return self.critic(features), self.action(features)
@@ -198,7 +198,9 @@ def train(trajs, policy, args):
                     np.array([current_loss]), np.array([e]),
                     win=loss_plot, update='append')
                 print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, current_loss, speed))
-                th.save(policy, 'tmp/models/imitation_th_epoch_latest') #th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
+                th.save(policy, 'tmp/models/imitation_th_epoch_latest')
+                if e % (eval_period * 50) == 0:
+                    th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
                 #rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy), args.gpu))
             if len(rewards_futures) > cur_future:
                 future = rewards_futures[cur_future]

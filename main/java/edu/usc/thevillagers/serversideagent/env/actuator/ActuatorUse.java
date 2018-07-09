@@ -23,7 +23,6 @@ public class ActuatorUse extends Actuator {
 	@Override
 	public void act(Actor actor) {
 		if(actor.entity.world.rand.nextFloat() > values[0] * CommandConstant.ACTION_PROB_FACTOR) {
-			actor.actionState.action = null;
 			return;
 		}
 		World world = actor.entity.world;
@@ -49,7 +48,6 @@ public class ActuatorUse extends Actuator {
 			break;
 			
 		default:
-			actor.actionState.action = null;
 			break;
 		}
 	}

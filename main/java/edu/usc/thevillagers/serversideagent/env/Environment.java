@@ -127,6 +127,7 @@ public abstract class Environment { //TODO document functions that should be ove
 	}
 	
 	public final void decodeAction(Actor actor, float[] actionVector) {
+		actor.actionState.action = null;
 		int offset = 0;
 		for(Actuator actuator : actuators) {
 			for(int i = 0; i < actuator.dim; i ++)

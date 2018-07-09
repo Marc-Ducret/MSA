@@ -15,6 +15,7 @@ public class CommandConstant extends CommandBase {
 	public static int SKIP_TICK = 0;
 	public static float AGENT_SPEED_FACTOR = 1;
 	public static float ACTION_PROB_FACTOR = 1;
+	public static float AGENT_PITCH_CLAMP = 90;
 	
 	@Override
 	public String getName() {
@@ -41,6 +42,10 @@ public class CommandConstant extends CommandBase {
 			
 		case "prob":
 			ACTION_PROB_FACTOR = (float) parseDouble(args[1], 0);
+			break;
+			
+		case "pitch":
+			AGENT_PITCH_CLAMP = (float) parseDouble(args[1], 0);
 			break;
 		}
 	}

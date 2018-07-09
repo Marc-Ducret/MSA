@@ -15,6 +15,7 @@ import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -55,8 +56,9 @@ public class EntityAgent extends EntityPlayerMP {
 		state.clamp();
 		if(state.action != null) executeAction(state.action);
 		this.setPositionAndRotation(posX, posY, posZ, 
-				rotationYaw   + state.momentumYaw   * ROTATION_SPEED * CommandConstant.AGENT_SPEED_FACTOR, 
-				rotationPitch + state.momentumPitch * ROTATION_SPEED * CommandConstant.AGENT_SPEED_FACTOR);
+				rotationYaw + state.momentumYaw   * ROTATION_SPEED * CommandConstant.AGENT_SPEED_FACTOR, 
+				MathHelper.clamp(rotationPitch + state.momentumPitch * ROTATION_SPEED * CommandConstant.AGENT_SPEED_FACTOR,
+						-CommandConstant.AGENT_PITCH_CLAMP, +CommandConstant.AGENT_PITCH_CLAMP));
 		Vec3d move = new Vec3d(state.strafe, 0, state.forward).rotateYaw(-rotationYaw * (float) Math.PI / 180)
 				.scale(.15F * CommandConstant.AGENT_SPEED_FACTOR);
 		motionX = move.x;
