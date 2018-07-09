@@ -51,6 +51,9 @@ class Policy(nn.Module):
                 nn.init.normal_(m.weight)
             return m
         C = 8
+        vision_features = C * 2 * 4
+        memory_features = 256
+
         self.vision = nn.Sequential(
             nn.ReflectionPad2d(3),
             init_(nn.Conv2d(obs_dim_c, C, 7, groups=1, bias=False)),
@@ -70,39 +73,47 @@ class Policy(nn.Module):
 
         ).cuda()
 
-        self.feature_dim = C * 2 * 4
+        self.memory = nn.LSTM(vision_features, memory_features).cuda()
+
 
         self.action = nn.Sequential(
-            nn.Linear(self.feature_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, 64),
-            nn.Tanh(),
-            nn.Linear(64, act_dim)
+            #nn.Linear(memory_features, 64),
+            #nn.Tanh(),
+            #nn.Linear(64, 64),
+            #nn.Tanh(),
+            nn.Linear(memory_features, act_dim)
         ).cuda()
 
         self.critic = nn.Sequential(
-            nn.Linear(self.feature_dim, 64),
-            nn.Tanh(),
-            nn.Linear(64, 64),
-            nn.Tanh(),
-            nn.Linear(64, 1)
+            #nn.Linear(memory_features, 64),
+            #nn.Tanh(),
+            #nn.Linear(64, 64),
+            #nn.Tanh(),
+            nn.Linear(memory_features, 1)
         ).cuda()
 
         self.dist = DiagGaussian(act_dim).cuda()
 
         self.train()
 
-        self.state_size = 1
+        self.state_size = memory_features
 
     def _adapt_inputs(inputs):
         if len(inputs.shape) < 4:
+            assert(False)
             inputs = inputs.view(-1, 12, 24, 1).permute(0, 3, 1, 2)
         return inputs
 
-    def act(self, inputs, states=None, masks=None, deterministic=False):
+    def _value_action(self, inputs, states=None, masks=None):
         inputs = Policy._adapt_inputs(inputs)
         features = self.vision(inputs)
-        value, actor_features = self.critic(features), self.action(features)
+        self.memory.flatten_parameters()
+        features, states = self.memory(features.view(features.size(0), 1, features.size(1)), states)
+        features = features.view(features.size(0), features.size(2))
+        return self.critic(features), self.action(features)
+
+    def act(self, inputs, states=None, masks=None, deterministic=False):
+        value, actor_features = self._value_action(inputs, states, masks)
         dist = self.dist(actor_features)
 
         action = actor_features if deterministic else dist.rsample()
@@ -113,13 +124,11 @@ class Policy(nn.Module):
         return value, action, action_log_probs, states
 
     def get_value(self, inputs, states=None, masks=None):
-        inputs = Policy._adapt_inputs(inputs)
-        return self.critic(self.vision(inputs))
+        value, _ = self._value_action(inputs, states, masks)
+        return value
 
     def evaluate_actions(self, inputs, states, masks, action):
-        inputs = Policy._adapt_inputs(inputs)
-        features = self.vision(inputs)
-        value, actor_features = self.critic(features), self.action(features)
+        _, actor_features = self._value_action(inputs, states, masks)
         dist = self.dist(actor_features)
 
         action_log_probs = dist.log_probs(action)
@@ -128,7 +137,7 @@ class Policy(nn.Module):
         return value, action_log_probs, dist_entropy, states
 
 
-def train(obs_dataset, act_dataset, policy, args):
+def train(trajs, policy, args):
     #PARAMS
     lr = args.lr
     batch_size = args.batch
@@ -139,27 +148,22 @@ def train(obs_dataset, act_dataset, policy, args):
     vis = visdom.Visdom()
 
     optimizer = optim.Adam(policy.parameters(), lr=lr, weight_decay=decay)
-    n = obs_dataset.size(0)
-
-    def epoch(batch_size, size=None, offset=None):
-        size = size if size else n
-        ids = th.randperm(size).cuda()
-        if offset:
-            ids += offset
-        for batch_ids in ids.split(batch_size):
-            yield obs_dataset[batch_ids], act_dataset[batch_ids]
+    def epoch():
+        ids = np.random.permutation(len(trajs))
+        for i in ids:
+            yield trajs[i]
 
     def compute_loss():
         with th.no_grad():
             losses = []
-            for obs_batch, act_batch in epoch(1024 * 16, n, 0):
+            for obs_batch, act_batch in epoch():
                 _, action, _, _ = policy.act(obs_batch, deterministic=True)
                 losses.append(loss_function(act_batch, action).cpu().detach().numpy())
             return np.mean(np.array(losses))
 
     def opt():
         pairs = 0
-        for obs_batch, act_batch in epoch(batch_size, n):
+        for obs_batch, act_batch in epoch():
             _, action, _, _ = policy.act(obs_batch, deterministic=True)
             loss = loss_function(act_batch, action)
             loss.backward()
@@ -195,7 +199,7 @@ def train(obs_dataset, act_dataset, policy, args):
                     win=loss_plot, update='append')
                 print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, current_loss, speed))
                 th.save(policy, 'tmp/models/imitation_th_epoch_latest') #th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
-                rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy), args.gpu))
+                #rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy), args.gpu))
             if len(rewards_futures) > cur_future:
                 future = rewards_futures[cur_future]
                 if future.done():
@@ -213,50 +217,41 @@ def main():
     args = parser.parse_args()
 
     with th.cuda.device(args.gpu):
-        obs_dataset, act_dataset = None, None
+        trajs = []
         for name in args.dataset.split(','):
             with h5py.File('tmp/imitation/' + name + '.h5', 'r') as f:
                 obs = np.array(f['obsVar'])
                 act = np.array(f['actVar'])
-                obs_dataset = obs if obs_dataset is None else np.concatenate((obs_dataset, obs))
-                act_dataset = act if act_dataset is None else np.concatenate((act_dataset, act))
-
-        n = obs_dataset.shape[0] * obs_dataset.shape[1]
-        obs_dim = obs_dataset.shape[2]
-        act_dim = act_dataset.shape[2]
-        w, h, c = size(obs_dim, 2)
-        print('n = %i' % n)
-        print('w = %i, h = %i, c = %i' % (w, h, c))
+                env_info = np.array(f['envInfoVar'])
+                n_samples = obs.shape[0]
+                n_humans = obs.shape[1]
+                obs_dim = obs.shape[2]
+                act_dim = act.shape[2]
+                w, h, c = size(obs_dim, 2)
+                print('w = %i, h = %i, c = %i' % (w, h, c))
+                for human in range(n_humans):
+                    traj_start = 0
+                    while traj_start < n_samples:
+                        traj_end = traj_start
+                        while traj_end < n_samples and env_info[traj_end, human, 1] == 0:
+                            traj_end += 1
+                        if traj_end > traj_start and traj_end < n_samples:
+                            n = traj_end+1 - traj_start
+                            trajs.append((
+                                th.from_numpy(
+                                    obs[traj_start:traj_end+1, human, :].reshape((n, h, w, c)).transpose(0, 3, 1, 2)
+                                ).cuda(),
+                                th.from_numpy(
+                                    act[traj_start:traj_end+1, human, :].reshape((n, act_dim))
+                                ).cuda(),
+                            ))
+                        traj_start = traj_end + 1
+        print('#trajs = %i' % len(trajs))
         train(
-            th.from_numpy(obs_dataset.reshape((n, h, w, c)).transpose(0, 3, 1, 2)).cuda(),
-            th.from_numpy(act_dataset.reshape((n, act_dim))).cuda(),
+            trajs,
             Policy(w, h, c, act_dim),
             args
         )
-
-def play(args, env):
-    epoch = 5
-    w, h, c = size(env.observation_dim, 2)
-    policy = th.load('tmp/models/imitation_th_epoch_%i.pt' % epoch)
-    n_eps = 50
-    def act(obs):
-        with th.no_grad():
-            obs_th = th.from_numpy(obs.reshape((1, h, w, c)).transpose(0, 3, 1, 2)).float().cuda()
-            _, action, _, _ = policy.act(obs_th, deterministic=True)
-            action = action.cpu().detach().numpy()
-        return action
-    mean_rew = 0
-    for i in range(n_eps):
-        obs = env.reset()
-        ep_rew = 0
-        while True:
-            obs, rew, done, _ = env.step(act(obs))
-            ep_rew += rew
-            if done:
-                ep_rew = 100 if ep_rew > 0 else 0
-                mean_rew += ep_rew / n_eps
-                break
-    print('estimated %.2f for epoch %i' % (mean_rew, epoch))
 
 def estimate_reward(epoch, policy, gpu):
     with th.cuda.device(gpu):
@@ -266,18 +261,20 @@ def estimate_reward(epoch, policy, gpu):
             env.init_spaces()
             n_eps = 50
             w, h, c = size(env.observation_dim, 2)
-            def act(obs):
+            def act(obs, states):
                 with th.no_grad():
                     obs_th = th.from_numpy(obs.reshape((1, h, w, c)).transpose(0, 3, 1, 2)).float().cuda()
-                    _, action, _, _ = policy.act(obs_th, deterministic=True)
+                    _, action, _, states = policy.act(obs_th, states, deterministic=True)
                     action = action.cpu().detach().numpy()
-                return action
+                return action, states
             mean_rew = 0
             for i in range(n_eps):
                 obs = env.reset()
                 ep_rew = 0
+                states = None
                 while True:
-                    obs, rew, done, _ = env.step(act(obs))
+                    action, states = act(obs, states)
+                    obs, rew, done, _ = env.step(action)
                     ep_rew += rew
                     if done:
                         ep_rew = 100 if ep_rew > 0 else 0
