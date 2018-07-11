@@ -44,7 +44,7 @@ class DiagGaussian(nn.Module):
         return FixedNormal(x, action_logstd.exp())
 
 class Policy(nn.Module):
-    def __init__(self, obs_dim_w, obs_dim_h, obs_dim_c, act_dim):
+    def __init__(self, obs_dim_w, obs_dim_h, obs_dim_c, act_dim, memory_std):
         super(Policy, self).__init__()
         def init_(m):
             if hasattr(m, 'weight'):
@@ -52,7 +52,8 @@ class Policy(nn.Module):
             return m
         C = 8
         vision_features = C * 2 * 4
-        memory_features = 256
+        self.memory_features = 256
+        self.memory_std = memory_std
 
         self.vision = nn.Sequential(
             nn.ReflectionPad2d(3),
@@ -73,7 +74,7 @@ class Policy(nn.Module):
 
         ).cuda()
 
-        self.memory = nn.LSTM(vision_features, memory_features).cuda()
+        self.memory = nn.LSTM(vision_features, self.memory_features).cuda()
 
 
         self.action = nn.Sequential(
@@ -81,7 +82,7 @@ class Policy(nn.Module):
             #nn.Tanh(),
             #nn.Linear(64, 64),
             #nn.Tanh(),
-            nn.Linear(memory_features, act_dim)
+            nn.Linear(self.memory_features, act_dim)
         ).cuda()
 
         self.critic = nn.Sequential(
@@ -89,14 +90,14 @@ class Policy(nn.Module):
             #nn.Tanh(),
             #nn.Linear(64, 64),
             #nn.Tanh(),
-            nn.Linear(memory_features, 1)
+            nn.Linear(self.memory_features, 1)
         ).cuda()
 
         self.dist = DiagGaussian(act_dim).cuda()
 
         self.train()
 
-        self.state_size = memory_features
+        self.state_size = self.memory_features
 
     def _adapt_inputs(inputs):
         if len(inputs.shape) < 4:
@@ -105,9 +106,14 @@ class Policy(nn.Module):
         return inputs
 
     def _value_action(self, inputs, states=None, masks=None):
+        if states is None:
+            states = (
+                th.tanh(th.randn((1, 1, self.memory_features)).cuda() * self.memory_std),
+                th.tanh(th.randn((1, 1, self.memory_features)).cuda() * self.memory_std),
+            )
         inputs = Policy._adapt_inputs(inputs)
         features = self.vision(inputs)
-        #self.memory.flatten_parameters()
+        self.memory.flatten_parameters()
         features, states = self.memory(features.view(features.size(0), 1, features.size(1)), states)
         features = features.view(features.size(0), features.size(2))
         return self.critic(features), self.action(features)
@@ -144,6 +150,7 @@ def train(trajs, policy, args):
     loss_function = F.mse_loss
     decay = args.decay
     eval_period = args.eval
+    memory_std = args.mem_std
 
     vis = visdom.Visdom()
 
@@ -164,6 +171,7 @@ def train(trajs, policy, args):
     def opt():
         pairs = 0
         for obs_batch, act_batch in epoch():
+            optimizer.zero_grad()
             _, action, _, _ = policy.act(obs_batch, deterministic=True)
             loss = loss_function(act_batch, action)
             loss.backward()
@@ -174,7 +182,7 @@ def train(trajs, policy, args):
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         initial_loss = compute_loss()
         opts = dict(
-            title='data=%s lr=%.1e bs=%i dc=%.1e' % (args.dataset, lr, batch_size, decay),
+            title='data=%s lr=%.1e bs=%i dc=%.1e mem=%.1e' % (args.dataset, lr, batch_size, decay, memory_std),
             xlabel='epochs'
         )
         opts['ylabel'] = 'loss'
@@ -198,9 +206,9 @@ def train(trajs, policy, args):
                     np.array([current_loss]), np.array([e]),
                     win=loss_plot, update='append')
                 print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, current_loss, speed))
-                th.save(policy, 'tmp/models/imitation_th_epoch_latest')
+                th.save(policy, 'tmp/models/imitation_%i_epoch_latest' % args.gpu)
                 if e % (eval_period * 50) == 0:
-                    th.save(policy, 'tmp/models/imitation_th_epoch_%i.pt' % e)
+                    th.save(policy, 'tmp/models/imitation_%i_epoch_%i' % (args.gpu, e))
                 #rewards_futures.append(executor.submit(estimate_reward, e, copy.deepcopy(policy), args.gpu))
             if len(rewards_futures) > cur_future:
                 future = rewards_futures[cur_future]
@@ -213,7 +221,7 @@ def train(trajs, policy, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset', action='store')
-    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2, 'eval': 100, 'gpu': 0}
+    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2, 'eval': 100, 'gpu': 0, 'mem_std': 0}
     for par, default in params.items():
         parser.add_argument('--'+par, action='store', default=default, type=type(default))
     args = parser.parse_args()
@@ -251,7 +259,7 @@ def main():
         print('#trajs = %i' % len(trajs))
         train(
             trajs,
-            Policy(w, h, c, act_dim),
+            Policy(w, h, c, act_dim, args.mem_std),
             args
         )
 
