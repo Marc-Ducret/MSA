@@ -221,7 +221,7 @@ def train(trajs, policy, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset', action='store')
-    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2, 'eval': 100, 'gpu': 0, 'mem_std': 0}
+    params = {'lr': 1e-6, 'batch': 32, 'decay': 1e-2, 'eval': 100, 'gpu': 0, 'mem_std': 0, 'load': ''}
     for par, default in params.items():
         parser.add_argument('--'+par, action='store', default=default, type=type(default))
     args = parser.parse_args()
@@ -257,9 +257,14 @@ def main():
                             ))
                         traj_start = traj_end + 1
         print('#trajs = %i' % len(trajs))
+        policy = None
+        if args.load == '':
+            policy = Policy(w, h, c, act_dim, args.mem_std)
+        else:
+            policy = th.load(args.load, map_location=lambda storage, loc: storage.cuda(args.gpu))
         train(
             trajs,
-            Policy(w, h, c, act_dim, args.mem_std),
+            policy,
             args
         )
 
