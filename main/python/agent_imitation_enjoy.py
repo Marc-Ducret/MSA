@@ -7,6 +7,10 @@ def play(args):
     with th.cuda.device(args.gpu):
         try:
             policy = th.load(args.save, map_location=lambda storage, loc: storage.cuda(args.gpu))
+            if not hasattr(policy, 'memory_features'):
+                policy.memory_features = 256
+                policy.memory_std = 0
+            #policy = Policy(24, 12, 7, 6, 1)
             env = minecraft.environment.MinecraftEnv(args.env_type, args.env_id)
             env.init_spaces()
             n_eps = 50

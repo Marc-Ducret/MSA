@@ -43,6 +43,14 @@ class DiagGaussian(nn.Module):
         action_logstd = self.logstd(zeros) - 3
         return FixedNormal(x, action_logstd.exp())
 
+class ConstantOutput(nn.Module):
+    def __init__(self):
+        super(ConstantOutput, self).__init__()
+        self.c = nn.Parameter(th.zeros(6))
+
+    def forward(self, obs):
+        return self.c
+
 class Policy(nn.Module):
     def __init__(self, obs_dim_w, obs_dim_h, obs_dim_c, act_dim, memory_std):
         super(Policy, self).__init__()
@@ -50,26 +58,32 @@ class Policy(nn.Module):
             if hasattr(m, 'weight'):
                 nn.init.normal_(m.weight)
             return m
-        C = 8
-        vision_features = C * 2 * 4
+        C = 7
+        vision_features = (C * 2) * 3 * 3
         self.memory_features = 256
         self.memory_std = memory_std
 
         self.vision = nn.Sequential(
-            nn.ReflectionPad2d(3),
-            init_(nn.Conv2d(obs_dim_c, C, 7, groups=1, bias=False)),
-            nn.Tanh(),
-            nn.ReflectionPad2d(2),
-            init_(nn.Conv2d(C, C, 5, groups=C, bias=False)),
-            nn.Tanh(),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(C, C, 3, groups=C, bias=False)),
-            nn.Tanh(),
+            init_(nn.Conv2d(obs_dim_c, C, 3, groups=1)),
+            nn.ReLU(),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(C, C, 3, groups=1)),
+            nn.ReLU(),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(C, C, 3, groups=1)),
+            nn.ReLU(),
             nn.MaxPool2d(2),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(C, C, 3, groups=C, bias=False)),
-            nn.Tanh(),
-            nn.MaxPool2d(3),
+            init_(nn.Conv2d(C, C * 2, 3, groups=1)),
+            nn.ReLU(),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(C * 2, C * 2, 3, groups=1)),
+            nn.ReLU(),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(C * 2, C * 2, 3, groups=1)),
+            nn.ReLU(),
+            nn.MaxPool2d((2, 4)),
             Flatten(),
 
         ).cuda()
