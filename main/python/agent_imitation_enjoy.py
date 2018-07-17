@@ -10,6 +10,8 @@ def play(args):
             if not hasattr(policy, 'memory_features'):
                 policy.memory_features = 256
                 policy.memory_std = 0
+            if not hasattr(policy, 'memory_layers'):
+                policy.memory_layers = 1
             #policy = Policy(24, 12, 7, 6, 1)
             env = minecraft.environment.MinecraftEnv(args.env_type, args.env_id)
             env.init_spaces()
@@ -25,7 +27,10 @@ def play(args):
             for i in range(n_eps):
                 obs = env.reset()
                 ep_rew = 0
-                states = None
+                states = (
+                    th.tanh(th.randn((policy.memory_layers, 1, policy.memory_features)).cuda() * policy.memory_std),
+                    th.tanh(th.randn((policy.memory_layers, 1, policy.memory_features)).cuda() * policy.memory_std),
+                )
                 while True:
                     action, states = act(obs, states)
                     obs, rew, done, _ = env.step(action)

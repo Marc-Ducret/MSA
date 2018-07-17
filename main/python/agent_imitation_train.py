@@ -58,52 +58,48 @@ class Policy(nn.Module):
             if hasattr(m, 'weight'):
                 nn.init.normal_(m.weight)
             return m
-        C = 7
-        vision_features = (C * 2) * 3 * 3
+        C = 16
+        vision_features = (C * 2) * 2 * 4
         self.memory_features = 256
         self.memory_std = memory_std
 
         self.vision = nn.Sequential(
             nn.ReflectionPad2d(1),
             init_(nn.Conv2d(obs_dim_c, C, 3, groups=1)),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(C, C, 3, groups=1)),
-            nn.ReLU(),
+            init_(nn.Conv2d(C, C, 3, groups=C)),
+            nn.Tanh(),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(C, C, 3, groups=1)),
-            nn.ReLU(),
+            init_(nn.Conv2d(C, C, 3, groups=C)),
+            nn.Tanh(),
             nn.MaxPool2d(2),
             nn.ReflectionPad2d(1),
             init_(nn.Conv2d(C, C * 2, 3, groups=1)),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(C * 2, C * 2, 3, groups=1)),
-            nn.ReLU(),
+            init_(nn.Conv2d(C * 2, C * 2, 3, groups=C*2)),
+            nn.Tanh(),
             nn.ReflectionPad2d(1),
-            init_(nn.Conv2d(C * 2, C * 2, 3, groups=1)),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 4)),
+            init_(nn.Conv2d(C * 2, C * 2, 3, groups=C*2)),
+            nn.Tanh(),
+            nn.MaxPool2d((3, 3)),
             Flatten(),
-
         ).cuda()
 
-        self.memory = nn.LSTM(vision_features, self.memory_features).cuda()
+        self.memory_layers = 3
+        self.memory = nn.LSTM(vision_features, self.memory_features, num_layers=self.memory_layers).cuda()
 
+        #self.memory = nn.Sequential(
+        #    nn.Linear(vision_features, self.memory_features),
+        #    nn.Tanh()
+        #).cuda()
 
         self.action = nn.Sequential(
-            #nn.Linear(memory_features, 64),
-            #nn.Tanh(),
-            #nn.Linear(64, 64),
-            #nn.Tanh(),
             nn.Linear(self.memory_features, act_dim)
         ).cuda()
 
         self.critic = nn.Sequential(
-            #nn.Linear(memory_features, 64),
-            #nn.Tanh(),
-            #nn.Linear(64, 64),
-            #nn.Tanh(),
             nn.Linear(self.memory_features, 1)
         ).cuda()
 
@@ -122,13 +118,15 @@ class Policy(nn.Module):
     def _value_action(self, inputs, states=None, masks=None):
         if states is None:
             states = (
-                th.tanh(th.randn((1, 1, self.memory_features)).cuda() * self.memory_std),
-                th.tanh(th.randn((1, 1, self.memory_features)).cuda() * self.memory_std),
+                th.tanh(th.randn((self.memory_layers, 1, self.memory_features)).cuda() * self.memory_std),
+                th.tanh(th.randn((self.memory_layers, 1, self.memory_features)).cuda() * self.memory_std),
             )
         inputs = Policy._adapt_inputs(inputs)
         features = self.vision(inputs)
+
         self.memory.flatten_parameters()
         features, states = self.memory(features.view(features.size(0), 1, features.size(1)), states)
+        #features = self.memory(features)
         features = features.view(features.size(0), features.size(2))
         return self.critic(features), self.action(features)
 
