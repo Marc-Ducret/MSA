@@ -61,7 +61,7 @@ def run(args, env):
     while True:
         obs = env.reset()
         ep_rew = 0
-        noise = .05
+        noise = .1
         while True:
             action = act(obs)
             action += noise * np.random.normal(size=6)

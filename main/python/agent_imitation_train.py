@@ -18,6 +18,7 @@ from rl.utils import AddBias
 from rl.distributions import FixedNormal
 import visdom
 import argparse
+import random
 
 def size(dim, ratio):
     channels = 7
@@ -56,7 +57,7 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         def init_(m):
             if hasattr(m, 'weight'):
-                nn.init.normal_(m.weight)
+                nn.init.normal_(m.weight)#nn.init.xavier_normal_(m.weight)
             return m
         C = 16
         vision_features = (C * 2) * 2 * 4
@@ -87,7 +88,7 @@ class Policy(nn.Module):
             Flatten(),
         ).cuda()
 
-        self.memory_layers = 3
+        self.memory_layers = 2
         self.memory = nn.LSTM(vision_features, self.memory_features, num_layers=self.memory_layers).cuda()
 
         #self.memory = nn.Sequential(
@@ -166,23 +167,28 @@ def train(trajs, policy, args):
 
     vis = visdom.Visdom()
 
+    n = len(trajs)
+    random.shuffle(trajs)
+    trajs_test  = trajs[:n//10]
+    trajs_train = trajs[n//10:]
+
     optimizer = optim.Adam(policy.parameters(), lr=lr, weight_decay=decay)
-    def epoch():
+    def epoch(trajs):
         ids = np.random.permutation(len(trajs))
         for i in ids:
             yield trajs[i]
 
-    def compute_loss():
+    def compute_loss(trajs):
         with th.no_grad():
             losses = []
-            for obs_batch, act_batch in epoch():
+            for obs_batch, act_batch in epoch(trajs):
                 _, action, _, _ = policy.act(obs_batch, deterministic=True)
                 losses.append(loss_function(act_batch, action).cpu().detach().numpy())
             return np.mean(np.array(losses))
 
     def opt():
         pairs = 0
-        for obs_batch, act_batch in epoch():
+        for obs_batch, act_batch in epoch(trajs_train):
             optimizer.zero_grad()
             _, action, _, _ = policy.act(obs_batch, deterministic=True)
             loss = loss_function(act_batch, action)
@@ -192,13 +198,13 @@ def train(trajs, policy, args):
         return pairs
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        initial_loss = compute_loss()
+        initial_loss = [compute_loss(trajs_train), compute_loss(trajs_test)]
         opts = dict(
             title='data=%s lr=%.1e bs=%i dc=%.1e mem=%.1e' % (args.dataset, lr, batch_size, decay, memory_std),
             xlabel='epochs'
         )
         opts['ylabel'] = 'loss'
-        loss_plot = vis.line(np.array([initial_loss]), np.array([0]),
+        loss_plot = vis.line(np.array([[0, 0]]), np.array([0]),
             opts=opts)
         opts['ylabel'] = 'success'
         reward_plot = vis.line(np.array([0]), np.array([0]),
@@ -206,18 +212,18 @@ def train(trajs, policy, args):
         rewards_futures = []
         epochs = 1000000
 
-        print('initial loss=%f' % initial_loss)
+        print('initial loss=(%f, %f)' % (initial_loss[0], initial_loss[1]))
         cur_future = 0
         for e in range(epochs):
             start_time = time()
             pairs = opt()
             speed = pairs / (time() - start_time)
             if e % eval_period == 0:
-                current_loss = compute_loss()
+                current_loss = [compute_loss(trajs_train), compute_loss(trajs_test)]
                 vis.line(
                     np.array([current_loss]), np.array([e]),
                     win=loss_plot, update='append')
-                print('epoch %i: \tloss=%.4f \tspeed=%.1f' % (e, current_loss, speed))
+                print('epoch %i: \tloss_train=%.4f \tloss_test=%.4f \tspeed=%.1f' % (e, current_loss[0], current_loss[1], speed))
                 th.save(policy, 'tmp/models/imitation_%i_epoch_latest' % args.gpu)
                 if e % (eval_period * 50) == 0:
                     th.save(policy, 'tmp/models/imitation_%i_epoch_%i' % (args.gpu, e))
