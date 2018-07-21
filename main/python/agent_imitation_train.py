@@ -74,9 +74,15 @@ class Policy(nn.Module):
             nn.ReflectionPad2d(1),
             init_(nn.Conv2d(C, C, 3, groups=C)),
             nn.Tanh(),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(C, C, 3, groups=C)),
+            nn.Tanh(),
             nn.MaxPool2d(2),
             nn.ReflectionPad2d(1),
             init_(nn.Conv2d(C, C * 2, 3, groups=1)),
+            nn.Tanh(),
+            nn.ReflectionPad2d(1),
+            init_(nn.Conv2d(C * 2, C * 2, 3, groups=C*2)),
             nn.Tanh(),
             nn.ReflectionPad2d(1),
             init_(nn.Conv2d(C * 2, C * 2, 3, groups=C*2)),
@@ -97,7 +103,13 @@ class Policy(nn.Module):
         #).cuda()
 
         self.action = nn.Sequential(
-            nn.Linear(self.memory_features, act_dim)
+            nn.Linear(self.memory_features, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, act_dim)
         ).cuda()
 
         self.critic = nn.Sequential(
@@ -129,10 +141,10 @@ class Policy(nn.Module):
         features, states = self.memory(features.view(features.size(0), 1, features.size(1)), states)
         #features = self.memory(features)
         features = features.view(features.size(0), features.size(2))
-        return self.critic(features), self.action(features)
+        return self.critic(features), self.action(features), states
 
     def act(self, inputs, states=None, masks=None, deterministic=False):
-        value, actor_features = self._value_action(inputs, states, masks)
+        value, actor_features, states = self._value_action(inputs, states, masks)
         dist = self.dist(actor_features)
 
         action = actor_features if deterministic else dist.rsample()
@@ -143,11 +155,11 @@ class Policy(nn.Module):
         return value, action, action_log_probs, states
 
     def get_value(self, inputs, states=None, masks=None):
-        value, _ = self._value_action(inputs, states, masks)
+        value, _, _ = self._value_action(inputs, states, masks)
         return value
 
     def evaluate_actions(self, inputs, states, masks, action):
-        _, actor_features = self._value_action(inputs, states, masks)
+        _, actor_features, _ = self._value_action(inputs, states, masks)
         dist = self.dist(actor_features)
 
         action_log_probs = dist.log_probs(action)

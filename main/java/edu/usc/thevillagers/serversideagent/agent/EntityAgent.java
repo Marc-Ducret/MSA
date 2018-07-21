@@ -68,7 +68,7 @@ public class EntityAgent extends EntityPlayerMP {
 		this.setSneaking(state.crouch);
 	}
 	
-	private void executeAction(HighLevelAction action) { //TODO testing needed
+	private void executeAction(HighLevelAction action) {
 		if(action.actionPhase != Phase.STOP) swingArm(action.hand);
 		switch(action.actionType) {
 		case HIT:
