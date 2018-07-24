@@ -9,6 +9,7 @@ import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.agent.EntityAgent;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
+import edu.usc.thevillagers.serversideagent.env.controller.ControllerPython;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -107,13 +108,18 @@ public class RequestManager {
 				if(req.envId != null) envManager.registerEnv(env, req.envId);
 				else envManager.registerEnv(env);
 			}
-			String name = env.id;
-			if(name.length() > 16) name = name.substring(0, 16);
-			Agent a = new Agent(env, new EntityAgent(env.world, name), req.sok);
-			((EntityAgent) a.entity).spawn(env.getOrigin());
-			env.newActor(a);
+			
+			if(req.envId == null) {
+				env.setController(new ControllerPython(env, req.sok));
+			} else {
+				String name = env.id;
+				if(name.length() > 16) name = name.substring(0, 16);
+				Agent a = new Agent(env, new EntityAgent(env.world, name), req.sok);
+				((EntityAgent) a.entity).spawn(env.getOrigin());
+				env.newActor(a);
+			}
 		} catch (Exception e) {
-			System.out.println("Cannot start agent ("+e+")");
+			System.out.println("Cannot process request ("+e+")");
 		}
 	}
 	

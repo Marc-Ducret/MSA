@@ -10,6 +10,10 @@ import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.actuator.Actuator;
 import edu.usc.thevillagers.serversideagent.env.allocation.Allocator;
+import edu.usc.thevillagers.serversideagent.env.controller.Controller;
+import edu.usc.thevillagers.serversideagent.env.controller.ControllerDefault;
+import edu.usc.thevillagers.serversideagent.env.controller.ControllerPython;
+import edu.usc.thevillagers.serversideagent.env.controller.Controller.ControllerState;
 import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -39,6 +43,7 @@ public abstract class Environment { //TODO document functions that should be ove
 	private BlockPos origin;
 	
 	private List<Actor> actors = new ArrayList<>();
+	private Controller controller;
 	
 	public boolean done;
 	public int time;
@@ -47,6 +52,7 @@ public abstract class Environment { //TODO document functions that should be ove
 		this.name = getClass().getSimpleName().replaceFirst("Environment", "");
 		this.sensors = new ArrayList<>();
 		this.actuators = new ArrayList<>();
+		this.controller = new ControllerDefault(this);
 	}
 	
 	public abstract void readPars(float[] pars);
@@ -81,6 +87,10 @@ public abstract class Environment { //TODO document functions that should be ove
 		actors.add(a);
 	}
 	
+	public void setController(Controller controller) {
+		this.controller = controller;
+	}
+	
 	public BlockPos getOrigin() {
 		return origin;
 	}
@@ -96,21 +106,31 @@ public abstract class Environment { //TODO document functions that should be ove
 	
 	public final void preTick() throws Exception {
 		if(done) {
-			applyToInactivActors((a) -> {
-				a.active = true;
-			});
-			reset();
-			applyToActiveActors((a) -> {
-				a.observeNoReward();
-			});
+			if(controller.state == ControllerState.RESET) {
+				applyToInactivActors((a) -> {
+					a.active = true;
+				});
+				reset();
+				applyToActiveActors((a) -> {
+					a.observeNoReward();
+				});
+			}
 		}
-		applyToActiveActors((a) -> a.act());
+		if(!done) {
+			applyToActiveActors((a) -> a.act());
+		}
 	}
 	
 	public final void postTick() throws Exception {
-		step();
-		time++;
-		applyToActiveActors((a) -> a.observe());
+		if(done) {
+			controller.step(done);
+		} else {
+			step();
+			time++;
+			controller.step(done);
+			if(controller.state != ControllerState.WAIT) done = true;
+			applyToActiveActors((a) -> a.observe());
+		}
 	}
 	
 	public BlockPos getSpawnPoint(Actor a) {
