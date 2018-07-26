@@ -11,9 +11,8 @@ import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.actuator.Actuator;
 import edu.usc.thevillagers.serversideagent.env.allocation.Allocator;
 import edu.usc.thevillagers.serversideagent.env.controller.Controller;
-import edu.usc.thevillagers.serversideagent.env.controller.ControllerDefault;
-import edu.usc.thevillagers.serversideagent.env.controller.ControllerPython;
 import edu.usc.thevillagers.serversideagent.env.controller.Controller.ControllerState;
+import edu.usc.thevillagers.serversideagent.env.controller.ControllerDefault;
 import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -24,8 +23,6 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
  * Represents an environment for Agents inside of Minecraft.
  */
 public abstract class Environment { //TODO document functions that should be overridden
-	
-	public long allocationTime = 0;
 	
 	public final String name;
 	public String id;
@@ -130,6 +127,7 @@ public abstract class Environment { //TODO document functions that should be ove
 			controller.step(done);
 			if(controller.state != ControllerState.WAIT) done = true;
 			applyToActiveActors((a) -> a.observe());
+			if(controller.state == ControllerState.TERMINATE) throw new Exception("Controller state: TERMINATE");
 		}
 	}
 	
@@ -212,7 +210,6 @@ public abstract class Environment { //TODO document functions that should be ove
 		if(pos == null) return false;
 		setOrigin(pos);
 		allocated = true;
-		allocationTime = System.currentTimeMillis();
 		return true;
 	}
 	

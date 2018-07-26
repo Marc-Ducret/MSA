@@ -53,11 +53,6 @@ public class EnvironmentManager {
 				try {
 					switch(phase) {
 					case START:
-						if(env.isAllocated() && env.isEmpty()) {
-							if(System.currentTimeMillis() - env.allocationTime > 10000) {
-								throw new Exception("Empty");
-							}
-						}
 						env.preTick();
 						break;
 					case END:
@@ -117,6 +112,7 @@ public class EnvironmentManager {
 	}
 	
 	public void registerEnv(Environment env, String envId) {
+		System.out.println("Register "+envId);
 		if(doesEnvExists(envId)) throw new RuntimeException("Env "+envId+" already exists");
 		envs.put(envId, env);
 		env.id = envId;

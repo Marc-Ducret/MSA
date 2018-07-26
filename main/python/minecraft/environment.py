@@ -1,6 +1,7 @@
 import sys
 from .data_stream import *
 import socket
+import threading
 
 import numpy as np
 import gym
@@ -8,21 +9,24 @@ from gym import spaces
 
 class MinecraftEnv(gym.Env):
 
-    def __init__(self, env_type, env_id="", use_entities=False):
+    def __init__(self, env_type, env_id='', use_entities=False):
         self.env_type = env_type
         self.env_id = env_id
         self.use_entities = use_entities
+
+        if env_id == '':
+            controller = MinecraftController(env_type, MinecraftController.default_step)
+            controller.start()
+            env_id = controller.env_id
+
         self.sok = socket.create_connection(('localhost', 1337))
         self.sok.settimeout(5)
         self.in_stream  = DataInputStream (self.sok.makefile(mode='rb'))
         self.out_stream = DataOutputStream(self.sok.makefile(mode='wb'))
 
         self.out_stream.write_utf(env_type)
-        if env_id == "":
-            self.out_stream.write_boolean(True)
-        else:
-            self.out_stream.write_boolean(False)
-            self.out_stream.write_utf(env_id)
+        self.out_stream.write_boolean(False)
+        self.out_stream.write_utf(env_id)
         self.out_stream.flush()
 
         self.num_envs = 1
@@ -84,9 +88,42 @@ class MinecraftEnv(gym.Env):
         return obs, rew, done, info
 
     def reset(self):
-        #self.out_stream.write_int(0x13371337)
-        #self.out_stream.flush()
         return self._receive_observation()
 
     def close(self):
         self.sok.close()
+
+class MinecraftController:
+    WAIT = 0
+    RESET = 1
+    LOAD = 2
+    TERMINATE = 3
+
+    def default_step(done):
+        return MinecraftController.RESET if done else MinecraftController.WAIT
+
+    def __init__(self, env_type, step):
+        self.env_type = env_type
+        self.sok = socket.create_connection(('localhost', 1337))
+        self.sok.settimeout(5)
+        self.in_stream  = DataInputStream (self.sok.makefile(mode='rb'))
+        self.out_stream = DataOutputStream(self.sok.makefile(mode='wb'))
+
+        self.out_stream.write_utf(env_type)
+        self.out_stream.write_boolean(True)
+        self.out_stream.flush()
+
+        self.step = step
+
+    def start(self):
+        self.env_id = self.in_stream.read_utf()
+
+        self.thread = threading.Thread(target=self._socket_thread)
+        self.thread.deamon = True
+        self.thread.start()
+
+    def _socket_thread(self):
+        while True:
+            done = self.in_stream.read_boolean()
+            self.out_stream.write_byte(self.step(done))
+            self.out_stream.flush()

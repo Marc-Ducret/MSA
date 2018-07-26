@@ -22,6 +22,5 @@ public class ControllerPython extends Controller {
 		} catch (Exception e) {
 			state = ControllerState.TERMINATE;
 		}
-		
 	}
 }

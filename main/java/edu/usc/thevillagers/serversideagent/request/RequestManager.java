@@ -111,6 +111,8 @@ public class RequestManager {
 			
 			if(req.envId == null) {
 				env.setController(new ControllerPython(env, req.sok));
+				req.sok.out.writeUTF(env.id);
+				req.sok.out.flush();
 			} else {
 				String name = env.id;
 				if(name.length() > 16) name = name.substring(0, 16);
