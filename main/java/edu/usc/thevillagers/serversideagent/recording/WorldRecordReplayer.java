@@ -2,21 +2,29 @@ package edu.usc.thevillagers.serversideagent.recording;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.mojang.authlib.GameProfile;
+
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
+import edu.usc.thevillagers.serversideagent.agent.DummyNetworkManager;
 import edu.usc.thevillagers.serversideagent.recording.event.RecordEvent;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.block.BlockDirectional;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityPiston;
 import net.minecraft.util.math.BlockPos;
@@ -43,9 +51,14 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	private Future<ChangeSet> nextChangeSet;
 	public Set<ActionListener> actionListeners = new HashSet<>();
 	
+	protected Map<Integer, Integer> idMapping = new HashMap<>();
+	
+	public BlockPos offset;
+	
 	public WorldRecordReplayer(File saveFolder) {
 		this.world = null;
 		this.saveFolder = saveFolder;
+		this.offset = BlockPos.ORIGIN;
 	}
 	
 	@Override
@@ -85,7 +98,6 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		currentTick++;
 		for(Entity e : world.loadedEntityList)
 			world.updateEntityWithOptionalForce(e, false);
-//		world.fakeWorld.setTotalWorldTime(worldTimeOffset + currentTick); TODO that's client side only...
 		world.setWorldTime((worldTimeOffset + currentTick) % 24000);
 	}
 	
@@ -122,12 +134,13 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		return ServerSideAgentMod.getPrivateField(ChunkProviderServer.class, "id2ChunkMap", world.getChunkProvider());
 	}
 	
-	public void spawnEntity(Entity e) {
+	public void spawnEntity(int id, Entity e) {
+		idMapping.put(id, e.getEntityId());
 		world.spawnEntity(e);
 	}
 
 	public void killEntity(int id) {
-		Entity e = world.getEntityByID(id);
+		Entity e = world.getEntityByID(idMapping.remove(id));
 		if(e == null) {
 			System.out.println("Missing entity "+id);
 			return;
@@ -136,22 +149,24 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	}
 
 	public void updateEntity(int id, NBTTagCompound data) {
-		Entity e = world.getEntityByID(id);
+		Entity e = world.getEntityByID(idMapping.get(id));
 		if(e == null) {
 			System.err.println("Missing entity "+id);
 			return;
 		}
 		e.readFromNBT(data);
+		e.setPosition(e.posX + offset.getX(), e.posY + offset.getY(), e.posZ + offset.getZ());
 		if(e instanceof EntityPlayer) {
 			e.setSneaking(data.getBoolean("Sneaking"));
 		}
 	}
 
-	public Entity getEntity(int entityId) {
-		return world.getEntityByID(entityId);
+	public Entity getEntity(int id) {
+		return world.getEntityByID(idMapping.get(id));
 	}
 
 	public void spawnTileEntity(TileEntity tileEntity) {
+		tileEntity.setPos(tileEntity.getPos().add(offset));
 		if(tileEntity instanceof TileEntityPiston) {
 			TileEntityPiston piston = (TileEntityPiston) tileEntity;
 			world.setBlockState(piston.getPos(), 
@@ -161,10 +176,12 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	}
 
 	public void killTileEntity(BlockPos pos) {
+		pos = pos.add(offset);
 		world.setTileEntity(pos, null);
 	}
 
 	public void updateTileEntity(BlockPos pos, NBTTagCompound data) {
+		pos = pos.add(offset);
 		TileEntity tileEntity = world.getTileEntity(pos);
 		if(tileEntity == null) {
 			tileEntity = TileEntity.create(world, data);
@@ -173,6 +190,13 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 			spawnTileEntity(tileEntity);
 		}
 		tileEntity.readFromNBT(data);
+	}
+	
+	public EntityPlayer createReplayEntityPlayer(World world, GameProfile profile) {
+		EntityPlayerMP player = new EntityPlayerMP(FMLCommonHandler.instance().getMinecraftServerInstance(), 
+				(WorldServer) world, profile, new PlayerInteractionManager(world));
+		player.connection = new NetHandlerPlayServer(world.getMinecraftServer(), new DummyNetworkManager(), player);
+		return player;
 	}
 
 	public void reset() {

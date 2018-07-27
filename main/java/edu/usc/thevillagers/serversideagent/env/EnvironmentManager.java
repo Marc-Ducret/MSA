@@ -1,7 +1,6 @@
 package edu.usc.thevillagers.serversideagent.env;
 
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -63,7 +62,7 @@ public class EnvironmentManager {
 					}
 					return null;
 				} catch(Exception e) {
-					if(e instanceof ConcurrentModificationException) e.printStackTrace();
+					if(e instanceof NullPointerException) e.printStackTrace();
 					System.err.println("Env "+env.name+" terminated ("+e+")");
 					return env.id;
 				}

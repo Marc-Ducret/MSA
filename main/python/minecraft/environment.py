@@ -100,9 +100,9 @@ class MinecraftController:
     TERMINATE = 3
 
     def default_step(done):
-        return MinecraftController.RESET if done else MinecraftController.WAIT
+        return (MinecraftController.RESET if done else MinecraftController.WAIT), None
 
-    def __init__(self, env_type, step):
+    def __init__(self, env_type, step, record=None):
         self.env_type = env_type
         self.sok = socket.create_connection(('localhost', 1337))
         self.sok.settimeout(5)
@@ -111,6 +111,9 @@ class MinecraftController:
 
         self.out_stream.write_utf(env_type)
         self.out_stream.write_boolean(True)
+        self.out_stream.write_boolean(record is not None)
+        if record is not None:
+            self.out_stream.write_utf(record)
         self.out_stream.flush()
 
         self.step = step
@@ -125,5 +128,8 @@ class MinecraftController:
     def _socket_thread(self):
         while True:
             done = self.in_stream.read_boolean()
-            self.out_stream.write_byte(self.step(done))
+            state, param = self.step(done)
+            self.out_stream.write_byte(state)
+            if param is not None:
+                self.out_stream.write_int(param)
             self.out_stream.flush()

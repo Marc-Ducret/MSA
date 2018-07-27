@@ -103,11 +103,12 @@ public abstract class Environment { //TODO document functions that should be ove
 	
 	public final void preTick() throws Exception {
 		if(done) {
-			if(controller.state == ControllerState.RESET) {
+			if(controller.state == ControllerState.RESET || controller.state == Controller.ControllerState.LOAD) {
 				applyToInactivActors((a) -> {
 					a.active = true;
 				});
 				reset();
+				if(controller.state == ControllerState.LOAD) controller.record.seek(controller.stateParam);
 				applyToActiveActors((a) -> {
 					a.observeNoReward();
 				});
@@ -127,8 +128,8 @@ public abstract class Environment { //TODO document functions that should be ove
 			controller.step(done);
 			if(controller.state != ControllerState.WAIT) done = true;
 			applyToActiveActors((a) -> a.observe());
-			if(controller.state == ControllerState.TERMINATE) throw new Exception("Controller state: TERMINATE");
 		}
+		if(controller.state == ControllerState.TERMINATE) throw new Exception("Controller state: TERMINATE");
 	}
 	
 	public BlockPos getSpawnPoint(Actor a) {
@@ -213,7 +214,7 @@ public abstract class Environment { //TODO document functions that should be ove
 		return true;
 	}
 	
-	protected static interface ActorApplication { 
+	public static interface ActorApplication { 
 		void apply(Actor a) throws Exception; 
 	}
 	

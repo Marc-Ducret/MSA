@@ -11,5 +11,6 @@ public class ControllerDefault extends Controller {
 	@Override
 	public void step(boolean done) {
 		state = done ? ControllerState.RESET : ControllerState.WAIT;
+		if(done && env.isEmpty() && env.isAllocated()) state = ControllerState.TERMINATE;
 	}
 }

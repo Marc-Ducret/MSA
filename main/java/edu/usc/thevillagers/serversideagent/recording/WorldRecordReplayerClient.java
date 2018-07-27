@@ -10,12 +10,14 @@ import com.mojang.authlib.GameProfile;
 import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.stats.RecipeBook;
@@ -91,14 +93,20 @@ public class WorldRecordReplayerClient extends WorldRecordReplayer {
 	}
 	
 	@Override
-	public void spawnEntity(Entity e) {
+	public void spawnEntity(int id, Entity e) {
+		idMapping.put(id, e.getEntityId());
 		e.forceSpawn = true;
 		world.addEntityToWorld(e.getEntityId(), e);
 	}
 	
 	@Override
 	public void killEntity(int id) {
-		super.killEntity(id);
-		world.removeEntityFromWorld(id);
+		super.killEntity(idMapping.get(id));
+		world.removeEntityFromWorld(idMapping.remove(id));
+	}
+	
+	@Override
+	public EntityPlayer createReplayEntityPlayer(World world, GameProfile profile) {
+		return new EntityOtherPlayerMP(world, profile);
 	}
 }

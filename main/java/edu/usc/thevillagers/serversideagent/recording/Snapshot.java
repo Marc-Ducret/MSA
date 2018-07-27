@@ -75,8 +75,10 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 			storageField.setAccessible(true);
 			Long2ObjectMap<Chunk> chunkMapping = wr.getChunkMapping();
 			int margin = 1;
-			for(int chunkZ = (wr.from.getZ() >> 4) - margin; chunkZ <= (wr.to.getZ() >> 4) + margin; chunkZ++)
-				for(int chunkX = (wr.from.getX() >> 4) - margin; chunkX <= (wr.to.getX() >> 4) + margin; chunkX++) {
+			BlockPos from = wr.from.add(wr.offset);
+			BlockPos to   = wr.to  .add(wr.offset);
+			for(int chunkZ = (from.getZ() >> 4) - margin; chunkZ <= (to.getZ() >> 4) + margin; chunkZ++)
+				for(int chunkX = (from.getX() >> 4) - margin; chunkX <= (to.getX() >> 4) + margin; chunkX++) {
 					long chunkPos = ChunkPos.asLong(chunkX, chunkZ);
 					Chunk c;
 					if(!chunkMapping.containsKey(chunkPos)) {
@@ -87,7 +89,7 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 					for(int y = 0; y < 0x100; y++) {
 						for(int z = 0; z < 0x10; z++) {
 							for(int x = 0; x < 0x10; x++) {
-								int index = index(x + (chunkX << 4), y, z + (chunkZ << 4), wr.from, diff);
+								int index = index(x + (chunkX << 4), y, z + (chunkZ << 4), from, diff);
 								if(index >= 0) {
 									IBlockState state = data.blockStates[index];
 									if(state.getBlock() != Blocks.AIR) {
@@ -100,10 +102,12 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 							}
 						}
 					}
-					c.onLoad();
-					c.generateSkylightMap();
+					if(!c.isLoaded()) {
+						c.onLoad();
+						c.generateSkylightMap();
+					}
 				}
-			wr.world.markBlockRangeForRenderUpdate(wr.from, wr.to);
+			wr.world.markBlockRangeForRenderUpdate(from, to);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

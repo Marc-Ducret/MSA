@@ -10,6 +10,11 @@ public class ControllerPython extends Controller {
 	public ControllerPython(Environment env, DataSocket sok) {
 		super(env);
 		this.sok = sok;
+		try {
+			if(sok.in.readBoolean()) setRecord(sok.in.readUTF());
+		} catch (Exception e) {
+			System.err.println("Cannot set record "+e);
+		}
 	}
 
 	@Override

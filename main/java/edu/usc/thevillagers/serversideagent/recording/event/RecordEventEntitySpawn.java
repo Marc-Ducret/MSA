@@ -2,7 +2,6 @@ package edu.usc.thevillagers.serversideagent.recording.event;
 
 import com.mojang.authlib.GameProfile;
 
-import edu.usc.thevillagers.serversideagent.ServerSideAgentMod;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordWorker;
 import net.minecraft.entity.Entity;
@@ -31,12 +30,11 @@ public class RecordEventEntitySpawn extends RecordEvent {
 	public void replay(WorldRecordReplayer wr) {
 		Entity e;
 		if(type < 0) 
-			e = ServerSideAgentMod.proxy.createReplayEntityPlayer(wr.world, 
+			e = wr.createReplayEntityPlayer(wr.world, 
 					new GameProfile(data.getUniqueId("ProfileUUID"), data.getString("ProfileName")));
 		else
 			e = GameData.getEntityRegistry().getValue(type).newInstance(wr.world);
-		e.setEntityId(id);
-		wr.spawnEntity(e);
+		wr.spawnEntity(id, e);
 		wr.entitiesData.put(id, data);
 	}
 

@@ -47,9 +47,6 @@ public class AllocatorEmptySpace implements Allocator {
 		for(AxisAlignedBB bb : takenSpace)
 			if(bb.intersects(boundingBox.offset(origin)))
 				return false;
-//		for(BlockPos p : BlockPos.getAllInBoxMutable(origin.add(min), origin.add(max)))
-//			if(world.getBlockState(p).getBlock() != Blocks.AIR) 
-//				return false;
 		return true;
 	}
 	
