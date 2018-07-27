@@ -84,7 +84,7 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 			if(currentTick + snapshotLength < duration) {
 				ChangeSet changeSet = changeSet(currentTick + snapshotLength);
 				nextChangeSet = ioExecutor.submit(() -> {
-					changeSet.read();
+					if(!changeSet.hasData()) changeSet.read();
 					return changeSet;
 				});
 			}
@@ -109,11 +109,11 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 		currentTick = tick - (tick % snapshotLength);
 		
 		Snapshot snapshot = snapshot(tick);
-		snapshot.read(); 
+		if(!snapshot.hasData()) snapshot.read(); 
 		
 		ChangeSet changeSet = changeSet(currentTick);
 		nextChangeSet = ioExecutor.submit(() -> {
-			changeSet.read();
+			if(!changeSet.hasData()) changeSet.read();
 			return changeSet;
 		});
 		

@@ -27,6 +27,7 @@ public class RecordEventBlockChange extends RecordEvent {
 
 	@Override
 	public void replay(WorldRecordReplayer wr) {
+		BlockPos pos = this.pos.add(wr.offset);
 		wr.world.setBlockState(pos, state);
 		wr.world.markBlockRangeForRenderUpdate(pos, pos);
 	}

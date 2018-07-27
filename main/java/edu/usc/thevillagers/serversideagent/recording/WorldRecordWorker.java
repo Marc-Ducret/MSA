@@ -26,6 +26,9 @@ public class WorldRecordWorker {
 	public int currentTick;
 	protected ChangeSet currentChangeSet;
 	
+	private Map<Integer, Snapshot> snapshotCache;
+	private Map<Integer, ChangeSet> changeSetCache;
+	
 	public Map<Integer, NBTTagCompound> entitiesData;
 	public Map<BlockPos, NBTTagCompound> tileEntitiesData;
 	
@@ -37,6 +40,8 @@ public class WorldRecordWorker {
 		this.currentTick = 0;
 		entitiesData = new HashMap<>();
 		tileEntitiesData = new HashMap<>();
+		snapshotCache = new HashMap<>();
+		changeSetCache = new HashMap<>();
 	}
 	
 	public void writeInfo() throws IOException {
@@ -61,11 +66,15 @@ public class WorldRecordWorker {
 	}
 	
 	protected ChangeSet changeSet(int tick) {
-		return new ChangeSet(new File(saveFolder, tick / snapshotLength + ".changeset"));
+		int id = tick / snapshotLength;
+		if(!changeSetCache.containsKey(id)) changeSetCache.put(id, new ChangeSet(new File(saveFolder, id + ".changeset")));
+		return changeSetCache.get(id);
 	}
 
 	protected Snapshot snapshot(int tick) {
-		return new Snapshot(new File(saveFolder, tick / snapshotLength + ".snapshot"));
+		int id = tick / snapshotLength;
+		if(!snapshotCache.containsKey(id)) snapshotCache.put(id, new Snapshot(new File(saveFolder, tick / snapshotLength + ".snapshot")));
+		return snapshotCache.get(id);
 	}
 
 	public static NBTTagCompound computeDifferentialCompound(NBTTagCompound oldComp, NBTTagCompound newComp) {
