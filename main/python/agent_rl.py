@@ -1,4 +1,4 @@
 import rl.main
-from experiment_trade import Policy, DiagGaussian, AddBias
+from agent_imitation_train import *
 
 rl.main.main()

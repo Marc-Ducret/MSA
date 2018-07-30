@@ -154,30 +154,6 @@ public class EnvironmentPattern extends Environment {
 				}
 			}
 		});
-//		sensors.add(new SensorRaytrace(24, 12, 4, 70, 2) {
-//			
-//			@Override
-//			protected void encode(World world, Vec3d from, Vec3d dir, RayTraceResult res, float[] result) {
-//				if(res == null) {
-//					result[0] = -1;
-//					result[1] = 1;
-//					result[2] = -1;
-//					result[3] = -1;
-//					return;
-//				}
-//				IBlockState state = world.getBlockState(res.getBlockPos());
-//				if(state.getBlock() == Blocks.STAINED_GLASS) {
-//					result[0] = state.getValue(BlockColored.COLOR) == EnumDyeColor.LIGHT_BLUE ? 1 : 0;
-//				} else {
-//					result[0] = -1;
-//				}
-//				result[1] = (float) res.hitVec.distanceTo(from) / dist;
-//				Vec3d right = dir.rotateYaw((float) Math.PI * .5F).subtract(0, dir.y, 0).normalize();
-//				Vec3d up = right.crossProduct(dir); 
-//				result[2] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(right);
-//				result[3] = (float) new Vec3d(res.sideHit.getDirectionVec()).dotProduct(up);
-//			}
-//		});
 	}
 	
 	@Override

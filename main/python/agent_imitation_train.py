@@ -55,6 +55,10 @@ class ConstantOutput(nn.Module):
 class Policy(nn.Module):
     def __init__(self, obs_dim_w, obs_dim_h, obs_dim_c, act_dim, memory_std):
         super(Policy, self).__init__()
+        self.obs_dim_w = obs_dim_w
+        self.obs_dim_h = obs_dim_h
+        self.obs_dim_c = obs_dim_c
+
         def init_(m):
             if hasattr(m, 'weight'):
                 nn.init.normal_(m.weight)#nn.init.xavier_normal_(m.weight)
@@ -120,28 +124,31 @@ class Policy(nn.Module):
 
         self.train()
 
-        self.state_size = self.memory_features
+        self.state_size = 2 * self.memory_layers * self.memory_features
 
-    def _adapt_inputs(inputs):
+    def _adapt_inputs(self, inputs):
         if len(inputs.shape) < 4:
-            assert(False)
-            inputs = inputs.view(-1, 12, 24, 1).permute(0, 3, 1, 2)
+            if not hasattr(self, 'obs_dim_w'):
+                self.obs_dim_w, self.obs_dim_h, self.obs_dim_c = 24, 12, 7
+            inputs = inputs.view(-1, self.obs_dim_h, self.obs_dim_w, self.obs_dim_c).permute(0, 3, 1, 2)
         return inputs
 
     def _value_action(self, inputs, states=None, masks=None):
         if states is None:
-            states = (
-                th.tanh(th.randn((self.memory_layers, 1, self.memory_features)).cuda() * self.memory_std),
-                th.tanh(th.randn((self.memory_layers, 1, self.memory_features)).cuda() * self.memory_std),
-            )
-        inputs = Policy._adapt_inputs(inputs)
+            states = th.tanh(th.randn((2, self.memory_layers, 1, self.memory_features)).cuda() * self.memory_std)
+            batch_size = 1
+        else:
+            states = states.view(-1, 2, self.memory_layers, self.memory_features).permute(1, 2, 0, 3).contiguous()
+            batch_size = states.size(2)
+        inputs = self._adapt_inputs(inputs)
         features = self.vision(inputs)
 
         self.memory.flatten_parameters()
-        features, states = self.memory(features.view(features.size(0), 1, features.size(1)), states)
+        features, states = self.memory(features.view(-1, batch_size, features.size(1)), states)
         #features = self.memory(features)
-        features = features.view(features.size(0), features.size(2))
-        return self.critic(features), self.action(features), states
+        features = features.view(-1, features.size(2))
+        states = th.cat(states).view(2, self.memory_layers, -1, self.memory_features).permute(2, 0, 1, 3)
+        return self.critic(features), self.action(features), states.contiguous().view(batch_size, -1)
 
     def act(self, inputs, states=None, masks=None, deterministic=False):
         value, actor_features, states = self._value_action(inputs, states, masks)
@@ -159,7 +166,7 @@ class Policy(nn.Module):
         return value
 
     def evaluate_actions(self, inputs, states, masks, action):
-        _, actor_features, _ = self._value_action(inputs, states, masks)
+        value, actor_features, states = self._value_action(inputs, states, masks)
         dist = self.dist(actor_features)
 
         action_log_probs = dist.log_probs(action)
