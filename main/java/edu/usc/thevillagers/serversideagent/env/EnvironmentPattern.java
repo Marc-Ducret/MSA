@@ -8,6 +8,7 @@ import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorLook;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorUse;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
 import edu.usc.thevillagers.serversideagent.env.sensor.SensorRaytrace;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.state.IBlockState;
@@ -200,6 +201,20 @@ public class EnvironmentPattern extends Environment {
 		});
 	}
 	
+	@Override
+	public void onLoad(WorldRecordReplayer record, int time) {
+		super.onLoad(record, time);
+		applyToActiveActors((a) -> {
+			EnumDyeColor armorColor = getEntityArmorColor(a.entity);
+			int teamId = -1;
+			for(int i = 0; i < teams; i++)
+				if(TEAMS[i] == armorColor)
+					teamId = i;
+			if(teamId < 0) throw new RuntimeException("Unknown team color: "+armorColor);
+			a.envData = teamId;
+		});
+	}
+	
 	private void generateTree() {
 		BlockPos ref = getOrigin();
 		BlockPos treePos = null;
@@ -318,6 +333,7 @@ public class EnvironmentPattern extends Environment {
 				for(int patternX = 0; patternX < patternSize; patternX++) {
 					if(checkPattern(event.getPos().add(-patternX, 0, -patternZ), teamColor)) {
 						winner = (int)actor.envData;
+						System.out.println(teamColor+" win "+" in "+name);
 					}
 				}
 			}

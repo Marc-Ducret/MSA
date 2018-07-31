@@ -147,7 +147,7 @@ class Policy(nn.Module):
         features, states = self.memory(features.view(-1, batch_size, features.size(1)), states)
         #features = self.memory(features)
         features = features.view(-1, features.size(2))
-        states = th.cat(states).view(2, self.memory_layers, -1, self.memory_features).permute(2, 0, 1, 3)
+        states = th.cat(states).view(2, self.memory_layers, batch_size, self.memory_features).permute(2, 0, 1, 3)
         return self.critic(features), self.action(features), states.contiguous().view(batch_size, -1)
 
     def act(self, inputs, states=None, masks=None, deterministic=False):

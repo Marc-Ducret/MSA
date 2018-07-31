@@ -14,6 +14,7 @@ import edu.usc.thevillagers.serversideagent.env.controller.Controller;
 import edu.usc.thevillagers.serversideagent.env.controller.Controller.ControllerState;
 import edu.usc.thevillagers.serversideagent.env.controller.ControllerDefault;
 import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
+import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -108,7 +109,10 @@ public abstract class Environment { //TODO document functions that should be ove
 					a.active = true;
 				});
 				reset();
-				if(controller.state == ControllerState.LOAD) controller.record.seek(controller.stateParam);
+				if(controller.state == ControllerState.LOAD) {
+					controller.record.seek(controller.stateParam);
+					onLoad(controller.record, controller.stateParam);
+				}
 				applyToActiveActors((a) -> {
 					a.observeNoReward();
 				});
@@ -168,6 +172,10 @@ public abstract class Environment { //TODO document functions that should be ove
 		done = false;
 		time = 0;
 		applyToActiveActors((a) -> resetActor(a));
+	}
+	
+	public void onLoad(WorldRecordReplayer record, int time) {
+		//TODO set time depending on trajectory progress...
 	}
 	
 	public void resetActor(Actor a) {
