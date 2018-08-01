@@ -4,13 +4,13 @@ import time
 import random
 import baselines.logger as logger
 
-def _run(args, run):
-    env = MinecraftEnv(args.env_type, args.env_id)
+def _run(args, run, useEntities=False):
+    env = MinecraftEnv(args.env_type, args.env_id, useEntities)
     env.init_spaces()
     run(args, env)
     env.close()
 
-def run_agent(run, params={}):
+def run_agent(run, params={}, useEntities=False):
     logger.Logger.CURRENT = logger.Logger('tmp/logs/', [
         logger.TensorBoardOutputFormat('tmp/logs/run_%i_%i' % (int(time.time() * 1e3), int(random.random() * 1e6))),
         logger.HumanOutputFormat(sys.stdout)])
@@ -20,4 +20,4 @@ def run_agent(run, params={}):
     for par, default in params.items():
         parser.add_argument('--'+par, action='store', default=default, type=type(default))
 
-    _run(parser.parse_args(), run)
+    _run(parser.parse_args(), run, useEntities)

@@ -3,22 +3,18 @@ package edu.usc.thevillagers.serversideagent.env;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.usc.thevillagers.serversideagent.HighLevelAction;
-import edu.usc.thevillagers.serversideagent.HighLevelAction.Phase;
-import edu.usc.thevillagers.serversideagent.HighLevelAction.Type;
 import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
+import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
 import net.minecraft.block.BlockColored;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
@@ -30,25 +26,19 @@ public class EnvironmentCowArena extends Environment {
 	protected BlockPos ref;
 
 	private List<EntityCow> cows;
+	private int maxCows;
 	private int nCows;
 	
 	@Override
 	public void readPars(float[] pars) {
 		size = getRoundPar(pars, 0, 5);
-		nCows = getRoundPar(pars, 1, 5);
+		maxCows = getRoundPar(pars, 1, 5);
 		cows = new ArrayList<>();
 		allocator = new AllocatorEmptySpace(new BlockPos(-size, -1, -size), new BlockPos(size, 2, size));
 	}
 	
 	@Override
 	protected void buildSensors() {
-//		sensors.add(new SensorGaussian(1));
-//		for(int i = 0; i < cows.length; i++) {
-//			final int index = i;
-//			sensors.add(new SensorPosition(size, 0, size, 
-//					(a) -> cows[index].getPositionVector().subtract(a.entity.getPositionVector())));
-//			sensors.add(new SensorBoolean(() -> cows[index].getHealth() > 0));
-//		}
 		entityDim = 3;
 		entityMax = 100;
 	}
@@ -90,14 +80,12 @@ public class EnvironmentCowArena extends Environment {
 			if(cow.getHealth() > 0) {
 				oneAlive = true;
 				if(cow.getDistanceSq(actor.entity) < 2) {
-					actor.actionState.action = new HighLevelAction(Type.HIT, Phase.INSTANT, actor.entity.getEntityId(), 
-							EnumHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD), cow.getEntityId(), null, null, null);
+					cow.attackEntityFrom(DamageSource.CACTUS, 10);
 					actor.reward += 5;
 				}
 				if(closestAlive == null || cow.getDistanceSq(actor.entity) < closestAlive.getDistanceSq(actor.entity)) closestAlive = cow;
 			}
 		}
-//		if(closestAlive != null) actor.reward -= closestAlive.getDistanceSq(actor.entity) / (size * size) * .1F;
 		if(!oneAlive) {
 			done = true;
 			actor.reward = 20;
@@ -108,12 +96,13 @@ public class EnvironmentCowArena extends Environment {
 	@Override
 	public void reset() {
 		super.reset();
+		maxCows = 20; //TMP
 		for(Entity e : world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(ref.add(-size, -1, -size), ref.add(size, +2, size))))
 			if(!(e instanceof EntityLivingBase)) e.setDead();
 		generate();
 		for(EntityCow cow : cows) cow.setDead();
 		cows.clear();
-		nCows = 1 + world.rand.nextInt(4);
+		nCows = 1 + world.rand.nextInt(maxCows);
 		for(int i = 0; i < nCows; i++) {
 			EntityCow cow = new EntityCow(world);
 			cow.setPosition(ref.getX() - size + world.rand.nextInt(2 * size - 3) + 2, ref.getY(), 

@@ -18,6 +18,7 @@ class MinecraftEnv(gym.Env):
             controller = MinecraftController(env_type, MinecraftController.default_step)
             controller.start()
             env_id = controller.env_id
+            self.env_id = env_id
 
         self.sok = socket.create_connection(('localhost', 1337))
         self.sok.settimeout(5)

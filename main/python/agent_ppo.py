@@ -127,7 +127,7 @@ def main():
         'schedule': 'linear',
         'filename': 'model',
         }
-    single_env_agent.run_agent(train, params)
+    single_env_agent.run_agent(train, params, useEntities=True)
 
 if __name__ == '__main__':
     main()
