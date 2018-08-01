@@ -7,3 +7,11 @@
 ![Parkour Environment](random_parkour.gif)
 
 **Animated Figure 2:** *Parkour environment after 9 million time steps of A2C. The agent succeeds most of the time.*
+
+![CowArena Environment 1-2 cows](cow_att.gif)
+
+**Animated Figure 3:** *CowArena environment with attention layer in the training setting (1-2 cows).*
+
+![CowArena Environment transfer to 1-20 cows](cow_att_transfer.gif)
+
+**Animated Figure 4:** *CowArena environment with attention layer transfer to another setting (trained with 1-2 cows, tested with 1-20 cows).*
