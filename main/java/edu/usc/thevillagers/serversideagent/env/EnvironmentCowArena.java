@@ -96,7 +96,6 @@ public class EnvironmentCowArena extends Environment {
 	@Override
 	public void reset() {
 		super.reset();
-		maxCows = 20; //TMP
 		for(Entity e : world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(ref.add(-size, -1, -size), ref.add(size, +2, size))))
 			if(!(e instanceof EntityLivingBase)) e.setDead();
 		generate();
