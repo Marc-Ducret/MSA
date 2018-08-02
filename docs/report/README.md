@@ -15,3 +15,11 @@
 ![CowArena Environment transfer to 1-20 cows](cow_att_transfer.gif)
 
 **Animated Figure 4:** *CowArena environment with attention layer transfer to another setting (trained with 1-2 cows, tested with 1-20 cows).*
+
+![Simple policy imitation - data](tree_data.gif)
+
+**Animated Figure 5:** *Simple policy: data*
+
+![Simple policy imitation - imitation](tree_imitation.gif)
+
+**Animated Figure 6:** *Simple policy: imitation*
