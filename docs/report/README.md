@@ -18,8 +18,16 @@
 
 ![Simple policy imitation - data](tree_data.gif)
 
-**Animated Figure 5:** *Simple policy: data*
+**Animated Figure 5:** *Simple break tree policy: data*
 
 ![Simple policy imitation - imitation](tree_imitation.gif)
 
-**Animated Figure 6:** *Simple policy: imitation*
+**Animated Figure 6:** *Simple break tree policy: imitation*
+
+![Human - data](human_data.gif)
+
+**Animated Figure 7:** *Human subjects: data*
+
+![Human - imitation](human_imitation.gif)
+
+**Animated Figure 8:** *Human subjects: imitation*
