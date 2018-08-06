@@ -11,7 +11,7 @@ public abstract class SensorRaytrace extends Sensor {
 	
 	public final int hRes, vRes, channels;
 	public final float fov, focal, ratio;
-	public final float dist;
+	public float dist;
 	public final boolean hitEntitites;
 	
 	public SensorRaytrace(int hRes, int vRes, int channels, float fov, float ratio) {

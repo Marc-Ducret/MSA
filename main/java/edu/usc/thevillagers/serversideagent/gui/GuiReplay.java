@@ -267,27 +267,30 @@ public class GuiReplay extends GuiScreen {
 			GlStateManager.popMatrix();
 			GlStateManager.disableDepth();
 			
-			if(Keyboard.isKeyDown(Keyboard.KEY_V)) drawDebugVision();
+			if(Keyboard.isKeyDown(Keyboard.KEY_V) && !Keyboard.isKeyDown(Keyboard.KEY_0)) drawDebugVision();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		drawCenteredString(mc.fontRenderer, speed+"*", 35, height-14, 0xFFFFFF);
-		if(followedEntity != null) {
-			drawCenteredString(mc.fontRenderer, followedEntity.getName(), width / 2, 2, 0xFFFFFF);
+		if(!Keyboard.isKeyDown(Keyboard.KEY_V)) {
+			super.drawScreen(mouseX, mouseY, partialTicks);
+			drawCenteredString(mc.fontRenderer, speed+"*", 35, height-14, 0xFFFFFF);
+			if(followedEntity != null) {
+				drawCenteredString(mc.fontRenderer, followedEntity.getName(), width / 2, 2, 0xFFFFFF);
+			}
+			drawString(fontRenderer, ""+record.player.getPosition()+
+					" | "+record.player.chunkCoordX+", "+record.player.chunkCoordY+" "+record.player.chunkCoordZ, 2, 2, 0xFFFFFF);
+			drawString(fontRenderer, record.from+" | "+record.to, 2, 15, 0xFFFFFF);
+			drawString(fontRenderer, record.world.getDebugLoadedEntities(), 2, 28, 0xFFFFFF);
+			itemRender.renderItemAndEffectIntoGUI(new ItemStack(Items.CLOCK), width-18, height-18);
 		}
-		drawString(fontRenderer, ""+record.player.getPosition()+
-				" | "+record.player.chunkCoordX+", "+record.player.chunkCoordY+" "+record.player.chunkCoordZ, 2, 2, 0xFFFFFF);
-		drawString(fontRenderer, record.from+" | "+record.to, 2, 15, 0xFFFFFF);
-		drawString(fontRenderer, record.world.getDebugLoadedEntities(), 2, 28, 0xFFFFFF);
-        itemRender.renderItemAndEffectIntoGUI(new ItemStack(Items.CLOCK), width-18, height-18);
 		mc.world = null;
 		mc.player = null;
 		mc.playerController = null;
 	}
 	
 	private void drawDebugVision() {
-		int res = 24;
+		int resMult = 5;
+		int res = 24 * resMult;
 		float fov = 70;
 		float ratio = (float) width / height;
 		SensorRaytrace sensor = new SensorRaytrace(res, (int) (res / ratio), 7, fov, ratio, true) {
@@ -345,6 +348,7 @@ public class GuiReplay extends GuiScreen {
 				}
 			}
 		};
+		sensor.dist /= resMult;
 //	long timeStart = System.currentTimeMillis();
 		sensor.sense(record.world, record.player.getPositionEyes(1), record.player.rotationYaw, record.player.rotationPitch, followedEntity == null ? record.player : followedEntity);
 //	long elapsed = System.currentTimeMillis() - timeStart;
