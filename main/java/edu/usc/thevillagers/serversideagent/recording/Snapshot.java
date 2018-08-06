@@ -92,7 +92,7 @@ public class Snapshot extends NBTFileInterface<SnapshotData> {
 								int index = index(x + (chunkX << 4), y, z + (chunkZ << 4), from, diff);
 								if(index >= 0) {
 									IBlockState state = data.blockStates[index];
-									if(state.getBlock() != Blocks.AIR) {
+									if(state.getBlock() != Blocks.AIR || storage[y >> 4] != null) {
 										if(storage[y >> 4] == null) storage[y >> 4] = new ExtendedBlockStorage((y >> 4) << 4, true);
 										storage[y >> 4].set(x, y & 0xF, z, state);
 										storage[y >> 4].setBlockLight(x, y & 0xF, z, 0x8);
