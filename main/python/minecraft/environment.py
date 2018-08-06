@@ -43,6 +43,7 @@ class MinecraftEnv(gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(self.action_dim,), dtype=np.float32)
         self.entity_dim = self.in_stream.read_int()
         self.entity_max = self.in_stream.read_int()
+        self.actor_id = self.in_stream.read_int()
 
         self.reward_range = (-100, 100) ## TODO: get from java
 

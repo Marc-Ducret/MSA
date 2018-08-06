@@ -1,5 +1,6 @@
 package edu.usc.thevillagers.serversideagent.command;
 
+import java.io.IOException;
 import java.util.List;
 
 import edu.usc.thevillagers.serversideagent.agent.Human;
@@ -70,7 +71,11 @@ public class CommandEnvironment extends CommandBase {
 			for(int i = 2; i < args.length; i ++) {
 				EntityPlayerMP player = getPlayer(server, sender, args[i]);
 				if(player == null) throw new CommandException("No such player '"+args[i]+"'");
-				env.newActor(new Human(env, player));
+				try {
+					env.newActor(new Human(env, player));
+				} catch (IOException e) {
+					throw new CommandException("Exception: "+e);
+				}
 			}
 			break;
 			

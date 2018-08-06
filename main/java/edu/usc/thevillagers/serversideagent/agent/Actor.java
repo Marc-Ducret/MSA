@@ -34,6 +34,8 @@ public abstract class Actor {
 		this.actionState = actionState;
 	}
 	
+	public void joinEnv(int actorId) throws IOException {}
+	
 	public abstract void terminate();
 	
 	public abstract void observe() throws IOException;

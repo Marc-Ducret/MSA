@@ -81,7 +81,8 @@ public abstract class Environment { //TODO document functions that should be ove
 		this.actionDim = actionDim;
 	}
 	
-	public void newActor(Actor a) {
+	public void newActor(Actor a) throws IOException {
+		a.joinEnv(actors.size());
 		actors.add(a);
 	}
 	

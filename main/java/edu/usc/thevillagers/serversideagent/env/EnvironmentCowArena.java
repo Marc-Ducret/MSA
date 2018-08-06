@@ -7,7 +7,6 @@ import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
 import edu.usc.thevillagers.serversideagent.env.allocation.AllocatorEmptySpace;
-import edu.usc.thevillagers.serversideagent.env.sensor.Sensor;
 import net.minecraft.block.BlockColored;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -57,12 +56,7 @@ public class EnvironmentCowArena extends Environment {
 			obs.add(cow.getHealth() > 0 ? +1F : -1F);
 		}
 	}
-	
-	@Override
-	public void newActor(Actor a) {
-		super.newActor(a);
-	}
-	
+
 	@Override
 	public void init(WorldServer world) {
 		super.init(world);

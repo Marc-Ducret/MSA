@@ -16,11 +16,17 @@ public class Agent extends Actor {
 	public Agent(Environment env, EntityAgent agent, DataSocket sok) throws IOException {
 		super(env, agent, agent.actionState);
 		this.sok = sok;
+	}
+	
+	@Override
+	public void joinEnv(int actorId) throws IOException {
+		super.joinEnv(actorId);
 		sok.out.writeUTF(env.id);
 		sok.out.writeInt(env.observationDim);
 		sok.out.writeInt(env.actionDim);
 		sok.out.writeInt(env.entityDim);
 		sok.out.writeInt(env.entityMax);
+		sok.out.writeInt(actorId);
 		sok.out.flush();
 	}
 	

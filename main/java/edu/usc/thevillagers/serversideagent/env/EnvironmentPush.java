@@ -1,5 +1,7 @@
 package edu.usc.thevillagers.serversideagent.env;
 
+import java.io.IOException;
+
 import edu.usc.thevillagers.serversideagent.agent.Actor;
 import edu.usc.thevillagers.serversideagent.env.actuator.ActuatorForwardStrafe;
 import edu.usc.thevillagers.serversideagent.env.sensor.SensorPosition;
@@ -38,7 +40,7 @@ public class EnvironmentPush extends Environment {
 	}
 	
 	@Override
-	public void newActor(Actor a) {
+	public void newActor(Actor a) throws IOException {
 		super.newActor(a);
 		if(actorA == null) actorA = a;
 		else if(actorB == null) {
