@@ -9,10 +9,11 @@ from gym import spaces
 
 class MinecraftEnv(gym.Env):
 
-    def __init__(self, env_type, env_id='', use_entities=False):
+    def __init__(self, env_type, env_id='', use_entities=False, actor_id=0):
         self.env_type = env_type
         self.env_id = env_id
         self.use_entities = use_entities
+        self.wanted_id = actor_id
 
         if env_id == '':
             controller = MinecraftController(env_type, MinecraftController.default_step)
@@ -28,6 +29,7 @@ class MinecraftEnv(gym.Env):
         self.out_stream.write_utf(env_type)
         self.out_stream.write_boolean(False)
         self.out_stream.write_utf(env_id)
+        self.out_stream.write_int(actor_id)
         self.out_stream.flush()
 
         self.num_envs = 1
@@ -44,6 +46,8 @@ class MinecraftEnv(gym.Env):
         self.entity_dim = self.in_stream.read_int()
         self.entity_max = self.in_stream.read_int()
         self.actor_id = self.in_stream.read_int()
+        if self.wanted_id > 0 and self.wanted_id != self.actor_id:
+            print('actor_id missmach: wanted', self.wanted_id, 'got', self.actor_id)
 
         self.reward_range = (-100, 100) ## TODO: get from java
 

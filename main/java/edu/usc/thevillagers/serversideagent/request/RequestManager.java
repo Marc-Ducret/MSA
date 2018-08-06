@@ -3,6 +3,7 @@ package edu.usc.thevillagers.serversideagent.request;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import edu.usc.thevillagers.serversideagent.agent.Agent;
@@ -66,8 +67,9 @@ public class RequestManager {
 		}
 		Class<?> envClass = envManager.findEnvClass(envClassName);
 		String envId = sok.in.readBoolean() ? null : sok.in.readUTF();
+		int actorId = envId == null ? -1 : sok.in.readInt();
 		synchronized(requests) {
-			requests.add(new Request(envClass, pars, envId, sok));
+			requests.add(new Request(envClass, pars, envId, sok, actorId));
 			System.out.println("Received request ["+envClass.getSimpleName()+" "+envId+"]");
 			lastRequestTime = System.currentTimeMillis();
 		}
@@ -83,6 +85,13 @@ public class RequestManager {
 			synchronized(requests) {
 				if(System.currentTimeMillis() - lastRequestTime > 400 && !requests.isEmpty()) {
 					System.out.println("Processing "+requests.size()+" requests");
+					requests.sort(new Comparator<Request>() {
+						
+						@Override
+						public int compare(Request o1, Request o2) {
+							return o1.actorId - o2.actorId;
+						}
+					});
 					while(!requests.isEmpty())
 						processRequest(requests.remove(0));
 				}
@@ -91,6 +100,7 @@ public class RequestManager {
     }
 	
 	private void processRequest(Request req) {
+		System.out.println("PROCESS "+req.actorId);//TODO RM
 		try {
 			Environment env = null;
 			if(req.envId != null) {
@@ -131,12 +141,14 @@ public class RequestManager {
 		public final float[] pars;
 		public final String envId;
 		public final DataSocket sok;
+		public final int actorId;
 		
-		public Request(Class<?> envClass, float[] pars, String envId, DataSocket sok) {
+		public Request(Class<?> envClass, float[] pars, String envId, DataSocket sok, int actorId) {
 			this.envClass = envClass;
 			this.pars = pars;
 			this.envId = envId;
 			this.sok = sok;
+			this.actorId = actorId;
 		}
 	}
 }
