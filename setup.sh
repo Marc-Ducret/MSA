@@ -18,5 +18,7 @@ cp ../build.gradle .
 ln -s ../src/main/python run/python
 
 echo "runClient { args '--username', username }" >> build.gradle
+echo "eula=true" > run/eula.txt
+cp src/setup/server.properties run/server.properties
 
 cd src

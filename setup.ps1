@@ -18,5 +18,7 @@ cp ../build.gradle .
 cmd /c mklink /d run\python ..\src\main\python
 
 echo "runClient { args '--username', username }" | Out-File build.gradle -append -encoding utf8
+echo "eula=true" | Out-File run/eula.txt -encoding utf8
+cp src/setup/server.properties run/server.properties
 
 cd src
