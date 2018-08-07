@@ -7,7 +7,7 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.server.MinecraftServer;
 
 /**
- * Command that compiles a recording into a observation-action dataset
+ * Command that executes some static method from some class.
  */
 public class CommandExecute extends CommandBase {
 	

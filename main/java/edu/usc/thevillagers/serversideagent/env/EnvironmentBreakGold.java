@@ -27,13 +27,6 @@ public class EnvironmentBreakGold extends Environment {
 	
 	@Override
 	protected void buildSensors() {
-//		sensors.add(new SensorBlocks(new BlockPos(-size, -1, -size), new BlockPos(size, -1, size), (state) -> {
-//			if(state.getBlock() == Blocks.STAINED_GLASS) {
-//				return state.getValue(BlockColored.COLOR) == EnumDyeColor.YELLOW ? 1F : 0F;
-//			} else {
-//				return -1F;
-//			}
-//		}));
 		sensors.add(new SensorRaytrace(12, 6, 1, 70, 2) {
 			
 			@Override

@@ -12,6 +12,9 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+/**
+ * Actuator for the discrete action of using: to place a block or interract with something.
+ */
 public class ActuatorUse extends Actuator {
 	
 	private static final double REACH = 5;

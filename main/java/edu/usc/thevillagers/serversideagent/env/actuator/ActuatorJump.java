@@ -19,7 +19,7 @@ public class ActuatorJump extends Actuator {
 
 	@Override
 	public Reverser reverser(Actor actor, WorldRecordReplayer replay) {
-		// TODO Auto-generated method stub
+		// TODO implement
 		return null;
 	}
 }

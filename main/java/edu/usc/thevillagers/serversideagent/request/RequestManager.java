@@ -19,7 +19,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
 /**
- * A server that handles agent request from other processes. A request can be about a specific
+ * A server that handles agent and controller requests from other processes. A request can be about a specific
  * environment instance or require to allocate a new one.
  */
 public class RequestManager {

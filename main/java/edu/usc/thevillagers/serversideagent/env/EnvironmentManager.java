@@ -21,6 +21,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
+/**
+ * Manages the active environments.
+ */
 public class EnvironmentManager {
 	
 	private Map<String, Environment> envs = new HashMap<>();

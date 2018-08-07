@@ -13,7 +13,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 
 /**
- * Command that compiles a recording into a observation-action dataset
+ * Command that runs a human experiment. It creates an environment, places the humans within it and records for a fixed
+ * number of episodes.
  */
 public class CommandExperiment extends CommandBase {
 	

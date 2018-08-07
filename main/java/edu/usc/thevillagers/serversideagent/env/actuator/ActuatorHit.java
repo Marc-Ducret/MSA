@@ -12,6 +12,9 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+/**
+ * Actuator for the discrete action of hitting: to break a block or hit an entity.
+ */
 public class ActuatorHit extends Actuator {
 	
 	private static final double REACH = 5;

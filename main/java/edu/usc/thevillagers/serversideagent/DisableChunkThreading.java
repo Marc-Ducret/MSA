@@ -13,6 +13,11 @@ import org.objectweb.asm.tree.MethodNode;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
+/**
+ * Transforms needImediateUpdate method from net.minecraft.client.renderer.chunk.RenderChunk to return true.
+ * This effectively disables multi-threading of chunks' mesh computations. It enables the usage of Minecraft's
+ * renderer for replaying records.
+ */
 public class DisableChunkThreading implements IClassTransformer, IFMLLoadingPlugin {
 
 	@Override

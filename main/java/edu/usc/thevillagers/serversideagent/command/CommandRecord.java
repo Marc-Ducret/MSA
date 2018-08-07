@@ -31,7 +31,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
 /**
- * Command that controls the recording of a specified area.
+ * Command that controls the recording of a specified area. Only one recording can happen at a time for now.
  */
 public class CommandRecord extends CommandBase {
 	

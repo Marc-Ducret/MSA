@@ -8,7 +8,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
 
 /**
- * Command that compiles a recording into a observation-action dataset
+ * Command that alters some constant among: the number of ticks to skip
+ * between agents' updates, agents' movement speed factor, agents' discrete
+ * actions probability factor and agents' maximum pitch magnitude.
  */
 public class CommandConstant extends CommandBase {
 	
