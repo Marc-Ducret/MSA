@@ -26,3 +26,17 @@ Open a terminal in `forge/mod/src/` and execute `./setup.sh`.
 ### Windows
 
 Open a `PowerShell` in `forge\mod\src\` and execute `.\setup.ps1`.
+
+## Starting the Minecraft Server
+
+Run `./gradlew runServer -Pusername=` in `forge/mod/`.
+
+## Starting a Minecraft Client
+
+Run `./gradlew runClient -Pusername=<name>` in `forge/mod/` having replaced `<name>` with your desired username.
+
+## Running agent scripts
+
+Scripts should be placed in `forge/mod/src/python/`. They should be run from the `forge/mod/run` folder using the symbolic link to the `python` folder.
+
+An example would be: running `python python/agent_dummy.py Pattern` in `forge/mod/run/`
