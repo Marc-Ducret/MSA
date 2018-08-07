@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
 import edu.ucar.ral.nujan.hdf.HdfException;
@@ -94,6 +95,7 @@ public class CommandCompile extends CommandBase {
 		env.init((WorldServer) replay.world);
 		List<Human> humans = new ArrayList<>();
 		List<List<Actuator.Reverser>> reversers = new ArrayList<>();
+		List<Integer> replayIds = new ArrayList<>();
 		int firstTick = -1;
 		while(humans.isEmpty()) {
 			for(Entity e : replay.world.loadedEntityList) {
@@ -104,6 +106,9 @@ public class CommandCompile extends CommandBase {
 					for(Actuator actuator : env.actuators)
 						hReversers.add(actuator.reverser(h, replay));
 					reversers.add(hReversers);
+					for(Entry<Integer, Integer> entry : replay.idMapping.entrySet())
+						if(entry.getValue() == e.getEntityId())
+							replayIds.add(entry.getKey());
 				}
 			}
 			firstTick++;
@@ -146,7 +151,7 @@ public class CommandCompile extends CommandBase {
 					for(float v : reverser.endStep())
 						actBuffer[offset++] = v;
 				}
-				NBTTagCompound data = replay.entitiesData.get(humans.get(h).entity.getEntityId());
+				NBTTagCompound data = replay.entitiesData.get(replayIds.get(h));
 				envInfoBuffer[envInfoOffset++] = data.getFloat("Reward");
 				envInfoBuffer[envInfoOffset++] = data.getBoolean("Done") ? 1 : 0;
 			}

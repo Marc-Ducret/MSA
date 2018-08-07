@@ -51,7 +51,7 @@ public class WorldRecordReplayer extends WorldRecordWorker {
 	private Future<ChangeSet> nextChangeSet;
 	public Set<ActionListener> actionListeners = new HashSet<>();
 	
-	protected Map<Integer, Integer> idMapping = new HashMap<>();
+	public Map<Integer, Integer> idMapping = new HashMap<>();
 	
 	public BlockPos offset;
 	
