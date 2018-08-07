@@ -86,7 +86,6 @@ class Policy:
         (ob_const, ob_entities, entity_mask) = ob
         ob_entities = ob_entities.reshape((self.env.entity_max,
             self.env.entity_dim))
-        #print(self._attention(ob_entities[None]))
         ac1, vpred1 =  self._act(stochastic, ob_const[None], ob_entities[None], entity_mask[None])
         return ac1[0], vpred1[0]
     def get_variables(self):

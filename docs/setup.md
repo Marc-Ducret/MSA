@@ -11,6 +11,7 @@
     * Tensorflow
     * Numpy
     * OpenAI's baselines and gym
+    * PyTorch
     * probably more (TODO: which ones?)
  * (UNIX only) unzip command
 

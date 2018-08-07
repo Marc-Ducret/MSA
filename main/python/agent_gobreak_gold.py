@@ -34,7 +34,9 @@ def run(args, env):
                 hit = 1
             yaw *= .3
             pch *= .15
+            
         return np.array([fwd, stf, yaw, pch, hit])
+
     sucesses = deque(maxlen=10000)
     while True:
         obs = env.reset()

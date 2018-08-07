@@ -12,4 +12,15 @@ The learning algorithms should be written in Python, they interface with Java th
 
 ## Communication between Java and Python
 
-Each agent has its own Python process. Each of those process communicates with Minecraft through its `stdin` and `stdout`. Also, `stderr` can be used to display debugging information.
+Python scripts communicate with the Minecraft server through TCP sockets.
+
+## Examples
+
+* `agent_dummy` and `agent_random` are the most simple agent implementations
+* `agent_goto_gold`, `agent_gobreak_gold` and `agent_tree` are hardcoded agents
+* `agent_ppo` and `agent_acktr` are wrappers for OpenAI's baselines
+* `agent_rl` runs [PyTorch RL algorithms](https://github.com/VengeurK/pytorch-a2c-ppo-acktr)
+* `agent_nearest` is a K-Neareast-Neighbor agent
+* `test_controller` is a simple usage of `MinecraftController`
+* `multi_agent_test_pattern` runs multiple agents in a single environment with only one Python process
+* `agent_imitation_train` does imitation learning

@@ -12,7 +12,6 @@ def play(args):
                 policy.memory_std = 0
             if not hasattr(policy, 'memory_layers'):
                 policy.memory_layers = 1
-            #policy = Policy(24, 12, 7, 6, 1)
             env = minecraft.environment.MinecraftEnv(args.env_type, args.env_id)
             env.init_spaces()
             n_eps = 50

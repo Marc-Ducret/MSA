@@ -27,6 +27,7 @@ def run(args, env):
             fwd *= .5
             yaw *= .5
             pch *= .2
+            
         return np.array([fwd, stf, yaw, pch])
     while True:
         obs, _, _ = env.reset()
