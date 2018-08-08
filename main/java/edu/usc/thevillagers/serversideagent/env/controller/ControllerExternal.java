@@ -3,11 +3,14 @@ package edu.usc.thevillagers.serversideagent.env.controller;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.request.DataSocket;
 
-public class ControllerPython extends Controller {
+/**
+ * An external controller that behaves according to a TCP connection.
+ */
+public class ControllerExternal extends Controller {
 
 	private final DataSocket sok;
 	
-	public ControllerPython(Environment env, DataSocket sok) {
+	public ControllerExternal(Environment env, DataSocket sok) {
 		super(env);
 		this.sok = sok;
 		try {

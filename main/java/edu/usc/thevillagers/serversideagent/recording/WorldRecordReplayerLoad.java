@@ -12,6 +12,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 
+/**
+ * Replayer that uses the real world instead of a 'fake' world. Used for loading an environment state from a recording.
+ */
 public class WorldRecordReplayerLoad extends WorldRecordReplayer {
 
 	public final Environment env;

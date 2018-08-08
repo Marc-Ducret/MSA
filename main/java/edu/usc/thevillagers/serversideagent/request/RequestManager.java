@@ -10,7 +10,7 @@ import edu.usc.thevillagers.serversideagent.agent.Agent;
 import edu.usc.thevillagers.serversideagent.agent.EntityAgent;
 import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.env.EnvironmentManager;
-import edu.usc.thevillagers.serversideagent.env.controller.ControllerPython;
+import edu.usc.thevillagers.serversideagent.env.controller.ControllerExternal;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -123,7 +123,7 @@ public class RequestManager {
 			}
 			
 			if(req.envId == null) {
-				env.setController(new ControllerPython(env, req.sok));
+				env.setController(new ControllerExternal(env, req.sok));
 				req.sok.out.writeUTF(env.id);
 				req.sok.out.flush();
 			} else {

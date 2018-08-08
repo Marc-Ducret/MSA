@@ -59,7 +59,7 @@ public class ActuatorHit extends Actuator {
 	public Reverser reverser(Actor actor, WorldRecordReplayer replay) {
 		return new Reverser(actor) {
 			
-			private ActionListener listener = (action) -> {
+			private ActionListener listener = (action) -> { //TODO maybe check actor!?
 				if(action.actionType == Type.HIT) values[0] = 1;
 			};
 			

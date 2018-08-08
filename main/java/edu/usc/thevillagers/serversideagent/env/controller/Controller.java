@@ -7,6 +7,9 @@ import edu.usc.thevillagers.serversideagent.env.Environment;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayer;
 import edu.usc.thevillagers.serversideagent.recording.WorldRecordReplayerLoad;
 
+/**
+ * Controls resets, load and termination of environments.
+ */
 public abstract class Controller {
 
 	public static enum ControllerState { WAIT, RESET, LOAD, TERMINATE };

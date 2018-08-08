@@ -7,6 +7,9 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+/**
+ * A sensor that uses ray tracing to produce some low resolution vision over multiple channels according to the specified encoding.
+ */
 public abstract class SensorRaytrace extends Sensor {
 	
 	public final int hRes, vRes, channels;
