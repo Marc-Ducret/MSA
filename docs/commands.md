@@ -42,3 +42,15 @@ Commands must be typed in the chat and preceded by `/`. All server commands can 
     * `rec stop` stops the current recording and saves it to `forge/mod/run/tmp/records`
 * `exp <env-type> <episodes> <x> <y> <z> <username> ...` starts an experiment with specified human subjects within an environment of `<env-type>` at the specified position and records it for `<episodes>`. Only one experiment or recording can happen at one time. Experiments can be stopped early by `rec stop` and `env remove exp`.
 * `compile <record> <env-type>` compiles the only recording containing `<record>` into the *observation-action* dataset `forge/mod/run/tmp/imitation/<record>.h5` using the observation and actions spaces defined by `<env-type>`.
+
+## Tools for Recordings
+
+### Visual replay
+
+When in Minecraft's menu, pressing `Ctrl + R` (`Ctrl + Command + R` on Mac) opens a screen where a recording can be selected.
+
+### File formats
+
+Recordings' files are formatted using Minecraft's [Named Binary Tag](https://minecraft.gamepedia.com/NBT_format) format. Those can be edited using [*NBTExplorer*](https://minecraft.gamepedia.com/Programs_and_editors/NBTExplorer).
+
+Dataset files are formatted using [Hierarchical Data Format 5](https://support.hdfgroup.org/HDF5/).
