@@ -15,3 +15,4 @@ The goal is to have the following features:
 * [Minecraft Forge](docs/minecraft_forge.md)
 * [Project Architecture](docs/project_architecture.md)
 * [Setup](docs/setup.md)
+* [Useful Commands](docs/commands.md)
