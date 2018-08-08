@@ -94,6 +94,9 @@ public class RequestManager {
 					});
 					while(!requests.isEmpty())
 						processRequest(requests.remove(0));
+				} else {
+					for(Request req : requests) if(req.actorId < 0) processRequest(req);
+					requests.removeIf((req) -> req.actorId < 0);
 				}
 			}
 		}
