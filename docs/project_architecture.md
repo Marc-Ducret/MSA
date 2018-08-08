@@ -17,8 +17,8 @@ Python scripts communicate with the Minecraft server through TCP sockets.
 ## Examples
 
 * `agent_dummy` and `agent_random` are the most simple agent implementations
-* `agent_goto_gold`, `agent_gobreak_gold` and `agent_tree` are hardcoded agents
-* `agent_ppo` and `agent_acktr` are wrappers for OpenAI's baselines
+* `agent_tree` is an hardcoded agent for the `Pattern` environment
+* `agent_ppo` and `agent_acktr` are wrappers for [OpenAI's baselines](https://github.com/VengeurK/Villagers-Baselines-Fork)
 * `agent_rl` runs [PyTorch RL algorithms](https://github.com/VengeurK/pytorch-a2c-ppo-acktr)
 * `agent_nearest` is a K-Neareast-Neighbor agent
 * `test_controller` is a simple usage of `MinecraftController`
