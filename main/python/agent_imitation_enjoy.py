@@ -26,10 +26,7 @@ def play(args):
             for i in range(n_eps):
                 obs = env.reset()
                 ep_rew = 0
-                states = (
-                    th.tanh(th.randn((policy.memory_layers, 1, policy.memory_features)).cuda() * policy.memory_std),
-                    th.tanh(th.randn((policy.memory_layers, 1, policy.memory_features)).cuda() * policy.memory_std),
-                )
+                states = th.tanh(th.randn((2, policy.memory_layers, 1, policy.memory_features)).cuda() * policy.memory_std)
                 while True:
                     action, states = act(obs, states)
                     obs, rew, done, _ = env.step(action)
