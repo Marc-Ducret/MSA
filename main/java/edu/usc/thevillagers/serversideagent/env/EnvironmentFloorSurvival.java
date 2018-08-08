@@ -17,7 +17,7 @@ public class EnvironmentFloorSurvival extends Environment {
 	
 	private int size;
 	private static final List<EnumDyeColor> STAGES = 
-			Arrays.asList(new EnumDyeColor[] {EnumDyeColor.GREEN, EnumDyeColor.YELLOW, EnumDyeColor.RED});
+			Arrays.asList(new EnumDyeColor[] {EnumDyeColor.GREEN, EnumDyeColor.LIME, EnumDyeColor.YELLOW, EnumDyeColor.ORANGE, EnumDyeColor.RED});
 	
 	@Override
 	public void readPars(float[] pars) {
@@ -59,6 +59,7 @@ public class EnvironmentFloorSurvival extends Environment {
 
 	@Override
 	protected void stepActor(Actor a) throws Exception {
+		a.reward = 0;
 		BlockPos p = a.entity.getPosition().down();
 		IBlockState state = world.getBlockState(p);
 		if(state.getBlock() == Blocks.STAINED_GLASS) {
@@ -72,6 +73,7 @@ public class EnvironmentFloorSurvival extends Environment {
 			}
 		} else {
 			done = true;
+			a.reward = time / 20F;
 		}
 	}
 	
