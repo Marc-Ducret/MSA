@@ -42,7 +42,7 @@ public class ActuatorHit extends Actuator {
 					-1, result.getBlockPos(), result.sideHit, result.hitVec);
 			break;
 			
-		case ENTITY: // TODO test
+		case ENTITY:
 			actor.actionState.action = new HighLevelAction(
 					HighLevelAction.Type.HIT, 
 					HighLevelAction.Phase.START, actor.entity.getEntityId(), 
@@ -59,8 +59,9 @@ public class ActuatorHit extends Actuator {
 	public Reverser reverser(Actor actor, WorldRecordReplayer replay) {
 		return new Reverser(actor) {
 			
-			private ActionListener listener = (action) -> { //TODO maybe check actor!?
-				if(action.actionType == Type.HIT) values[0] = 1;
+			private ActionListener listener = (action) -> {
+				if(action.actionType == Type.HIT && replay.idMapping.get(action.actorId) == actor.entity.getEntityId()) 
+					values[0] = 1;
 			};
 			
 			@Override

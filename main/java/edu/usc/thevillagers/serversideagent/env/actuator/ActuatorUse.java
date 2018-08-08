@@ -13,7 +13,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 /**
- * Actuator for the discrete action of using: to place a block or interract with something.
+ * Actuator for the discrete action of using: to place a block or interact with something.
  */
 public class ActuatorUse extends Actuator {
 	
@@ -42,7 +42,7 @@ public class ActuatorUse extends Actuator {
 					-1, result.getBlockPos(), result.sideHit, result.hitVec);
 			break;
 			
-		case ENTITY: // TODO test
+		case ENTITY:
 			actor.actionState.action = new HighLevelAction(
 					HighLevelAction.Type.USE, 
 					HighLevelAction.Phase.INSTANT, actor.entity.getEntityId(), 
@@ -60,7 +60,8 @@ public class ActuatorUse extends Actuator {
 		return new Reverser(actor) {
 			
 			private ActionListener listener = (action) -> {
-				if(action.actionType == Type.USE) values[0] = 1;
+				if(action.actionType == Type.USE && replay.idMapping.get(action.actorId) == actor.entity.getEntityId())
+					values[0] = 1;
 			};
 			
 			@Override
