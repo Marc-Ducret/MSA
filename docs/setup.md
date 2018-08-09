@@ -63,6 +63,8 @@ Scripts should be placed in `forge/mod/src/main/python/`. They should be run fro
 * `python python/multi_single_env_agent.py 4 Pattern "python python/agent_tree.py"`
 * `python python/agent_ppo.py CowArena[5,2] --epochs 8 --actorbatch_timesteps 8004 --learning_rate 5e-5 --total_timesteps 200000`
 * `python python/agent_acktr.py ParkourRandom`
-* `python python/agent_rl.py --env-name mc.ParkourRandom --num-processes 16 --num-stack 1 --num-steps 400 --algo ppo`
-* `python python/agent_rl.py --env-name mc.FloorSurvival --num-processes 16 --num-stack 1 --num-steps 50 --algo ppo`
+* `python python/agent_rl.py --env-name mc.ParkourRandom --num-processes 16 --num-stack 1 --num-steps 50 --algo ppo --num-frames 200000`
+* `python python/agent_rl.py --env-name mc.FloorSurvival --num-processes 16 --num-stack 1 --num-steps 50 --algo ppo --num-frames 200000`
 * `python python/multi_agent_test_pattern.py 250`
+* `python python/agent_imitation_train.py <dataset> --eval 1 --decay 1e-4 --lr 1e-4 --gpu 0 --mem_std 0` replace `<dataset>` by the name used in the `compile` command.
+* `python python/multi_single_env_agent.py 4 Pattern "python python/agent_imitation_enjoy.py tmp/models/imitation_0_epoch_latest --gpu 0"` tests the imitation policy within Minecraft
