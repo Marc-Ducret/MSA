@@ -60,10 +60,20 @@ public abstract class Environment { //TODO document functions that should be ove
 	public void encodeEntityObservation(Agent a, List<Float> obs) { //TODO doc
 	}
 	
+	
+	/**
+	 * @return Math.round(getPar())
+	 */
 	protected int getRoundPar(float[] pars, int i, int def) {
 		return Math.round(getPar(pars, i, def));
 	}
 	
+	/**
+	 * @param pars: list of par
+	 * @param i: index of the par want to get
+	 * @param def: default value
+	 * @return par[i], or def
+	 */
 	protected float getPar(float[] pars, int i, float def) {
 		if(pars == null || i < 0 || i >= pars.length) return def;
 		return pars[i];
