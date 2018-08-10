@@ -21,6 +21,13 @@ public abstract class SensorRaytrace extends Sensor {
 		this(hRes, vRes, channels, fov, ratio, false);
 	}
 
+	/**
+	 * @param hRes: horizontal resolution
+	 * @param vRes: vertical resolution
+	 * @param channels: number of channels of the image
+	 * @param fov: horizontal field of view (in degree)
+	 * @param ratio: horizontal over vertical
+	 */
 	public SensorRaytrace(int hRes, int vRes, int channels, float fov, float ratio, boolean hitEntities) {
 		super(hRes * vRes * channels);
 		this.hRes = hRes;
