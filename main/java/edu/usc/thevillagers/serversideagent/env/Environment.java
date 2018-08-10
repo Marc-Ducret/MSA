@@ -146,34 +146,21 @@ public abstract class Environment {
 	public void encodeEntityObservation(Agent a, List<Float> obs) {
 	}
 	
-<<<<<<< HEAD
 	/**
 	 * @param pars Parameter array to get from.
 	 * @param i Index of the parameter.
 	 * @param def Default value to return if the parameter is not specified.
 	 * @return round(pars[i]) if possible, otherwise def.
-=======
-	
-	/**
-	 * @return Math.round(getPar())
->>>>>>> 94a03b8c7528375faea71710fb79dcd280dd13e8
 	 */
 	protected int getRoundPar(float[] pars, int i, int def) {
 		return Math.round(getPar(pars, i, def));
 	}
 	
 	/**
-<<<<<<< HEAD
 	 * @param pars Parameter array to get from.
 	 * @param i Index of the parameter.
 	 * @param def Default value to return if the parameter is not specified.
 	 * @return pars[i] if possible, otherwise def.
-=======
-	 * @param pars: list of par
-	 * @param i: index of the par want to get
-	 * @param def: default value
-	 * @return par[i], or def
->>>>>>> 94a03b8c7528375faea71710fb79dcd280dd13e8
 	 */
 	protected float getPar(float[] pars, int i, float def) {
 		if(pars == null || i < 0 || i >= pars.length) return def;
