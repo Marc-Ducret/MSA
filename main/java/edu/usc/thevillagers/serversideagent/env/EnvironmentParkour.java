@@ -20,15 +20,15 @@ public class EnvironmentParkour extends Environment {
 	protected BlockPos ref;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		sightDist = getRoundPar(pars, 0, 3);
 		width = getRoundPar(pars, 1, 4);
 		length = getRoundPar(pars, 2, 15);
 	}
 	
 	@Override
-	public void init(WorldServer world) {
-		super.init(world);
+	public void enterWorld(WorldServer world) {
+		super.enterWorld(world);
 		ref = getOrigin();
 	}
 	

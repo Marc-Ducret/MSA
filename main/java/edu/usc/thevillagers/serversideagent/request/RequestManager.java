@@ -114,10 +114,10 @@ public class RequestManager {
 			}
 			if(env == null) {
 				env = envManager.createEnv(req.envClass);
-				env.readPars(req.pars);
+				env.initialize(req.pars);
 				WorldServer world = FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0];
 				if(!env.tryAllocate(world)) throw new Exception("Cannot allocate "+req.envClass);
-				env.init(world);
+				env.enterWorld(world);
 				if(req.envId != null) envManager.registerEnv(env, req.envId);
 				else envManager.registerEnv(env);
 			}

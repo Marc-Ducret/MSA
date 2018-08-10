@@ -17,7 +17,7 @@ public class EnvironmentPush extends Environment {
 	private Actor actorB;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 	}
 
 	@Override
@@ -34,8 +34,8 @@ public class EnvironmentPush extends Environment {
 	}
 	
 	@Override
-	public void init(WorldServer world) {
-		super.init(world);
+	public void enterWorld(WorldServer world) {
+		super.enterWorld(world);
 		ref = getOrigin();
 	}
 	

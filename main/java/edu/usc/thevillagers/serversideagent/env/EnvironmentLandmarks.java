@@ -26,7 +26,7 @@ public class EnvironmentLandmarks extends Environment {
 	
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		nLandmarks = getRoundPar(pars, 0, 4);
 		nAgents = getRoundPar(pars, 1, 4);
 		comSize = getRoundPar(pars, 2, 1);

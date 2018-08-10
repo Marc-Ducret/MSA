@@ -20,7 +20,7 @@ public class EnvironmentBreakGold extends Environment {
 	private BlockPos goldBlock;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		size = getRoundPar(pars, 0, 2);
 		allocator = new AllocatorEmptySpace(new BlockPos(-size, -1, -size), new BlockPos(size, 2, size));
 	}

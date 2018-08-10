@@ -20,7 +20,7 @@ public class EnvironmentFloorSurvival extends Environment {
 			Arrays.asList(new EnumDyeColor[] {EnumDyeColor.GREEN, EnumDyeColor.LIME, EnumDyeColor.YELLOW, EnumDyeColor.ORANGE, EnumDyeColor.RED});
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		size = getRoundPar(pars, 0, 1);
 		allocator = new AllocatorEmptySpace(new BlockPos(-size, -1, -size), new BlockPos(size, 2, size));
 	}

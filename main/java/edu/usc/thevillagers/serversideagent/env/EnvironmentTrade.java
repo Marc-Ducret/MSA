@@ -35,7 +35,7 @@ public class EnvironmentTrade extends Environment {
 	private StatEntry stat;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		C = getRoundPar(pars, 0, 10);
 		R = getRoundPar(pars, 1, 2);
 		T = getRoundPar(pars, 2, 100);

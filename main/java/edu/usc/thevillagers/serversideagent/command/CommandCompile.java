@@ -91,8 +91,8 @@ public class CommandCompile extends CommandBase {
 	private void compile(WorldRecordReplayer replay, Environment env, String name) throws HdfException, IOException, InterruptedException, ExecutionException {
 		replay.readInfo();
 		replay.seek(0);
-		env.readPars(new float[]{});
-		env.init((WorldServer) replay.world);
+		env.initialize(new float[]{});
+		env.enterWorld((WorldServer) replay.world);
 		List<Human> humans = new ArrayList<>();
 		List<List<Actuator.Reverser>> reversers = new ArrayList<>();
 		List<Integer> replayIds = new ArrayList<>();

@@ -14,7 +14,7 @@ public class EnvironmentFollow extends Environment {
 	private Entity target;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 	}
 
 	@Override
@@ -29,8 +29,8 @@ public class EnvironmentFollow extends Environment {
 	}
 	
 	@Override
-	public void init(WorldServer world) {
-		super.init(world);
+	public void enterWorld(WorldServer world) {
+		super.enterWorld(world);
 		BlockPos ref = getOrigin();
 		target = world.getClosestPlayer(ref.getX(), ref.getY(), ref.getZ(), 50, false);
 	}

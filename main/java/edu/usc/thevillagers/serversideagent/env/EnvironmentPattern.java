@@ -74,7 +74,7 @@ public class EnvironmentPattern extends Environment {
 	private int winner = -1;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		size = getRoundPar(pars, 0, 8);
 		teams = getRoundPar(pars, 1, 2);
 		trees = getRoundPar(pars, 2, 4);
@@ -281,8 +281,8 @@ public class EnvironmentPattern extends Environment {
 	}
 	
 	@Override
-	public void init(WorldServer world) {
-		super.init(world);
+	public void enterWorld(WorldServer world) {
+		super.enterWorld(world);
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 	

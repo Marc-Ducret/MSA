@@ -21,7 +21,7 @@ public class EnvironmentGoBreakGold extends Environment {
 	private BlockPos goldBlock;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		size = getRoundPar(pars, 0, 8);
 		allocator = new AllocatorEmptySpace(new BlockPos(-size-1, -1, -size-1), new BlockPos(size+1, 2, size+1));
 	}

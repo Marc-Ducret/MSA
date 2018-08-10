@@ -13,7 +13,7 @@ public class EnvironmentResources extends Environment {
 	private int nRes;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		nRes = getRoundPar(pars, 0, 3);
 		allocator = new Allocator() {
 			

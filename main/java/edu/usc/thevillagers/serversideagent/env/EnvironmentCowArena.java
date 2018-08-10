@@ -29,7 +29,7 @@ public class EnvironmentCowArena extends Environment {
 	private int nCows;
 	
 	@Override
-	public void readPars(float[] pars) {
+	public void initialize(float[] pars) {
 		size = getRoundPar(pars, 0, 5);
 		maxCows = getRoundPar(pars, 1, 5);
 		cows = new ArrayList<>();
@@ -58,8 +58,8 @@ public class EnvironmentCowArena extends Environment {
 	}
 
 	@Override
-	public void init(WorldServer world) {
-		super.init(world);
+	public void enterWorld(WorldServer world) {
+		super.enterWorld(world);
 		ref = getOrigin();
 	}
 

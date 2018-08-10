@@ -55,7 +55,7 @@ public class CommandEnvironment extends CommandBase {
 				origin = sender.getPosition();
 			Environment env = createEnvironment(args[2]);
 			env.setOrigin(origin);
-			env.init(world);
+			env.enterWorld(world);
 			envManager.registerEnv(env, envId);
 			break;
 			
@@ -101,7 +101,7 @@ public class CommandEnvironment extends CommandBase {
 			}
 			Class<?> envClass = envManager.findEnvClass(envClassName);
 			Environment env = (Environment) envClass.newInstance();
-			env.readPars(pars);
+			env.initialize(pars);
 			return env;
 			
 		} catch (Exception e) {
